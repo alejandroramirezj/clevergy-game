@@ -1,0 +1,53 @@
+export const CHARS = [
+  { id: "alejandro", emoji: "🪰", name: "ALEJANDRO R.", form: "Mosca boxeadora", ab: "FLY PUNCH", spd: 4.4, jump: 10.5, cd: 0.25,
+    tip: "X: puñetazo · mantén salto para planear" },
+  { id: "ale", emoji: "🫒", name: "ALE GRACIANO", form: "Botella de aceite", ab: "OIL SLIDE", spd: 4.0, jump: 9.5, cd: 1.0,
+    tip: "X: derrámate y deslízate arrollando" },
+  { id: "alvaroM", emoji: "🧮", name: "ÁLVARO MERINO", form: "Calculadora", ab: "ERROR 404", spd: 2.9, jump: 9, cd: 0.8,
+    tip: "X: lanza una operación que explota" },
+  { id: "alvaroP", emoji: "🎙️", name: "ÁLVARO", form: "Micro de podcast", ab: "PODCAST ATTACK", spd: 3.6, jump: 9.5, cd: 0.7,
+    tip: "X: onda sonora de largo alcance" },
+  { id: "ana", emoji: "🦁", name: "ANA", form: "Escaladora leona", ab: "CLIMB MODE", spd: 4.0, jump: 10, cd: 0.25,
+    tip: "Empuja contra una pared para trepar (↑/↓)" },
+  { id: "beltran", emoji: "🔵", name: "BELTRÁN", form: "Dedal azul", ab: "THIMBLE SHIELD", spd: 2.4, jump: 8.5, cd: 0,
+    tip: "Mantén X: invulnerable (gasta escudo)" },
+  { id: "bruno", emoji: "🗿", name: "BRUNO", form: "Tótem multicara", ab: "MULTIFACE", spd: 3.0, jump: 9, cd: 2.5,
+    tip: "X: una cara aleatoria hace algo distinto" },
+  { id: "gonzalo", emoji: "🥦", name: "GONZALO", form: "Brócoli", ab: "BROCCOLI RAGE", spd: 3.2, jump: 9.5, cd: 1.2,
+    tip: "X: te multiplicas en mini-brócolis" },
+  { id: "javi", emoji: "☭", name: "JAVI", form: "Señal comunista", ab: "WORKERS UNITED", spd: 3.4, jump: 9, cd: 1.4,
+    tip: "X: invoca trabajadores en marcha" },
+  { id: "jesus", emoji: "🍺", name: "JESÚS", form: "Botella de Cruzcampo", ab: "CRUZCAMPO SMASH", spd: 2.6, jump: 9, cd: 0.6,
+    tip: "X: smash de área (en el aire, se lanza al suelo)" },
+  { id: "joseluis", emoji: "🖨️", name: "JOSÉ LUIS", form: "Impresora 3D", ab: "PRINT", spd: 3.0, jump: 9.5, cd: 0.4,
+    tip: "X: imprime una plataforma (máx. 3)" },
+  { id: "josu", emoji: "🥮", name: "JOSU", form: "Panetón escalador", ab: "PANETÓN CLIMB", spd: 4.0, jump: 10, cd: 0.6,
+    tip: "Rebota en paredes con salto · X: bote diagonal" },
+  { id: "juan", emoji: "📻", name: "JUAN", form: "Microondas", ab: "MICROWAVE", spd: 2.9, jump: 9, cd: 1.0,
+    tip: "X: calienta todo a tu alrededor" },
+  { id: "maca", emoji: "🏐", name: "MACA", form: "Pelota de voleibol", ab: "SPIKE", spd: 4.6, jump: 10, cd: 0.4,
+    tip: "X: modo pelota — botas sin parar y arrollas" },
+  { id: "manu", emoji: "💪", name: "MANU", form: "Forzudo con zapatos", ab: "SUPER STEP", spd: 3.2, jump: 9, cd: 0.8,
+    tip: "X: salto gigantesco con impacto al caer" },
+  { id: "pablo", emoji: "🍊", name: "PABLO", form: "Naranja", ab: "ORANGE ROLL", spd: 4.2, jump: 9.5, cd: 0.9,
+    tip: "X: rueda a toda velocidad arrollando" },
+  { id: "paloma", emoji: "🕊️", name: "PALOMA", form: "Paloma", ab: "FLY AWAY", spd: 4.6, jump: 9.5, cd: 0.3,
+    tip: "Mantén salto para volar (barra de vuelo)" },
+  { id: "silvia", emoji: "👟", name: "SILVIA", form: "Zapatilla", ab: "SPEEDRUN", spd: 5.4, jump: 10, cd: 0.6,
+    tip: "X: dash invulnerable que arrolla" }
+];
+
+export const FLY_META = {
+  fw: 96,
+  fh: 112,
+  anims: {
+    idle: { row: 0, frames: 3 },
+    walk: { row: 1, frames: 4 },
+    run: { row: 2, frames: 3 },
+    jump: { row: 3, frames: 3 },
+    attack: { row: 4, frames: 3 },
+    damage: { row: 5, frames: 2 },
+    death: { row: 6, frames: 5 },
+    victory: { row: 7, frames: 3 }
+  }
+};

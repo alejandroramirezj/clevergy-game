@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>RETREAT: THE LEGEND OF THE TEAM · Clevergy</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <div id="wrap">
+    <canvas id="cv" width="960" height="540"></canvas>
+  </div>
+
+  <div id="rotate">
+    <div class="ico">📱</div>
+    <div>Gira el móvil para jugar<br><span style="font-size:12px;color:#9fb4e8">RETREAT se juega en horizontal</span></div>
+  </div>
+
+  <!-- BOOT / TITLE -->
+  <div id="bootOv" class="overlay">
+    <div id="bootTxt" class="boot"></div>
+    <div id="bootTitle" class="hidden" style="display:flex;flex-direction:column;align-items:center;">
+      <div class="title-big">RETREAT</div>
+      <div class="sub">THE LEGEND OF THE TEAM · WORLD 1: THE OFFICE</div>
+      <div class="sub" style="margin-top:6px;color:var(--amber);">🏆 MODO COMPETICIÓN 🏆</div>
+      <input class="name" id="nameInput" maxlength="10" placeholder="TU NOMBRE" autocomplete="off">
+      <div class="panel">
+        <b>← →</b> mover · <b>↑/Espacio</b> saltar · <b>X</b> habilidad · <b>TAB</b> siguiente · <b>T / 👥</b> elegir del equipo<br>
+        <b>18 personajes jugables.</b> Puntúa eliminando enemigos, encadenando combos y recogiendo ☕.<br>
+        El tiempo corre: acaba rápido, muere poco, y entra en el <b>ranking del retreat</b>.
+      </div>
+      <div class="press" id="pressStart">— PULSA ENTER O TOCA AQUÍ PARA EMPEZAR —</div>
+    </div>
+  </div>
+
+  <!-- TEAM SELECT -->
+  <div id="teamOv" class="overlay hidden">
+    <div class="title-big" style="font-size:clamp(16px,3vw,26px);">ELIGE COMPAÑERO</div>
+    <div class="sub">cada persona es una mecánica</div>
+    <div id="teamGrid"></div>
+    <button class="btn alt" id="teamClose">VOLVER (T)</button>
+  </div>
+
+  <!-- WIN -->
+  <div id="winOv" class="overlay hidden">
+    <div class="title-big" id="rankTitle" style="font-size:clamp(22px,5vw,40px);"></div>
+    <div class="boot" id="winTxt"></div>
+    <div id="lbWin"></div>
+    <div class="sub" style="margin-top:10px;">...or is it?</div>
+    <button class="btn" id="restartBtn">OTRA PARTIDA</button>
+  </div>
+
+  <!-- GAME OVER -->
+  <div id="goOv" class="overlay hidden">
+    <div class="title-big" style="color:#fff;">MEETING ETERNA</div>
+    <div class="sub">"¿Tienes 5 minutos?" te ha alcanzado demasiadas veces.</div>
+    <div class="panel" id="goStats" style="text-align:center;"></div>
+    <button class="btn" id="retryBtn">CONTINUAR (-300 pts)</button>
+  </div>
+
+  <!-- TOUCH CONTROLS -->
+  <div id="touch">
+    <div class="tbtn" id="tL">◀</div><div class="tbtn" id="tR">▶</div>
+    <div class="tbtn" id="tT">👥</div><div class="tbtn" id="tS">⇄</div>
+    <div class="tbtn" id="tB">✦</div><div class="tbtn" id="tA">▲</div>
+  </div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
