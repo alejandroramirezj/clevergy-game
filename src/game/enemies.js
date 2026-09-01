@@ -4,7 +4,7 @@ import { GameState, addScore, kill, hurt, msg, fmtT } from "./state.js";
 import { sfx } from "../engine/audio.js";
 import { rectsHit, solidAt } from "../engine/physics.js";
 import { abilK } from "../engine/input.js";
-import { loadLB, saveLB } from "./leaderboard.js";
+import { fetchGlobalLeaderboard, submitScore } from "./leaderboard.js";
 
 export function hitFx(x, y) {
   for (let i = 0; i < 5; i++) {
@@ -418,21 +418,9 @@ TOTAL .............. <span style="color:#b6f542">${finalScore}</span>
 `;
   }
 
-  let lb = loadLB();
-  lb.push({ n: GameState.playerName, s: finalScore, t: Math.round(GameState.gameTime), r: rank, d: Date.now() });
-  lb.sort((a, b) => b.s - a.s);
-  lb = lb.slice(0, 8);
-  saveLB(lb);
-
-  let html = `<table class="lb"><tr><th>#</th><th>NOMBRE</th><th>SCORE</th><th>TIEMPO</th><th>RANK</th></tr>`;
-  lb.forEach((e, i) => {
-    const me = e.n === GameState.playerName && e.s === finalScore ? " class=\"me\"" : "";
-    html += `<tr${me}><td>${i + 1}</td><td>${e.n}</td><td>${e.s}</td><td>${fmtT(e.t)}</td><td>${e.r}</td></tr>`;
-  });
-  html += "</table>";
-
+  const curChar = CHARS[GameState.charIdx];
   const lbWin = document.getElementById("lbWin");
-  if (lbWin) lbWin.innerHTML = html;
+  if (lbWin) lbWin.innerHTML = `<div style="color:var(--cyan);margin:12px 0;font-size:13px;">⚡ Sincronizando con Cloudflare D1...</div>`;
 
   const winOv = document.getElementById("winOv");
   if (winOv) winOv.classList.remove("hidden");
@@ -440,4 +428,32 @@ TOTAL .............. <span style="color:#b6f542">${finalScore}</span>
   sfx(523, 0.15);
   setTimeout(() => sfx(659, 0.15), 150);
   setTimeout(() => sfx(784, 0.3), 300);
+
+  submitScore({
+    name: GameState.playerName,
+    score: finalScore,
+    character: curChar.id,
+    char_name: curChar.name,
+    time_seconds: Math.round(GameState.gameTime),
+    rank: rank,
+    deaths: GameState.deaths
+  }).then(async () => {
+    const list = await fetchGlobalLeaderboard();
+    let html = `<div style="font-size:12px;color:var(--lime);margin:8px 0;">☁️ CLASIFICACIÓN GLOBAL (CLOUDFLARE D1)</div>`;
+    html += `<table class="lb"><tr><th>#</th><th>NOMBRE</th><th>HÉROE</th><th>SCORE</th><th>TIEMPO</th><th>RANK</th></tr>`;
+    (list || []).slice(0, 8).forEach((e, i) => {
+      const isMe = (e.name || e.n) === GameState.playerName && (e.score || e.s) === finalScore;
+      const medal = i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : (i + 1);
+      html += `<tr class="${isMe ? "me" : ""}">
+        <td>${medal}</td>
+        <td>${e.name || e.n}</td>
+        <td>${CHARS.find(c => c.id === (e.character || e.c))?.emoji || "🪰"} ${e.char_name || e.name || ""}</td>
+        <td style="color:var(--lime);font-weight:bold;">${e.score || e.s}</td>
+        <td>${fmtT(e.time_seconds || e.t || 0)}</td>
+        <td>${e.rank || e.r || "C"}</td>
+      </tr>`;
+    });
+    html += "</table>";
+    if (lbWin) lbWin.innerHTML = html;
+  });
 }

@@ -3,6 +3,7 @@ import { CHARS } from "../config/characters.js";
 import { sfx } from "../engine/audio.js";
 import { anim, triggerAnim } from "../engine/sprites.js";
 import { abilK } from "../engine/input.js";
+import { submitScore } from "./leaderboard.js";
 
 export const GameState = {
   status: "boot", // boot, ready, play, gameover, win
@@ -155,9 +156,21 @@ export function hurt(n) {
   if (P.hp <= 0) {
     GameState.deaths++;
     GameState.status = "gameover";
+    const curC = CHARS[GameState.charIdx];
     const goStats = document.getElementById("goStats");
     if (goStats) {
       goStats.innerHTML = `SCORE: <b style="color:#b6f542">${GameState.score}</b> · TIEMPO: <b>${fmtT(GameState.gameTime)}</b> · MUERTES: <b>${GameState.deaths}</b>`;
+    }
+    if (GameState.score > 0) {
+      submitScore({
+        name: GameState.playerName,
+        score: GameState.score,
+        character: curC.id,
+        char_name: curC.name,
+        time_seconds: Math.round(GameState.gameTime),
+        rank: "GAME OVER",
+        deaths: GameState.deaths
+      });
     }
     const goOv = document.getElementById("goOv");
     if (goOv) goOv.classList.remove("hidden");

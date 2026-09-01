@@ -2,7 +2,7 @@ import { TILE, LW, LH, SIGNS } from "../config/constants.js";
 import { CHARS } from "../config/characters.js";
 import { GameState, fmtT } from "./state.js";
 import { grid } from "../engine/physics.js";
-import { SPR, ANIM, drawAnimatedPlayer } from "../engine/sprites.js";
+import { SPR, ANIM, anim, drawAnimatedPlayer } from "../engine/sprites.js";
 import { abilK } from "../engine/input.js";
 
 export function draw(cx) {
@@ -25,6 +25,7 @@ export function draw(cx) {
   if (GameState.fragment) drawFragment(cx);
   drawPlayer(cx);
   drawParticles(cx);
+  drawLighting(cx);
 
   cx.restore();
   drawHUD(cx);
@@ -427,4 +428,82 @@ function meter(cx, x, y, label, v, col) {
   cx.fillRect(x, y + 6, 90, 8);
   cx.fillStyle = col;
   cx.fillRect(x + 1, y + 7, 88 * Math.max(0, v), 6);
+}
+
+function drawLighting(cx) {
+  cx.save();
+  cx.globalCompositeOperation = "lighter";
+
+  const time = GameState.time;
+  const P = GameState.P;
+  const C = CHARS[GameState.charIdx];
+
+  // 1. Player ability / punch light
+  if (P.atkT > 0 || anim.name === "attack") {
+    const px = P.x + (P.face > 0 ? P.w + 16 : -16);
+    const py = P.y + P.h / 2;
+    const grad = cx.createRadialGradient(px, py, 4, px, py, 72);
+    grad.addColorStop(0, "rgba(255, 190, 60, 0.4)");
+    grad.addColorStop(0.4, "rgba(255, 70, 40, 0.18)");
+    grad.addColorStop(1, "rgba(0, 0, 0, 0)");
+    cx.fillStyle = grad;
+    cx.beginPath();
+    cx.arc(px, py, 72, 0, Math.PI * 2);
+    cx.fill();
+  }
+
+  // 2. Beltrán energy shield glow
+  if (C.id === "beltran" && abilK() && P.shieldE > 0) {
+    const px = P.x + P.w / 2;
+    const py = P.y + P.h / 2;
+    const grad = cx.createRadialGradient(px, py, 12, px, py, 52);
+    grad.addColorStop(0, "rgba(89, 216, 255, 0.35)");
+    grad.addColorStop(1, "rgba(0, 0, 0, 0)");
+    cx.fillStyle = grad;
+    cx.beginPath();
+    cx.arc(px, py, 52, 0, Math.PI * 2);
+    cx.fill();
+  }
+
+  // 3. Coffees pulsing amber glow
+  for (const cf of GameState.coffees) {
+    if (cf.got) continue;
+    const pulse = Math.sin(time * 3 + cf.t) * 4;
+    const grad = cx.createRadialGradient(cf.x + 8, cf.y + 8, 2, cf.x + 8, cf.y + 8, 24 + pulse);
+    grad.addColorStop(0, "rgba(255, 205, 80, 0.3)");
+    grad.addColorStop(1, "rgba(0, 0, 0, 0)");
+    cx.fillStyle = grad;
+    cx.beginPath();
+    cx.arc(cf.x + 8, cf.y + 8, 24 + pulse, 0, Math.PI * 2);
+    cx.fill();
+  }
+
+  // 4. Boss glow (The Email Chain)
+  const boss = GameState.boss;
+  if (boss.active && !boss.dead) {
+    const bx = boss.x + 42;
+    const by = boss.y + 28;
+    const pulse = Math.sin(time * 4) * 8;
+    const grad = cx.createRadialGradient(bx, by, 10, bx, by, 84 + pulse);
+    grad.addColorStop(0, boss.hitFlash > 0 ? "rgba(255, 255, 255, 0.5)" : "rgba(230, 50, 80, 0.25)");
+    grad.addColorStop(1, "rgba(0, 0, 0, 0)");
+    cx.fillStyle = grad;
+    cx.beginPath();
+    cx.arc(bx, by, 84 + pulse, 0, Math.PI * 2);
+    cx.fill();
+  }
+
+  // 5. Projectiles glow
+  for (const p of GameState.projectiles) {
+    const col = p.kind === "404" ? "rgba(182, 245, 66, 0.35)" : "rgba(143, 163, 217, 0.35)";
+    const grad = cx.createRadialGradient(p.x, p.y, 2, p.x, p.y, 28);
+    grad.addColorStop(0, col);
+    grad.addColorStop(1, "rgba(0, 0, 0, 0)");
+    cx.fillStyle = grad;
+    cx.beginPath();
+    cx.arc(p.x, p.y, 28, 0, Math.PI * 2);
+    cx.fill();
+  }
+
+  cx.restore();
 }

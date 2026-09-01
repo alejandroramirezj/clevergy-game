@@ -17,29 +17,104 @@
     <div>Gira el móvil para jugar<br><span style="font-size:12px;color:#9fb4e8">RETREAT se juega en horizontal</span></div>
   </div>
 
-  <!-- BOOT / TITLE -->
-  <div id="bootOv" class="overlay">
-    <div id="bootTxt" class="boot"></div>
-    <div id="bootTitle" class="hidden" style="display:flex;flex-direction:column;align-items:center;">
-      <div class="title-big">RETREAT</div>
-      <div class="sub">THE LEGEND OF THE TEAM · WORLD 1: THE OFFICE</div>
-      <div class="sub" style="margin-top:6px;color:var(--amber);">🏆 MODO COMPETICIÓN 🏆</div>
-      <input class="name" id="nameInput" maxlength="10" placeholder="TU NOMBRE" autocomplete="off">
-      <div class="panel">
-        <b>← →</b> mover · <b>↑/Espacio</b> saltar · <b>X</b> habilidad · <b>TAB</b> siguiente · <b>T / 👥</b> elegir del equipo<br>
-        <b>18 personajes jugables.</b> Puntúa eliminando enemigos, encadenando combos y recogiendo ☕.<br>
-        El tiempo corre: acaba rápido, muere poco, y entra en el <b>ranking del retreat</b>.
+  <!-- MAIN MENU -->
+  <div id="menuOv" class="overlay">
+    <div class="menu-container">
+      <div class="menu-header">
+        <div class="game-logo">RETREAT</div>
+        <div class="game-sub">THE LEGEND OF THE TEAM · WORLD 1: THE OFFICE</div>
+        <div class="badge-competition">🏆 MODO COMPETICIÓN RETREAT 🏆</div>
       </div>
-      <div class="press" id="pressStart">— PULSA ENTER O TOCA AQUÍ PARA EMPEZAR —</div>
+
+      <!-- PLAYER & CHARACTER CARD -->
+      <div class="menu-card">
+        <div class="card-row player-input-row">
+          <label for="nameInput">TU NOMBRE O APODO:</label>
+          <input class="name" id="nameInput" maxlength="12" placeholder="ANON" autocomplete="off" spellcheck="false">
+        </div>
+
+        <div class="card-row char-spotlight" id="charSpotlight">
+          <div class="char-preview-box">
+            <div class="char-avatar" id="spotlightAvatar">🪰</div>
+            <button class="btn-sm" id="btnChangeChar">👥 ELEGIR COMPAÑERO (18)</button>
+          </div>
+          <div class="char-info">
+            <div class="char-header">
+              <span class="char-name" id="spotlightName">ALEJANDRO R.</span>
+              <span class="char-form" id="spotlightForm">Mosca boxeadora</span>
+            </div>
+            <div class="char-ab" id="spotlightAb">✦ HABILIDAD: FLY PUNCH</div>
+            <div class="char-tip" id="spotlightTip">X: puñetazo · mantén salto para planear</div>
+            <div class="stat-bars">
+              <div class="stat-row"><span>VELOCIDAD</span><div class="bar-track"><div class="bar-fill" id="barSpd" style="width:75%"></div></div></div>
+              <div class="stat-row"><span>SALTO</span><div class="bar-track"><div class="bar-fill" id="barJump" style="width:85%"></div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAIN MENU ACTIONS -->
+      <div class="menu-actions">
+        <button class="btn btn-hero" id="btnPlay">▶ INICIAR MISIÓN (ENTER)</button>
+        <div class="menu-sub-actions">
+          <button class="btn btn-menu" id="btnOpenLB">🏆 CLASIFICACIÓN D1</button>
+          <button class="btn btn-menu" id="btnOpenCtrl">🕹️ CONTROLES</button>
+          <button class="btn btn-menu alt" id="btnOpenStory">🖥️ HISTORIA</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- TEAM SELECT -->
+  <!-- TERMINAL BOOT STORY (OPTIONAL RE-WATCH) -->
+  <div id="bootOv" class="overlay hidden">
+    <div id="bootTxt" class="boot"></div>
+    <div class="press" id="pressSkipStory">— TOCA O PULSA ENTER PARA SALTAR AL MENÚ —</div>
+  </div>
+
+  <!-- CLOUDFLARE D1 LEADERBOARD MODAL -->
+  <div id="lbOv" class="overlay hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="title-big" style="font-size:clamp(18px,3.5vw,28px);">🏆 CLASIFICACIÓN GLOBAL</div>
+        <div class="sub-status"><span class="pulse-dot"></span> BASE DE DATOS CLOUDFLARE D1 EN VIVO</div>
+      </div>
+      <div id="lbModalContent" class="lb-scroll-box">
+        <div style="color:var(--cyan);margin:20px 0;">Cargando clasificación en tiempo real...</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-menu" id="btnRefreshLB">🔄 ACTUALIZAR</button>
+        <button class="btn alt" id="btnCloseLB">VOLVER (ESC)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTROLS & GUIDE MODAL -->
+  <div id="ctrlOv" class="overlay hidden">
+    <div class="modal-box">
+      <div class="title-big" style="font-size:clamp(18px,3.5vw,26px);">🕹️ CÓMO JUGAR</div>
+      <div class="sub" style="margin-bottom:12px;">Controles para Teclado y Pantalla Táctil</div>
+      <div class="ctrl-grid">
+        <div class="ctrl-card"><span class="kbadge">← → / A D</span><span>Moverse</span></div>
+        <div class="ctrl-card"><span class="kbadge">↑ / W / ESPACIO</span><span>Saltar</span></div>
+        <div class="ctrl-card"><span class="kbadge">X / J</span><span>Habilidad especial</span></div>
+        <div class="ctrl-card"><span class="kbadge">TAB</span><span>Siguiente compañero</span></div>
+        <div class="ctrl-card"><span class="kbadge">T / 👥</span><span>Ver equipo completo</span></div>
+        <div class="ctrl-card"><span class="kbadge">M</span><span>Música ON/OFF</span></div>
+      </div>
+      <div class="panel" style="margin-top:14px;">
+        💡 <b>Mecánicas clave:</b> Encadena enemigos sin tocar el suelo para multiplicar tu <b>COMBO (hasta x5)</b>.<br>
+        Recoge las tazas de ☕ para sumar puntos y curarte. ¡Derrota a <b>The Email Chain</b> para recuperar el Retreat!
+      </div>
+      <button class="btn" id="btnCloseCtrl" style="margin-top:16px;">¡ENTENDIDO!</button>
+    </div>
+  </div>
+
+  <!-- TEAM SELECT MODAL -->
   <div id="teamOv" class="overlay hidden">
     <div class="title-big" style="font-size:clamp(16px,3vw,26px);">ELIGE COMPAÑERO</div>
-    <div class="sub">cada persona es una mecánica</div>
+    <div class="sub">18 héroes de Clevergy · cada uno con su habilidad</div>
     <div id="teamGrid"></div>
-    <button class="btn alt" id="teamClose">VOLVER (T)</button>
+    <button class="btn alt" id="teamClose">SELECCIONAR Y CERRAR (T)</button>
   </div>
 
   <!-- WIN -->
@@ -48,7 +123,10 @@
     <div class="boot" id="winTxt"></div>
     <div id="lbWin"></div>
     <div class="sub" style="margin-top:10px;">...or is it?</div>
-    <button class="btn" id="restartBtn">OTRA PARTIDA</button>
+    <div style="display:flex;gap:12px;margin-top:14px;">
+      <button class="btn" id="restartBtn">OTRA PARTIDA</button>
+      <button class="btn alt" id="winToMenuBtn">MENÚ PRINCIPAL</button>
+    </div>
   </div>
 
   <!-- GAME OVER -->
@@ -56,7 +134,10 @@
     <div class="title-big" style="color:#fff;">MEETING ETERNA</div>
     <div class="sub">"¿Tienes 5 minutos?" te ha alcanzado demasiadas veces.</div>
     <div class="panel" id="goStats" style="text-align:center;"></div>
-    <button class="btn" id="retryBtn">CONTINUAR (-300 pts)</button>
+    <div style="display:flex;gap:12px;margin-top:14px;">
+      <button class="btn" id="retryBtn">CONTINUAR (-300 pts)</button>
+      <button class="btn alt" id="goBackMenuBtn">MENÚ PRINCIPAL</button>
+    </div>
   </div>
 
   <!-- TOUCH CONTROLS -->
