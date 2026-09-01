@@ -223,8 +223,8 @@ export function loadAnim(id, src, meta) {
 }
 
 export function getCharacterAvatar(charId) {
-  if (charId === "alejandro") return "/sprites/alejandro/idle.png";
-  if (charId === "ale") return "/sprites/ale/idle.png";
+  if (charId === "alejandro") return "/sprites/alejandro/avatar.png";
+  if (charId === "ale") return "/sprites/ale/avatar.png";
   const s = SPR[charId];
   if (s && s.img) {
     try {

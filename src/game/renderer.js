@@ -417,12 +417,6 @@ function drawHUD(cx) {
   }
   cx.textAlign = "left";
 
-  if (SAFEB === 0) {
-    cx.font = "10px monospace";
-    cx.fillStyle = "#565f75";
-    cx.fillText("TAB: siguiente · T/👥: equipo · M: música", 16, H - 10);
-  }
-
   if (msgT > 0) {
     cx.font = "bold 20px monospace";
     cx.textAlign = "center";

@@ -369,10 +369,13 @@ initLevelGrid();
 initSprites();
 fitCanvas();
 
-const { toggleTeam, tryStart } = initOverlays({ onStartGame: startGame });
+const { toggleTeam, tryStart, updateSpotlight } = initOverlays({ onStartGame: startGame });
 
 initInput({
-  onSwitchChar: (dir) => switchChar(dir),
+  onSwitchChar: (dir) => {
+    switchChar(dir);
+    updateSpotlight();
+  },
   onToggleTeam: () => toggleTeam(),
   onToggleMusic: () => {
     const on = toggleMusic();

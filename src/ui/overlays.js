@@ -84,6 +84,17 @@ export function initOverlays({ onStartGame }) {
         el.classList.toggle("sel", i === GameState.charIdx);
       });
     }
+
+    // Update Game Boy portrait hero hub
+    const gbHubAvatar = document.getElementById("gbHubAvatar");
+    const gbHubName = document.getElementById("gbHubName");
+    const gbHubForm = document.getElementById("gbHubForm");
+    if (gbHubAvatar) {
+      const av = getCharacterAvatar(c.id);
+      if (av) gbHubAvatar.src = av;
+    }
+    if (gbHubName) gbHubName.textContent = c.name;
+    if (gbHubForm) gbHubForm.textContent = c.form;
   }
 
   // Populate team selector (18 characters)
@@ -98,7 +109,7 @@ export function initOverlays({ onStartGame }) {
     d.innerHTML = `
       ${avHtml}
       <div class="nm">${c.name}</div>
-      <div class="fm">${c.form}<br><span style="color:var(--amber)">${c.ab}</span></div>
+      <div class="fm">${c.form}</div>
     `;
     d.addEventListener("click", () => {
       GameState.charIdx = i;
@@ -116,6 +127,52 @@ export function initOverlays({ onStartGame }) {
     });
     teamGrid.appendChild(d);
   });
+
+  // Game Boy Central Hero Hub Controls
+  const gbPrevChar = document.getElementById("gbPrevChar");
+  const gbNextChar = document.getElementById("gbNextChar");
+  const gbHeroBadge = document.getElementById("gbHeroBadge");
+  const gbOpenTeamBtn = document.getElementById("gbOpenTeamBtn");
+
+  if (gbPrevChar) {
+    gbPrevChar.addEventListener("click", () => {
+      GameState.charIdx = (GameState.charIdx - 1 + CHARS.length) % CHARS.length;
+      GameState.P.ball = false;
+      GameState.P.roll = 0;
+      GameState.P.slide = 0;
+      anim.lock = null;
+      anim.name = "idle";
+      anim.frame = 0;
+      anim.t = 0;
+      GameState.switchBanner = 1.6;
+      updateSpotlight();
+      sfx(520, 0.06, "square");
+    });
+  }
+
+  if (gbNextChar) {
+    gbNextChar.addEventListener("click", () => {
+      GameState.charIdx = (GameState.charIdx + 1) % CHARS.length;
+      GameState.P.ball = false;
+      GameState.P.roll = 0;
+      GameState.P.slide = 0;
+      anim.lock = null;
+      anim.name = "idle";
+      anim.frame = 0;
+      anim.t = 0;
+      GameState.switchBanner = 1.6;
+      updateSpotlight();
+      sfx(520, 0.06, "square");
+    });
+  }
+
+  if (gbHeroBadge) {
+    gbHeroBadge.addEventListener("click", () => toggleTeam());
+  }
+
+  if (gbOpenTeamBtn) {
+    gbOpenTeamBtn.addEventListener("click", () => toggleTeam());
+  }
 
   updateSpotlight();
 
