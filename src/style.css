@@ -909,109 +909,6 @@ body.gameboy-mode .gameboy-deck {
   border-radius: 0 8px 8px 0;
 }
 
-/* PROMINENT HERO SWITCHER BAR */
-.gb-hero-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 480px;
-  margin: 2px auto 6px;
-  background: rgba(13, 17, 34, 0.85);
-  border: 1px solid var(--panel-border);
-  border-radius: 8px;
-  padding: 4px 8px;
-  box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.5);
-  gap: 8px;
-}
-
-.gb-arrow-btn {
-  background: #1e2642;
-  border: 1px solid #37446f;
-  color: #fff;
-  font-size: 14px;
-  width: 32px;
-  height: 36px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  touch-action: none;
-  box-shadow: 0 2px 0 #0c101d;
-  flex-shrink: 0;
-}
-
-.gb-arrow-btn:active {
-  transform: translateY(1px);
-  background: var(--cyan);
-  color: #0b0e1a;
-}
-
-.gb-hero-display {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-  cursor: pointer;
-  overflow: hidden;
-}
-
-.gb-hero-display-img {
-  width: 36px;
-  height: 36px;
-  object-fit: contain;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
-  flex-shrink: 0;
-}
-
-.gb-hero-text {
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-  flex: 1;
-  min-width: 0;
-}
-
-.gb-hero-name {
-  font-size: 11px;
-  font-weight: 900;
-  color: #fff;
-  letter-spacing: 0.05em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.gb-hero-form {
-  font-size: 9px;
-  color: var(--cyan);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.gb-team-tag {
-  background: #1f2746;
-  border: 1px solid var(--amber);
-  color: var(--amber);
-  font-size: 9px;
-  font-weight: bold;
-  padding: 4px 8px;
-  border-radius: 6px;
-  cursor: pointer;
-  touch-action: none;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.gb-team-tag:active {
-  background: var(--amber);
-  color: #0b0e1a;
-}
-
 /* BOTONES DE ACCIÓN: B & A GRANDES */
 .gb-actions-container {
   display: flex;
@@ -1081,13 +978,13 @@ body.gameboy-mode .gameboy-deck {
   text-shadow: 0 0 6px rgba(89, 216, 255, 0.4);
 }
 
-/* Bottom Area: SELECT, START, Speaker */
+/* Bottom Area: EQUIPO & CAMBIO (Centered) */
 .gb-bottom-area {
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  padding: 0 12px;
+  padding: 8px 12px 0;
   max-width: 520px;
   margin: 0 auto;
   width: 100%;
@@ -1095,7 +992,7 @@ body.gameboy-mode .gameboy-deck {
 
 .gb-system-btns {
   display: flex;
-  gap: 32px;
+  gap: 36px;
   justify-content: center;
 }
 
@@ -1103,35 +1000,36 @@ body.gameboy-mode .gameboy-deck {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
 }
 
 .gb-pill-btn {
-  width: 56px;
-  height: 16px;
-  background: #252e4d;
-  border: 1px solid #3b4875;
-  border-radius: 9px;
+  width: 68px;
+  height: 20px;
+  background: linear-gradient(180deg, #2c3558 0%, #1e2540 100%);
+  border: 1px solid #414f80;
+  border-radius: 10px;
   transform: rotate(-25deg);
   cursor: pointer;
-  box-shadow: 0 3px 0 #0e1220;
+  box-shadow: 0 4px 0 #0b0e18, 0 4px 8px rgba(0, 0, 0, 0.4);
   font-size: 0;
   touch-action: none;
-  transition: transform 0.04s, box-shadow 0.04s;
+  transition: transform 0.04s, box-shadow 0.04s, background 0.05s;
 }
 
 .gb-pill-btn:active {
   transform: rotate(-25deg) translateY(2px);
-  box-shadow: 0 1px 0 #0e1220;
-  background: #3b4875;
+  box-shadow: 0 1px 0 #0b0e18;
+  background: #414f80;
 }
 
 .gb-pill-label {
-  font-size: 10px;
-  font-weight: bold;
-  color: #8fa3d9;
-  letter-spacing: 0.08em;
-  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 900;
+  color: #a4b7e8;
+  letter-spacing: 0.06em;
+  margin-top: 5px;
+  text-transform: uppercase;
 }
 
 /* Speaker Slots */
