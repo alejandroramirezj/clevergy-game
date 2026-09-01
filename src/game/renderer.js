@@ -322,60 +322,98 @@ function drawHUD(cx) {
   const P = GameState.P;
   const C = CHARS[GameState.charIdx];
 
+  const isSmall = W < 540;
+
   // Hearts
+  const heartSpacing = isSmall ? 18 : 26;
+  const heartTop = isSmall ? 10 : 14;
   for (let i = 0; i < 5; i++) {
     cx.fillStyle = i < P.hp ? "#ff4d5e" : "#2a3566";
-    const hx = 16 + i * 26;
-    cx.fillRect(hx, 14, 9, 9);
-    cx.fillRect(hx + 11, 14, 9, 9);
-    cx.fillRect(hx, 20, 20, 8);
-    cx.fillRect(hx + 4, 28, 12, 5);
-    cx.fillRect(hx + 8, 33, 4, 3);
+    const hx = (isSmall ? 10 : 16) + i * heartSpacing;
+    if (isSmall) {
+      cx.fillRect(hx, heartTop, 7, 7);
+      cx.fillRect(hx + 8, heartTop, 7, 7);
+      cx.fillRect(hx, heartTop + 5, 15, 6);
+      cx.fillRect(hx + 3, heartTop + 11, 9, 4);
+      cx.fillRect(hx + 6, heartTop + 15, 3, 2);
+    } else {
+      cx.fillRect(hx, heartTop, 9, 9);
+      cx.fillRect(hx + 11, heartTop, 9, 9);
+      cx.fillRect(hx, heartTop + 6, 20, 8);
+      cx.fillRect(hx + 4, heartTop + 14, 12, 5);
+      cx.fillRect(hx + 8, heartTop + 19, 4, 3);
+    }
   }
 
   // Char plate
-  cx.fillStyle = "rgba(14,19,43,0.9)";
-  cx.fillRect(16, 48, 280, 50);
-  cx.strokeStyle = "#2a3566";
-  cx.strokeRect(16, 48, 280, 50);
-  cx.font = "15px monospace";
-  cx.fillStyle = "#fff";
-  cx.fillText(C.emoji + " " + C.name, 26, 68);
-  cx.font = "10px monospace";
-  cx.fillStyle = "#9fb4e8";
-  cx.fillText(C.form + " · " + C.ab, 26, 82);
+  if (isSmall) {
+    cx.fillStyle = "rgba(14,19,43,0.85)";
+    cx.fillRect(10, 32, 160, 32);
+    cx.strokeStyle = "#2a3566";
+    cx.strokeRect(10, 32, 160, 32);
+    cx.font = "bold 11px monospace";
+    cx.fillStyle = "#fff";
+    cx.fillText(C.emoji + " " + C.name, 16, 46);
+    if (C.cd > 0) {
+      cx.fillStyle = "#1c2450";
+      cx.fillRect(16, 52, 90, 4);
+      cx.fillStyle = P.cool > 0 ? "#565f75" : "#b6f542";
+      cx.fillRect(16, 52, 90 * (1 - Math.max(0, P.cool) / C.cd), 4);
+    }
 
-  // Cooldown bar
-  if (C.cd > 0) {
-    cx.fillStyle = "#1c2450";
-    cx.fillRect(26, 88, 120, 5);
-    cx.fillStyle = P.cool > 0 ? "#565f75" : "#b6f542";
-    cx.fillRect(26, 88, 120 * (1 - Math.max(0, P.cool) / C.cd), 5);
-  }
+    // Compact meters in portrait
+    if (C.id === "alejandro") meter(cx, 10, 68, "VUELO", P.flyMeter, "#9fb8e8");
+    if (C.id === "paloma") meter(cx, 10, 68, "VUELO", P.stamina, "#ffffff");
+    if (C.id === "beltran") meter(cx, 10, 68, "ESCUDO", P.shieldE, "#59d8ff");
+    if (C.id === "joseluis") {
+      cx.fillStyle = "#59d8ff";
+      cx.font = "9px monospace";
+      cx.fillText("IMPRESIONES: " + (3 - GameState.printed.length) + "/3", 10, 78);
+    }
+  } else {
+    cx.fillStyle = "rgba(14,19,43,0.9)";
+    cx.fillRect(16, 48, 280, 50);
+    cx.strokeStyle = "#2a3566";
+    cx.strokeRect(16, 48, 280, 50);
+    cx.font = "15px monospace";
+    cx.fillStyle = "#fff";
+    cx.fillText(C.emoji + " " + C.name, 26, 68);
+    cx.font = "10px monospace";
+    cx.fillStyle = "#9fb4e8";
+    cx.fillText(C.form + " · " + C.ab, 26, 82);
 
-  // Meters
-  if (C.id === "alejandro") meter(cx, 310, 58, "VUELO", P.flyMeter, "#9fb8e8");
-  if (C.id === "paloma") meter(cx, 310, 58, "VUELO", P.stamina, "#ffffff");
-  if (C.id === "beltran") meter(cx, 310, 58, "ESCUDO", P.shieldE, "#59d8ff");
-  if (C.id === "joseluis") {
-    cx.fillStyle = "#59d8ff";
-    cx.font = "11px monospace";
-    cx.fillText("IMPRESIONES: " + (3 - GameState.printed.length) + "/3", 310, 70);
+    // Cooldown bar
+    if (C.cd > 0) {
+      cx.fillStyle = "#1c2450";
+      cx.fillRect(26, 88, 120, 5);
+      cx.fillStyle = P.cool > 0 ? "#565f75" : "#b6f542";
+      cx.fillRect(26, 88, 120 * (1 - Math.max(0, P.cool) / C.cd), 5);
+    }
+
+    // Meters
+    if (C.id === "alejandro") meter(cx, 310, 58, "VUELO", P.flyMeter, "#9fb8e8");
+    if (C.id === "paloma") meter(cx, 310, 58, "VUELO", P.stamina, "#ffffff");
+    if (C.id === "beltran") meter(cx, 310, 58, "ESCUDO", P.shieldE, "#59d8ff");
+    if (C.id === "joseluis") {
+      cx.fillStyle = "#59d8ff";
+      cx.font = "11px monospace";
+      cx.fillText("IMPRESIONES: " + (3 - GameState.printed.length) + "/3", 310, 70);
+    }
   }
 
   // Score & Time (top right)
   cx.textAlign = "right";
-  cx.font = "bold 18px monospace";
+  cx.font = isSmall ? "bold 15px monospace" : "bold 18px monospace";
   cx.fillStyle = "#b6f542";
-  cx.fillText(String(score).padStart(6, "0"), W - 16, 30);
-  cx.font = "12px monospace";
+  cx.fillText(String(score).padStart(6, "0"), W - (isSmall ? 10 : 16), isSmall ? 22 : 30);
+  cx.font = isSmall ? "10px monospace" : "12px monospace";
   cx.fillStyle = "#9fb4e8";
-  cx.fillText("⏱ " + fmtT(gameTime) + "  ·  ☕ " + coffeeCount + "  ·  " + playerName, W - 16, 48);
+  cx.fillText("⏱ " + fmtT(gameTime) + " · ☕ " + coffeeCount, W - (isSmall ? 10 : 16), isSmall ? 36 : 48);
 
   if (combo > 1) {
-    cx.font = "bold 16px monospace";
+    cx.font = isSmall ? "bold 13px monospace" : "bold 16px monospace";
     cx.fillStyle = "#ffc857";
-    cx.fillText("COMBO x" + Math.min(5, combo), W - 16, 70);
+    cx.fillText("COMBO x" + Math.min(5, combo), W - (isSmall ? 10 : 16), isSmall ? 52 : 70);
   }
   cx.textAlign = "left";
 

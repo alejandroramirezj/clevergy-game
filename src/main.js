@@ -20,19 +20,23 @@ function fitCanvas() {
 
   if (isPortrait) {
     document.body.classList.add("gameboy-mode");
-    const W = 960;
-    const H = 540;
-    const targetW = iw;
-    const maxScreenH = Math.max(200, ih - 300);
-    const targetH = Math.min(maxScreenH, Math.round(targetW * (540 / 960)));
+    // Game Boy screen takes ~48% of screen height
+    const screenH = Math.round(ih * 0.48);
+    const screenW = iw;
+
+    // Zoomed-in camera: resolution H = 340, W scales with screen ratio (~300-360)
+    // This makes character 58px tall out of 340px -> 17% of screen height!
+    // On physical phone (390px wide x 380px tall), the character is ~65 physical pixels tall!
+    const H = 340;
+    const W = Math.round(H * (screenW / screenH));
 
     cv.width = Math.round(W * dpr);
     cv.height = Math.round(H * dpr);
     cv.style.position = "relative";
     cv.style.left = "auto";
     cv.style.top = "auto";
-    cv.style.width = targetW + "px";
-    cv.style.height = targetH + "px";
+    cv.style.width = screenW + "px";
+    cv.style.height = screenH + "px";
 
     cx.setTransform(dpr, 0, 0, dpr, 0, 0);
     cx.imageSmoothingEnabled = false;
@@ -341,16 +345,23 @@ function update(dt) {
   GameState.floaters = GameState.floaters.filter((f) => f.t > 0);
 
   // Smooth camera following
-  const target = P.x + P.w / 2 - GameState.W / 2;
-  GameState.camX += (target - GameState.camX) * 0.12;
+  const targetX = P.x + P.w / 2 - GameState.W / 2;
+  GameState.camX += (targetX - GameState.camX) * 0.14;
   GameState.camX = Math.max(0, Math.min(GameState.camX, LW * TILE - GameState.W));
   if (GameState.boss.active && !GameState.boss.dead) {
     GameState.camX = Math.max(0, Math.min(ARENA_L - 48, LW * TILE - GameState.W));
   }
 
   const worldBottom = LH * TILE;
-  GameState.camY = worldBottom - (GameState.H - GameState.SAFEB);
-  GameState.camY = Math.max(0, GameState.camY);
+  if (GameState.H < 500) {
+    // In portrait/handheld mode, dynamically follow player vertically!
+    const targetY = P.y + P.h / 2 - GameState.H * 0.55;
+    GameState.camY += (targetY - GameState.camY) * 0.12;
+    GameState.camY = Math.max(0, Math.min(GameState.camY, worldBottom - GameState.H));
+  } else {
+    GameState.camY = worldBottom - (GameState.H - GameState.SAFEB);
+    GameState.camY = Math.max(0, GameState.camY);
+  }
 }
 
 // Initialize components
