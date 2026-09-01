@@ -20,29 +20,80 @@ export function hitFx(x, y) {
   }
 }
 
-export function spawnEnemies() {
+export function spawnEnemies(worldId = 1) {
   GameState.enemies = [];
-  const email = (x, y) =>
-    GameState.enemies.push({ type: "email", x: x * TILE, y: y * TILE, vx: 0, vy: 0, hp: 1, t: Math.random() * 6, ifr: 0 });
-  const meet = (x, y) =>
-    GameState.enemies.push({ type: "meeting", x: x * TILE, y: y * TILE, vx: 0, vy: 0, hp: 2, t: Math.random() * 6, say: 0, ifr: 0 });
+  const addE = (type, x, y, hp = 1) =>
+    GameState.enemies.push({ type, x: x * TILE, y: y * TILE, vx: 0, vy: 0, hp, t: Math.random() * 6, say: 0, ifr: 0 });
 
-  email(30, 9);
-  email(36, 8);
-  email(40, 11);
-  email(58, 9);
-  email(65, 8);
-  meet(56, 11);
-  meet(63, 9);
-  meet(72, 10);
-  email(87, 8);
-  email(96, 11);
-  email(99, 10);
-  email(102, 9);
-  email(105, 11);
-  meet(101, 8);
-  email(114, 9);
-  meet(131, 9);
+  const w = worldId || GameState.currentWorld || 1;
+
+  if (w === 2) {
+    // 2. Integration Jungle: Spiders and bugs right from the start!
+    addE("spider", 12, 11, 1);
+    addE("spider", 18, 9, 1);
+    addE("spider", 25, 8, 2);
+    addE("spider", 32, 10, 1);
+    addE("spider", 40, 7, 2);
+    addE("spider", 52, 11, 1);
+    addE("spider", 60, 8, 2);
+    addE("spider", 72, 9, 1);
+    addE("spider", 85, 9, 2);
+    addE("spider", 104, 10, 2);
+    addE("spider", 112, 7, 2);
+  } else if (w === 3) {
+    // 3. Product Kingdom: Knights on ramparts
+    addE("knight", 10, 12, 2);
+    addE("knight", 18, 10, 2);
+    addE("knight", 26, 9, 2);
+    addE("knight", 35, 11, 2);
+    addE("knight", 50, 11, 2);
+    addE("knight", 65, 8, 3);
+    addE("knight", 78, 10, 2);
+    addE("knight", 95, 10, 3);
+    addE("knight", 108, 9, 2);
+    addE("knight", 116, 7, 3);
+  } else if (w === 4) {
+    // 4. Meeting Dimension: Floating call screens
+    addE("ghost", 12, 10, 2);
+    addE("ghost", 20, 8, 2);
+    addE("ghost", 28, 11, 2);
+    addE("ghost", 38, 7, 2);
+    addE("ghost", 54, 9, 2);
+    addE("ghost", 68, 7, 3);
+    addE("ghost", 82, 8, 2);
+    addE("ghost", 98, 9, 3);
+    addE("ghost", 110, 8, 2);
+  } else if (w === 5) {
+    // 5. The Retreat: Deadline Clock Demons
+    addE("clock", 10, 11, 2);
+    addE("clock", 18, 9, 2);
+    addE("clock", 26, 7, 2);
+    addE("clock", 36, 10, 2);
+    addE("clock", 50, 8, 3);
+    addE("clock", 65, 6, 3);
+    addE("clock", 78, 8, 3);
+    addE("clock", 92, 7, 3);
+    addE("clock", 105, 8, 3);
+    addE("clock", 115, 6, 4);
+  } else {
+    // 1. The Office: Standard Email & Meeting
+    addE("email", 16, 12);
+    addE("email", 24, 11);
+    addE("email", 30, 9);
+    addE("email", 36, 8);
+    addE("email", 40, 11);
+    addE("email", 58, 9);
+    addE("email", 65, 8);
+    addE("meeting", 56, 11, 2);
+    addE("meeting", 63, 9, 2);
+    addE("meeting", 72, 10, 2);
+    addE("email", 87, 8);
+    addE("email", 96, 11);
+    addE("email", 99, 10);
+    addE("meeting", 101, 8, 2);
+    addE("email", 114, 9);
+    addE("meeting", 131, 9, 2);
+  }
 }
 
 export function updateProjectiles(dt) {
@@ -285,7 +336,7 @@ export function updateBoss(dt) {
       boss.active = true;
       boss.intro = 2.2;
       GameState.shake = 8;
-      msg("⚠ BOSS: THE EMAIL CHAIN ⚠", 2.5);
+      msg(`⚠ JEFE: ${boss.name || "THE BOSS"} ⚠`, 2.5);
       sfx(120, 0.5, "sawtooth", 0.08);
     }
     return;
