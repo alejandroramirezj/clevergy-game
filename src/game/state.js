@@ -147,9 +147,8 @@ export function hurt(n) {
   GameState.combo = 0;
   sfx(140, 0.15, "sawtooth");
 
-  if (CHARS[GameState.charIdx].id === "alejandro") {
-    triggerAnim(P.hp <= 0 ? "death" : "damage", "alejandro");
-  }
+  const curCharId = CHARS[GameState.charIdx].id;
+  triggerAnim(P.hp <= 0 ? "death" : "damage", curCharId);
 
   GameState.floaters.push({ x: P.x, y: P.y - 20, t: 1, txt: "-" + n, col: "#ff4d5e" });
 

@@ -147,6 +147,22 @@ export function initSprites() {
     canvH: 260,
     targetH: 58
   });
+
+  // Load Alex Graciano (botella de aceite) custom high-res pose sprites
+  loadPoses("ale", {
+    idle: "/sprites/ale/idle.png",
+    walk: "/sprites/ale/walk.png",
+    run: "/sprites/ale/run.png",
+    jump: "/sprites/ale/jump.png",
+    attack: "/sprites/ale/attack.png",
+    death: "/sprites/ale/death.png"
+  }, {
+    faceRight: true,
+    anchorX: 150,
+    canvW: 380,
+    canvH: 280,
+    targetH: 60
+  });
 }
 
 export const ANIM = {};
@@ -209,6 +225,7 @@ export function loadAnim(id, src, meta) {
 export function pickAnim(P) {
   if (anim.lock) return anim.lock;
   if (P.hp <= 0) return "death";
+  if (P.slide > 0) return "attack";
   if (!P.onGround) return "jump";
   const spd = Math.abs(P.vx);
   if (spd > 4.6) return "run";

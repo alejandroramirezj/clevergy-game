@@ -23,6 +23,7 @@ export function doAbility(C) {
   } else if (id === "ale") {
     P.slide = 0.6;
     P.cool = C.cd;
+    triggerAnim("attack", "ale");
     sfx(500, 0.15, "sawtooth", 0.05);
     for (let i = 0; i < 6; i++) {
       GameState.particles.push({
