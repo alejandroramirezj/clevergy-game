@@ -5,7 +5,7 @@ import { sfx } from "../engine/audio.js";
 import { anim, getCharacterAvatar } from "../engine/sprites.js";
 import { fetchGlobalLeaderboard } from "../game/leaderboard.js";
 
-export function initOverlays({ onStartGame }) {
+export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
   // Elements
   const menuOv = document.getElementById("menuOv");
   const nameInput = document.getElementById("nameInput");
@@ -213,7 +213,7 @@ export function initOverlays({ onStartGame }) {
     sfx(400, 0.06);
   });
 
-  // Start game from Menu
+  // Start game from Menu: Opens the 5-World Adventure Map!
   function triggerStart() {
     const rawName = (nameInput.value.trim() || "ANON").toUpperCase().slice(0, 12);
     GameState.playerName = rawName;
@@ -227,7 +227,11 @@ export function initOverlays({ onStartGame }) {
     ctrlOv.classList.add("hidden");
     teamOv.classList.add("hidden");
 
-    onStartGame();
+    if (onOpenMap) {
+      onOpenMap();
+    } else {
+      onStartGame();
+    }
   }
 
   if (btnPlay) btnPlay.addEventListener("click", triggerStart);
@@ -285,6 +289,38 @@ export function initOverlays({ onStartGame }) {
       anim.name = "idle";
       anim.frame = 0;
       anim.t = 0;
+    });
+  }
+
+  const btnWinMap = document.getElementById("btnWinMap");
+  const btnWinNextWorld = document.getElementById("btnWinNextWorld");
+  const btnGoMap = document.getElementById("btnGoMap");
+
+  if (btnWinMap) {
+    btnWinMap.addEventListener("click", () => {
+      document.getElementById("winOv").classList.add("hidden");
+      if (onOpenMap) onOpenMap();
+    });
+  }
+
+  if (btnWinNextWorld) {
+    btnWinNextWorld.addEventListener("click", () => {
+      document.getElementById("winOv").classList.add("hidden");
+      if (onNextWorld) onNextWorld();
+    });
+  }
+
+  if (btnGoMap) {
+    btnGoMap.addEventListener("click", () => {
+      document.getElementById("goOv").classList.add("hidden");
+      if (onOpenMap) onOpenMap();
+    });
+  }
+
+  const btnGbMap = document.getElementById("btnGbMap");
+  if (btnGbMap) {
+    btnGbMap.addEventListener("click", () => {
+      if (onOpenMap) onOpenMap();
     });
   }
 

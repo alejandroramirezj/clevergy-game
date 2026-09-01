@@ -50,7 +50,7 @@
 
       <!-- MAIN MENU ACTIONS -->
       <div class="menu-actions">
-        <button class="btn btn-hero" id="btnPlay">▶ INICIAR MISIÓN (ENTER)</button>
+        <button class="btn btn-hero" id="btnPlay">🗺️ ENTRAR AL MAPA (5 MUNDOS)</button>
         <div class="menu-sub-actions">
           <button class="btn btn-menu" id="btnOpenLB">🏆 CLASIFICACIÓN D1</button>
           <button class="btn btn-menu" id="btnOpenCtrl">🕹️ CONTROLES</button>
@@ -112,15 +112,66 @@
     <button class="btn alt" id="teamClose">SELECCIONAR Y CERRAR (T)</button>
   </div>
 
+  <!-- WORLD MAP (MAPA DE AVENTURA - 5 MUNDOS) -->
+  <div id="worldMapOv" class="overlay hidden world-map-overlay">
+    <div class="map-header">
+      <div class="map-brand">
+        <span class="map-logo">RETREAT: THE LEGEND OF THE TEAM</span>
+        <span class="map-sub">MAPA DE AVENTURA · 5 MUNDOS</span>
+      </div>
+      <div class="map-header-actions">
+        <div id="mapProgressBadge" class="map-badge-progress">⭐ 0/5 MUNDOS DOMINADOS</div>
+        <div id="mapHeroBadge" class="map-hero-pill">
+          <img id="mapHeroImg" src="/sprites/alejandro/avatar.png" class="map-hero-avatar" alt="Héroe">
+          <span id="mapHeroName">ALEJANDRO R.</span>
+          <button id="btnMapTeam" class="btn-micro">👥 EQUIPO</button>
+        </div>
+        <button id="btnCloseMap" class="btn-icon" title="Volver al menú">✕</button>
+      </div>
+    </div>
+
+    <div class="map-viewport">
+      <!-- Background SVG Trail connecting the 5 nodes -->
+      <svg class="map-trail-svg" viewBox="0 0 1000 600" preserveAspectRatio="none">
+        <path class="trail-line-bg" d="M 120 430 Q 210 270 300 230 T 500 390 T 700 190 T 880 330" />
+        <path class="trail-line-dash" d="M 120 430 Q 210 270 300 230 T 500 390 T 700 190 T 880 330" />
+      </svg>
+      <!-- Interactive Nodes Container -->
+      <div id="mapNodesContainer" class="map-nodes-container"></div>
+    </div>
+
+    <!-- World Detail Modal -->
+    <div id="worldCardModal" class="world-card-modal hidden">
+      <div class="wc-content">
+        <div class="wc-top">
+          <span id="wcIcon" class="wc-emoji">🏢</span>
+          <div class="wc-headings">
+            <h2 id="wcTitle" class="wc-title">1. The Office</h2>
+            <div id="wcSubtitle" class="wc-sub">Oficinas Centrales de Clevergy</div>
+          </div>
+        </div>
+        <p id="wcDesc" class="wc-desc">Supera los bugs 404 y alcanza el Inbox Zero.</p>
+        <div class="wc-meta">
+          <div id="wcBoss" class="wc-boss">👾 JEFE: EMAIL CHAIN</div>
+          <div id="wcRecord" class="wc-record">⚪ PENDIENTE DE DOMINAR</div>
+        </div>
+        <div class="wc-actions">
+          <button id="btnPlayWorld" class="btn">▶ JUGAR ESTE MUNDO</button>
+          <button id="btnCloseWc" class="btn alt">CANCELAR</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- WIN -->
   <div id="winOv" class="overlay hidden">
     <div class="title-big" id="rankTitle" style="font-size:clamp(22px,5vw,40px);"></div>
     <div class="boot" id="winTxt"></div>
     <div id="lbWin"></div>
-    <div class="sub" style="margin-top:10px;">...or is it?</div>
-    <div style="display:flex;gap:12px;margin-top:14px;">
-      <button class="btn" id="restartBtn">OTRA PARTIDA</button>
-      <button class="btn alt" id="winToMenuBtn">MENÚ PRINCIPAL</button>
+    <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;justify-content:center;">
+      <button class="btn btn-hero" id="btnWinNextWorld">SIGUIENTE MUNDO ▶</button>
+      <button class="btn" id="btnWinMap">🗺️ VOLVER AL MAPA</button>
+      <button class="btn alt" id="restartBtn">REPETIR NIVEL</button>
     </div>
   </div>
 
@@ -129,8 +180,9 @@
     <div class="title-big" style="color:#fff;">MEETING ETERNA</div>
     <div class="sub">"¿Tienes 5 minutos?" te ha alcanzado demasiadas veces.</div>
     <div class="panel" id="goStats" style="text-align:center;"></div>
-    <div style="display:flex;gap:12px;margin-top:14px;">
-      <button class="btn" id="retryBtn">CONTINUAR (-300 pts)</button>
+    <div style="display:flex;gap:12px;margin-top:14px;flex-wrap:wrap;justify-content:center;">
+      <button class="btn" id="retryBtn">REINTENTAR NIVEL</button>
+      <button class="btn alt" id="btnGoMap">🗺️ VOLVER AL MAPA</button>
       <button class="btn alt" id="goBackMenuBtn">MENÚ PRINCIPAL</button>
     </div>
   </div>
@@ -150,6 +202,7 @@
         <span class="gb-brand-main">Clevergy</span>
         <span class="gb-brand-sub">GAME BOY</span>
       </div>
+      <button class="gb-map-btn" id="btnGbMap">🗺️ MAPA</button>
       <div class="gb-battery">
         <span class="gb-led"></span>
         <span class="gb-battery-txt">BATTERY</span>

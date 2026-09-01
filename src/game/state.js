@@ -10,6 +10,9 @@ export const GameState = {
   charIdx: 0,
   switchBanner: 0,
   teamOpen: false,
+  currentWorld: 1,
+  worldTheme: null,
+  worldMapOpen: false,
 
   score: 0,
   combo: 0,

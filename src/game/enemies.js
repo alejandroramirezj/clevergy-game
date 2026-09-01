@@ -1,5 +1,6 @@
 import { TILE, LH, ARENA_L, ARENA_R, GRAV } from "../config/constants.js";
 import { CHARS } from "../config/characters.js";
+import { WORLDS, saveWorldProgress } from "../config/worlds.js";
 import { GameState, addScore, kill, hurt, msg, fmtT } from "./state.js";
 import { sfx } from "../engine/audio.js";
 import { rectsHit, solidAt } from "../engine/physics.js";
@@ -404,10 +405,15 @@ export function winGame() {
     rk.style.color = { S: "#ffc857", A: "#b6f542", B: "#59d8ff", C: "#9fb4e8" }[rank];
   }
 
+  const curWorld = WORLDS.find((w) => w.id === GameState.currentWorld) || WORLDS[0];
+  saveWorldProgress(curWorld.id, finalScore, rank);
+
   const winTxt = document.getElementById("winTxt");
   if (winTxt) {
-    winTxt.innerHTML = `FRAGMENT 1/5 RECOVERED — ${GameState.playerName}
-
+    winTxt.innerHTML = `⭐ ¡MUNDO ${curWorld.id}: ${curWorld.name.toUpperCase()} DOMINADO!
+${curWorld.fragmentName}
+────────────────────────────
+JUGADOR ............ ${GameState.playerName}
 SCORE .............. ${String(GameState.score).padStart(6, " ")}
 BONUS TIEMPO ....... +${timeBonus}  (${fmtT(GameState.gameTime)})
 BONUS VIDAS ........ +${heartBonus}

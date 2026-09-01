@@ -9,6 +9,8 @@ import { doAbility } from "./game/abilities.js";
 import { spawnEnemies, updateProjectiles, updateMinions, updateEnemies, updateBoss, winGame } from "./game/enemies.js";
 import { draw } from "./game/renderer.js";
 import { initOverlays } from "./ui/overlays.js";
+import { initWorldMap } from "./ui/worldMap.js";
+import { loadWorld } from "./game/levelLoader.js";
 
 const cv = document.getElementById("cv");
 const cx = cv.getContext("2d");
@@ -74,10 +76,21 @@ function fitCanvas() {
 window.addEventListener("resize", fitCanvas);
 window.addEventListener("orientationchange", () => setTimeout(fitCanvas, 200));
 
-function startGame() {
-  spawnEnemies();
-  initCoffees();
+function startGame(worldId = 1) {
+  document.getElementById("menuOv")?.classList.add("hidden");
+  document.getElementById("worldMapOv")?.classList.add("hidden");
+  document.getElementById("worldCardModal")?.classList.add("hidden");
+  document.getElementById("bootOv")?.classList.add("hidden");
+  document.getElementById("lbOv")?.classList.add("hidden");
+  document.getElementById("ctrlOv")?.classList.add("hidden");
+  document.getElementById("teamOv")?.classList.add("hidden");
+  document.getElementById("winOv")?.classList.add("hidden");
+  document.getElementById("goOv")?.classList.add("hidden");
+
+  loadWorld(worldId);
   GameState.status = "play";
+  GameState.worldMapOpen = false;
+  fitCanvas();
   startMusic(() => GameState.status);
   anim.lock = null;
   anim.name = "idle";
@@ -85,7 +98,6 @@ function startGame() {
   anim.t = 0;
   sfx(880, 0.1);
   sfx(1174, 0.15);
-  msg("WORLD 1 — THE OFFICE", 2.4);
   msg2(CHARS[GameState.charIdx].tip, 4);
 }
 
@@ -369,12 +381,30 @@ initLevelGrid();
 initSprites();
 fitCanvas();
 
-const { toggleTeam, tryStart, updateSpotlight } = initOverlays({ onStartGame: startGame });
+let toggleTeamFn = () => {};
+
+const worldMap = initWorldMap({
+  onSelectWorld: (worldId) => {
+    startGame(worldId);
+  },
+  onOpenTeam: () => toggleTeamFn()
+});
+
+const { toggleTeam, tryStart, updateSpotlight } = initOverlays({
+  onStartGame: () => startGame(1),
+  onOpenMap: () => worldMap.showWorldMap(),
+  onNextWorld: () => {
+    const nextId = Math.min(5, (GameState.currentWorld || 1) + 1);
+    startGame(nextId);
+  }
+});
+toggleTeamFn = toggleTeam;
 
 initInput({
   onSwitchChar: (dir) => {
     switchChar(dir);
     updateSpotlight();
+    worldMap.renderMap();
   },
   onToggleTeam: () => toggleTeam(),
   onToggleMusic: () => {

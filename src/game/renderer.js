@@ -32,26 +32,101 @@ export function draw(cx) {
 }
 
 function drawBackground(cx) {
-  const { W, H, camX, camY, time } = GameState;
+  const { W, H, camX, camY, time, currentWorld } = GameState;
   const topY = camY - 4;
-  cx.fillStyle = "#0d1226";
-  cx.fillRect(camX - 4, topY, W + 8, H + 8);
+  const wId = currentWorld || 1;
 
-  for (let i = Math.floor(camX / 260); i < (camX + W) / 260 + 1; i++) {
-    cx.fillStyle = "#141b3d";
-    cx.fillRect(i * 260 + 30, camY + 40, 140, 150);
-    cx.fillStyle = "#1d2a5c";
-    cx.fillRect(i * 260 + 38, camY + 48, 124, 134);
-  }
-
-  cx.fillStyle = "#0f1530";
-  const deskY = camY + H;
-  for (let i = Math.floor((camX * 0.5) / 200); i < (camX * 0.5 + W) / 200 + 2; i++) {
-    const bx = i * 200 - camX * 0.5 + camX;
-    cx.fillRect(bx, deskY - 120, 120, 10);
-    cx.fillRect(bx + 10, deskY - 110, 8, 60);
-    cx.fillRect(bx + 100, deskY - 110, 8, 60);
-    cx.fillRect(bx + 30, deskY - 152, 46, 32);
+  if (wId === 2) {
+    // 2. Integration Jungle
+    cx.fillStyle = "#06130b";
+    cx.fillRect(camX - 4, topY, W + 8, H + 8);
+    for (let i = Math.floor(camX / 220); i < (camX + W) / 220 + 1; i++) {
+      cx.fillStyle = "#0c2616";
+      cx.fillRect(i * 220 + 20, camY + 20, 48, H);
+      cx.fillStyle = "#1b4d2e";
+      cx.fillRect(i * 220 + 75, camY, 4, 180 + Math.sin(time * 2 + i) * 15);
+      cx.fillStyle = "rgba(66,245,132,0.25)";
+      cx.fillRect(i * 220 + 73, camY + 160, 8, 12);
+    }
+  } else if (wId === 3) {
+    // 3. Product Kingdom
+    cx.fillStyle = "#0d0f22";
+    cx.fillRect(camX - 4, topY, W + 8, H + 8);
+    for (let i = Math.floor(camX / 280); i < (camX + W) / 280 + 1; i++) {
+      cx.fillStyle = "#181b3b";
+      cx.fillRect(i * 280 + 30, camY + 30, 110, 200);
+      cx.fillRect(i * 280 + 25, camY + 20, 20, 15);
+      cx.fillRect(i * 280 + 55, camY + 20, 20, 15);
+      cx.fillRect(i * 280 + 85, camY + 20, 20, 15);
+      cx.fillRect(i * 280 + 115, camY + 20, 20, 15);
+      cx.fillStyle = "#ffc857";
+      cx.fillRect(i * 280 + 70, camY + 65, 30, 45);
+    }
+  } else if (wId === 4) {
+    // 4. Meeting Dimension
+    cx.fillStyle = "#13061f";
+    cx.fillRect(camX - 4, topY, W + 8, H + 8);
+    cx.strokeStyle = "rgba(216,89,255,0.15)";
+    cx.lineWidth = 1;
+    for (let y = 0; y < H; y += 45) {
+      cx.beginPath();
+      cx.moveTo(camX, camY + y);
+      cx.lineTo(camX + W, camY + y);
+      cx.stroke();
+    }
+    for (let i = Math.floor(camX / 240); i < (camX + W) / 240 + 1; i++) {
+      cx.fillStyle = "rgba(46,18,71,0.6)";
+      cx.fillRect(i * 240 + 40, camY + 50, 120, 80);
+      cx.strokeStyle = "rgba(216,89,255,0.4)";
+      cx.strokeRect(i * 240 + 40, camY + 50, 120, 80);
+      cx.fillStyle = "#d859ff";
+      cx.font = "8px monospace";
+      cx.fillText("MEETING IN PROGRESS", i * 240 + 46, camY + 68);
+    }
+  } else if (wId === 5) {
+    // 5. The Retreat: Starry Night Alpine Peaks
+    cx.fillStyle = "#060914";
+    cx.fillRect(camX - 4, topY, W + 8, H + 8);
+    cx.fillStyle = "#ffffff";
+    for (let s = 0; s < 35; s++) {
+      const sx = (s * 137) % (LW * TILE);
+      const sy = camY + ((s * 31) % Math.max(80, H - 220));
+      cx.fillRect(sx, sy, 2, 2);
+    }
+    for (let i = Math.floor(camX / 300); i < (camX + W) / 300 + 2; i++) {
+      const mx = i * 300;
+      cx.fillStyle = "#101930";
+      cx.beginPath();
+      cx.moveTo(mx - 80, camY + H);
+      cx.lineTo(mx + 70, camY + 50);
+      cx.lineTo(mx + 220, camY + H);
+      cx.fill();
+      cx.fillStyle = "#3b4f7a";
+      cx.beginPath();
+      cx.moveTo(mx + 40, camY + 80);
+      cx.lineTo(mx + 70, camY + 50);
+      cx.lineTo(mx + 100, camY + 80);
+      cx.fill();
+    }
+  } else {
+    // 1. The Office: default
+    cx.fillStyle = "#0d1226";
+    cx.fillRect(camX - 4, topY, W + 8, H + 8);
+    for (let i = Math.floor(camX / 260); i < (camX + W) / 260 + 1; i++) {
+      cx.fillStyle = "#141b3d";
+      cx.fillRect(i * 260 + 30, camY + 40, 140, 150);
+      cx.fillStyle = "#1d2a5c";
+      cx.fillRect(i * 260 + 38, camY + 48, 124, 134);
+    }
+    cx.fillStyle = "#0f1530";
+    const deskY = camY + H;
+    for (let i = Math.floor((camX * 0.5) / 200); i < (camX * 0.5 + W) / 200 + 2; i++) {
+      const bx = i * 200 - camX * 0.5 + camX;
+      cx.fillRect(bx, deskY - 120, 120, 10);
+      cx.fillRect(bx + 10, deskY - 110, 8, 60);
+      cx.fillRect(bx + 100, deskY - 110, 8, 60);
+      cx.fillRect(bx + 30, deskY - 152, 46, 32);
+    }
   }
 
   cx.fillStyle = "rgba(120,140,200,0.12)";
@@ -62,9 +137,32 @@ function drawBackground(cx) {
 }
 
 function drawTiles(cx) {
-  const { W, camX, time } = GameState;
+  const { W, camX, time, currentWorld } = GameState;
   const i0 = Math.max(0, Math.floor(camX / TILE) - 1);
   const i1 = Math.min(LW, i0 + Math.ceil(W / TILE) + 3);
+  const wId = currentWorld || 1;
+
+  // Thematic colors per world
+  let colSolid = "#2a3566", colTop = "#38468a", colBot = "#1c2450";
+  let colPlat = "#7a84a3", colPlatTop = "#a8b2cf";
+
+  if (wId === 2) {
+    // Jungle: mossy bark
+    colSolid = "#1b4428"; colTop = "#2a663d"; colBot = "#112b1a";
+    colPlat = "#3d6e4b"; colPlatTop = "#62ab76";
+  } else if (wId === 3) {
+    // Castle: medieval stone
+    colSolid = "#303459"; colTop = "#464c80"; colBot = "#21243d";
+    colPlat = "#807b60"; colPlatTop = "#ffc857";
+  } else if (wId === 4) {
+    // Meeting dimension: cyber purple
+    colSolid = "#471e6e"; colTop = "#6b2fa6"; colBot = "#2c1245";
+    colPlat = "#7c3fa3"; colPlatTop = "#d859ff";
+  } else if (wId === 5) {
+    // Mountain retreat: alpine snow
+    colSolid = "#1d2d47"; colTop = "#3d5a8a"; colBot = "#111c2e";
+    colPlat = "#5a7094"; colPlatTop = "#e8f0fe";
+  }
 
   for (let j = 0; j < LH; j++) {
     for (let i = i0; i < i1; i++) {
@@ -72,21 +170,21 @@ function drawTiles(cx) {
       if (ch === ".") continue;
       const x = i * TILE, y = j * TILE;
       if (ch === "#") {
-        cx.fillStyle = "#2a3566";
+        cx.fillStyle = colSolid;
         cx.fillRect(x, y, TILE, TILE);
-        cx.fillStyle = "#38468a";
+        cx.fillStyle = colTop;
         cx.fillRect(x, y, TILE, 5);
-        cx.fillStyle = "#1c2450";
+        cx.fillStyle = colBot;
         cx.fillRect(x, y + TILE - 4, TILE, 4);
-        cx.fillStyle = "#222c58";
+        cx.fillStyle = colTop;
         cx.fillRect(x + 4, y + 10, 6, 6);
         cx.fillRect(x + 20, y + 20, 8, 5);
       } else if (ch === "=") {
-        cx.fillStyle = "#7a84a3";
+        cx.fillStyle = colPlat;
         cx.fillRect(x, y, TILE, 8);
-        cx.fillStyle = "#a8b2cf";
+        cx.fillStyle = colPlatTop;
         cx.fillRect(x, y, TILE, 3);
-        cx.fillStyle = "#4a5270";
+        cx.fillStyle = colBot;
         cx.fillRect(x + 3, y + 8, 4, 4);
         cx.fillRect(x + TILE - 7, y + 8, 4, 4);
       } else if (ch === "^") {
