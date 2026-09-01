@@ -43,10 +43,21 @@ export function initInput({ onSwitchChar, onToggleTeam, onToggleMusic, onTryStar
     );
   }
 
+  // Landscape HUD touch buttons
   bindT("tL", "L");
   bindT("tR", "R");
   bindT("tA", "A");
   bindT("tB", "B");
   bindT("tS", null, () => onSwitchChar(1));
   bindT("tT", null, () => onToggleTeam());
+
+  // Portrait Game Boy controls
+  bindT("gbLeft", "L");
+  bindT("gbRight", "R");
+  bindT("gbUp", "A");
+  bindT("gbDown", null);
+  bindT("gbA", "A");
+  bindT("gbB", "B");
+  bindT("gbSelect", null, () => onToggleTeam());
+  bindT("gbStart", null, () => onSwitchChar(1));
 }

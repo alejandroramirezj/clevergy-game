@@ -16,28 +16,55 @@ const cx = cv.getContext("2d");
 function fitCanvas() {
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const iw = window.innerWidth, ih = window.innerHeight;
-  const coarse = window.matchMedia("(pointer:coarse)").matches;
+  const isPortrait = ih > iw;
 
-  const H = 540;
-  let W = Math.round(H * (iw / ih));
-  W = Math.max(700, Math.min(1600, W));
-  const SAFEB = coarse ? 96 : 0;
+  if (isPortrait) {
+    document.body.classList.add("gameboy-mode");
+    const W = 960;
+    const H = 540;
+    const targetW = iw;
+    const maxScreenH = Math.max(200, ih - 300);
+    const targetH = Math.min(maxScreenH, Math.round(targetW * (540 / 960)));
 
-  cv.width = Math.round(W * dpr);
-  cv.height = Math.round(H * dpr);
-  cv.style.position = "fixed";
-  cv.style.left = "0";
-  cv.style.top = "0";
-  cv.style.width = iw + "px";
-  cv.style.height = ih + "px";
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    cv.style.position = "relative";
+    cv.style.left = "auto";
+    cv.style.top = "auto";
+    cv.style.width = targetW + "px";
+    cv.style.height = targetH + "px";
 
-  cx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  cx.imageSmoothingEnabled = false;
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx.imageSmoothingEnabled = false;
 
-  GameState.W = W;
-  GameState.H = H;
-  GameState.DPR = dpr;
-  GameState.SAFEB = SAFEB;
+    GameState.W = W;
+    GameState.H = H;
+    GameState.DPR = dpr;
+    GameState.SAFEB = 0;
+  } else {
+    document.body.classList.remove("gameboy-mode");
+    const H = 540;
+    let W = Math.round(H * (iw / ih));
+    W = Math.max(700, Math.min(1600, W));
+    const coarse = window.matchMedia("(pointer:coarse)").matches;
+    const SAFEB = coarse ? 96 : 0;
+
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    cv.style.position = "fixed";
+    cv.style.left = "0";
+    cv.style.top = "0";
+    cv.style.width = iw + "px";
+    cv.style.height = ih + "px";
+
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx.imageSmoothingEnabled = false;
+
+    GameState.W = W;
+    GameState.H = H;
+    GameState.DPR = dpr;
+    GameState.SAFEB = SAFEB;
+  }
 }
 
 window.addEventListener("resize", fitCanvas);

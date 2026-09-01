@@ -12,11 +12,6 @@
     <canvas id="cv" width="960" height="540"></canvas>
   </div>
 
-  <div id="rotate">
-    <div class="ico">📱</div>
-    <div>Gira el móvil para jugar<br><span style="font-size:12px;color:#9fb4e8">RETREAT se juega en horizontal</span></div>
-  </div>
-
   <!-- MAIN MENU -->
   <div id="menuOv" class="overlay">
     <div class="menu-container">
@@ -140,11 +135,77 @@
     </div>
   </div>
 
-  <!-- TOUCH CONTROLS -->
+  <!-- TOUCH CONTROLS (HORIZONTAL / LANDSCAPE) -->
   <div id="touch">
     <div class="tbtn" id="tL">◀</div><div class="tbtn" id="tR">▶</div>
     <div class="tbtn" id="tT">👥</div><div class="tbtn" id="tS">⇄</div>
     <div class="tbtn" id="tB">✦</div><div class="tbtn" id="tA">▲</div>
+  </div>
+
+  <!-- GAME BOY CONTROLLER DECK (VERTICAL / PORTRAIT) -->
+  <div id="gameboyDeck" class="gameboy-deck">
+    <!-- Brand Bezel Strip -->
+    <div class="gb-brand-strip">
+      <div class="gb-brand">
+        <span class="gb-brand-main">Clevergy</span>
+        <span class="gb-brand-sub">GAME BOY</span>
+      </div>
+      <div class="gb-battery">
+        <span class="gb-led"></span>
+        <span class="gb-battery-txt">BATTERY</span>
+      </div>
+    </div>
+
+    <!-- Main Controls Area: D-Pad Left, Actions Right -->
+    <div class="gb-controls-area">
+      <!-- D-PAD (CRUCETA) -->
+      <div class="gb-dpad-container">
+        <div class="gb-dpad">
+          <button class="gb-dpad-btn gb-up" id="gbUp" aria-label="Arriba">▲</button>
+          <button class="gb-dpad-btn gb-left" id="gbLeft" aria-label="Izquierda">◀</button>
+          <div class="gb-dpad-center"></div>
+          <button class="gb-dpad-btn gb-right" id="gbRight" aria-label="Derecha">▶</button>
+          <button class="gb-dpad-btn gb-down" id="gbDown" aria-label="Abajo">▼</button>
+        </div>
+      </div>
+
+      <!-- ACTION BUTTONS: B & A -->
+      <div class="gb-actions-container">
+        <div class="gb-btn-group">
+          <div class="gb-action-col">
+            <button class="gb-action-btn gb-btn-b" id="gbB" aria-label="Habilidad">B</button>
+            <span class="gb-action-label">HABILIDAD</span>
+          </div>
+          <div class="gb-action-col">
+            <button class="gb-action-btn gb-btn-a" id="gbA" aria-label="Salto">A</button>
+            <span class="gb-action-label">SALTO</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Row: SELECT, START, and Speaker Grill -->
+    <div class="gb-bottom-area">
+      <div class="gb-system-btns">
+        <div class="gb-pill-wrapper">
+          <button class="gb-pill-btn" id="gbSelect" aria-label="Equipo">SELECT</button>
+          <span class="gb-pill-label">👥 EQUIPO</span>
+        </div>
+        <div class="gb-pill-wrapper">
+          <button class="gb-pill-btn" id="gbStart" aria-label="Cambio">START</button>
+          <span class="gb-pill-label">⇄ CAMBIO</span>
+        </div>
+      </div>
+
+      <div class="gb-speaker">
+        <div class="gb-slot"></div>
+        <div class="gb-slot"></div>
+        <div class="gb-slot"></div>
+        <div class="gb-slot"></div>
+        <div class="gb-slot"></div>
+        <div class="gb-slot"></div>
+      </div>
+    </div>
   </div>
 
   <script type="module" src="/src/main.js"></script>

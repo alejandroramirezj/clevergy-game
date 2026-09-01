@@ -2,7 +2,7 @@ import { BOOT_LINES } from "../config/constants.js";
 import { CHARS } from "../config/characters.js";
 import { GameState, respawn, fmtT } from "../game/state.js";
 import { sfx } from "../engine/audio.js";
-import { anim } from "../engine/sprites.js";
+import { anim, getCharacterAvatar } from "../engine/sprites.js";
 import { fetchGlobalLeaderboard } from "../game/leaderboard.js";
 
 export function initOverlays({ onStartGame }) {
@@ -56,7 +56,14 @@ export function initOverlays({ onStartGame }) {
   function updateSpotlight() {
     const c = CHARS[GameState.charIdx];
     if (!c) return;
-    if (spotlightAvatar) spotlightAvatar.textContent = c.emoji;
+    if (spotlightAvatar) {
+      const av = getCharacterAvatar(c.id);
+      if (av) {
+        spotlightAvatar.innerHTML = `<img src="${av}" class="spotlight-avatar-img" alt="${c.name}">`;
+      } else {
+        spotlightAvatar.textContent = c.emoji;
+      }
+    }
     if (spotlightName) spotlightName.textContent = c.name;
     if (spotlightForm) spotlightForm.textContent = c.form;
     if (spotlightAb) spotlightAb.textContent = `✦ HABILIDAD: ${c.ab}`;
@@ -84,8 +91,12 @@ export function initOverlays({ onStartGame }) {
     const d = document.createElement("div");
     d.className = "tcell";
     d.dataset.i = i;
+    const av = getCharacterAvatar(c.id);
+    const avHtml = av
+      ? `<div class="em"><img src="${av}" class="team-avatar-img" alt="${c.name}"></div>`
+      : `<div class="em">${c.emoji}</div>`;
     d.innerHTML = `
-      <div class="em">${c.emoji}</div>
+      ${avHtml}
       <div class="nm">${c.name}</div>
       <div class="fm">${c.form}<br><span style="color:var(--amber)">${c.ab}</span></div>
     `;

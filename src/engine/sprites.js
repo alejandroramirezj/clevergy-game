@@ -222,6 +222,20 @@ export function loadAnim(id, src, meta) {
   ANIM[id] = rec;
 }
 
+export function getCharacterAvatar(charId) {
+  if (charId === "alejandro") return "/sprites/alejandro/idle.png";
+  if (charId === "ale") return "/sprites/ale/idle.png";
+  const s = SPR[charId];
+  if (s && s.img) {
+    try {
+      return s.img.toDataURL();
+    } catch (e) {
+      return null;
+    }
+  }
+  return null;
+}
+
 export function pickAnim(P) {
   if (anim.lock) return anim.lock;
   if (P.hp <= 0) return "death";
