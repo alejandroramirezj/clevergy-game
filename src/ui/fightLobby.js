@@ -1,20 +1,26 @@
 // =============================================================================
-// fightLobby.js — Responsive HTML/DOM Fight Lobby (Code Clash Arena)
+// fightLobby.js — Responsive HTML/DOM Fight Lobby with Real WebRTC Multiplayer
 // =============================================================================
 
 import { CHARS } from "../config/characters.js";
 import { getCharacterAvatar, initSprites } from "../engine/sprites.js";
-import { createRoom, joinRoom, sendReady, disconnect } from "../game/fightNet.js";
+import { Net, initHost, initGuest, broadcastStartMatch, disconnect } from "../game/fightNet.js";
 
 export const LState = {
   mode: "cpu", // "cpu" | "online"
   selectedIdx: 0, // default Alejandro (index 0)
   roomCode: "",
+  opponentChar: null,
   onStart: null,
   onExit: null
 };
 
 let initialized = false;
+
+function generateCode() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  return Array.from({ length: 4 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
+}
 
 export function showFightLobby(onStart, onExit) {
   initSprites();
@@ -22,11 +28,19 @@ export function showFightLobby(onStart, onExit) {
   LState.onExit = onExit;
   LState.mode = "cpu";
   LState.selectedIdx = 0; // Default to Alejandro
-  LState.roomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
+  LState.roomCode = generateCode();
+  LState.opponentChar = null;
 
   const modal = document.getElementById("fightLobbyModal");
   if (!modal) return;
   modal.classList.remove("hidden");
+
+  // Reset to CPU mode on open
+  const modeCpu = document.getElementById("flModeCpu");
+  const modeOnline = document.getElementById("flModeOnline");
+  modeCpu?.classList.add("active");
+  modeOnline?.classList.remove("active");
+  document.getElementById("flOnlineBox")?.classList.add("hidden");
 
   setupDOM();
   updateUI();
@@ -53,13 +67,16 @@ function setupDOM() {
   const modeOnline = document.getElementById("flModeOnline");
   const btnJoin = document.getElementById("btnFlJoin");
   const joinInput = document.getElementById("flJoinInput");
+  const btnCopy = document.getElementById("btnFlCopyCode");
 
   btnClose?.addEventListener("click", () => {
+    disconnect();
     hideFightLobby();
     if (LState.onExit) LState.onExit();
   });
 
   btnBackMap?.addEventListener("click", () => {
+    disconnect();
     hideFightLobby();
     if (LState.onExit) LState.onExit();
   });
@@ -74,7 +91,17 @@ function setupDOM() {
     updateUI();
   });
 
+  btnCopy?.addEventListener("click", () => {
+    if (navigator.clipboard && LState.roomCode) {
+      navigator.clipboard.writeText(LState.roomCode).then(() => {
+        btnCopy.textContent = "✔ COPIADO";
+        setTimeout(() => { btnCopy.textContent = "📋 COPIAR"; }, 2000);
+      });
+    }
+  });
+
   modeCpu?.addEventListener("click", () => {
+    disconnect();
     LState.mode = "cpu";
     modeCpu.classList.add("active");
     modeOnline?.classList.remove("active");
@@ -89,53 +116,64 @@ function setupDOM() {
 
     const codeSpan = document.getElementById("flRoomCode");
     if (codeSpan) codeSpan.textContent = LState.roomCode;
+    const st = document.getElementById("flOnlineStatus");
+    if (st) st.textContent = "Esperando a que tu compañero introduzca el código...";
 
-    // Connect to room as Host
-    createRoom(
-      LState.roomCode,
-      CHARS[LState.selectedIdx].id,
-      (oppChar) => {
-        const st = document.getElementById("flOnlineStatus");
-        if (st) st.textContent = `¡Compañero conectado! Pulsa "¡A PELEAR!"`;
+    // Connect as Host via PeerJS
+    initHost(LState.roomCode, CHARS[LState.selectedIdx].id, {
+      onOpponentJoin: (oppChar) => {
+        LState.opponentChar = oppChar;
+        const oppName = CHARS.find((c) => c.id === oppChar)?.name || "Compañero";
+        if (st) st.innerHTML = `✅ <strong>${oppName}</strong> conectado. ¡Pulsa "¡A PELEAR!"!`;
+        const startBtn = document.getElementById("btnFlStart");
+        if (startBtn) startBtn.style.boxShadow = "0 0 25px #42f584";
       },
-      () => {
-        // Disconnected
+      onMatchStart: (p1Char, p2Char) => {
+        hideFightLobby();
+        if (LState.onStart) LState.onStart(p1Char, p2Char, "online");
+      },
+      onError: (msg) => {
+        if (st) st.textContent = `Aviso: ${msg}`;
       }
-    );
+    });
   });
 
   btnJoin?.addEventListener("click", () => {
     const code = joinInput?.value.trim().toUpperCase();
     if (!code || code.length < 4) return;
     const st = document.getElementById("flOnlineStatus");
-    if (st) st.textContent = `Conectando a sala ${code}...`;
+    if (st) st.textContent = `Conectando a la sala ${code}...`;
 
-    joinRoom(
-      code,
-      CHARS[LState.selectedIdx].id,
-      (oppChar) => {
-        if (st) st.textContent = `¡Conectado con rival! Esperando inicio...`;
-        sendReady();
-        hideFightLobby();
-        if (LState.onStart) LState.onStart(CHARS[LState.selectedIdx].id, oppChar, "online");
+    initGuest(code, CHARS[LState.selectedIdx].id, {
+      onOpponentJoin: (hostChar) => {
+        LState.opponentChar = hostChar;
+        const hostName = CHARS.find((c) => c.id === hostChar)?.name || "Host";
+        if (st) st.innerHTML = `✅ Conectado con <strong>${hostName}</strong>. Esperando inicio del host...`;
       },
-      (err) => {
-        if (st) st.textContent = `Error: no se encontró la sala ${code}`;
+      onMatchStart: (p1Char, p2Char) => {
+        hideFightLobby();
+        if (LState.onStart) LState.onStart(p1Char, p2Char, "online");
+      },
+      onError: (msg) => {
+        if (st) st.textContent = `Error: ${msg}`;
       }
-    );
+    });
   });
 
   btnStart?.addEventListener("click", () => {
-    hideFightLobby();
     const p1Char = CHARS[LState.selectedIdx].id;
     if (LState.mode === "cpu") {
+      hideFightLobby();
       // Pick random opponent from coworkers other than p1
       const others = CHARS.filter((c) => c.id !== p1Char);
       const p2Char = others[Math.floor(Math.random() * others.length)].id;
       if (LState.onStart) LState.onStart(p1Char, p2Char, "cpu");
     } else {
-      sendReady();
-      if (LState.onStart) LState.onStart(p1Char, "ale", "online");
+      // Online mode: Host broadcasts start to guest
+      const p2Char = LState.opponentChar || "ale";
+      broadcastStartMatch(p1Char, p2Char);
+      hideFightLobby();
+      if (LState.onStart) LState.onStart(p1Char, p2Char, "online");
     }
   });
 

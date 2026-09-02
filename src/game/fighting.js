@@ -7,6 +7,7 @@ import { SPR, ANIM, initSprites, getCharacterAvatar } from "../engine/sprites.js
 import { sfx } from "../engine/audio.js";
 import { GameState } from "./state.js";
 import { isLeft, isRight, isJump, isAttack, isSpecial, setInputMode } from "../engine/input.js";
+import { Net, sendFighterState } from "./fightNet.js";
 
 // Stage Platforms (The Office Layout)
 const FLOOR_Y = 430;
@@ -89,6 +90,23 @@ export function startFight(p1CharId, p2CharId, mode, onExit) {
   FightState.p1 = createFighter(p1CharId, 0);
   FightState.p2 = createFighter(p2CharId, 1);
   setInputMode("fight");
+
+  if (FightState.mode === "online") {
+    Net.onRemoteState = (data) => {
+      // Remote updates the other fighter
+      const target = Net.isHost ? FightState.p2 : FightState.p1;
+      if (target) {
+        target.x += (data.x - target.x) * 0.45;
+        target.y += (data.y - target.y) * 0.45;
+        target.vx = data.vx;
+        target.vy = data.vy;
+        target.hp = data.hp;
+        target.facing = data.facing;
+        target.state = data.state;
+        target.shieldActive = data.shieldActive;
+      }
+    };
+  }
 }
 
 // ── CPU AI ─────────────────────────────────────────────────────────────────────
@@ -146,12 +164,8 @@ export function updateFight(dt) {
   const p1 = FightState.p1;
   const p2 = FightState.p2;
 
-  if (FightState.mode === "cpu") {
-    updateCPU(dt, p2, p1);
-  }
-
-  // Read Player 1 from unified InputManager
-  const p1Input = {
+  // Read local player input from unified InputManager
+  const localInput = {
     left: isLeft(),
     right: isRight(),
     jump: isJump(),
@@ -159,9 +173,22 @@ export function updateFight(dt) {
     special: isSpecial()
   };
 
-  // Update both fighters
-  updateFighter(p1, p1Input, p2, dt);
-  updateFighter(p2, cpuInput, p1, dt);
+  if (FightState.mode === "online") {
+    if (Net.isHost) {
+      // Host controls Player 1
+      updateFighter(p1, localInput, p2, dt);
+      sendFighterState(p1);
+    } else {
+      // Guest controls Player 2
+      updateFighter(p2, localInput, p1, dt);
+      sendFighterState(p2);
+    }
+  } else {
+    // CPU Mode: P1 is local, P2 is CPU AI
+    updateCPU(dt, p2, p1);
+    updateFighter(p1, localInput, p2, dt);
+    updateFighter(p2, cpuInput, p1, dt);
+  }
 
   // Auto-face opponent when idle/walking
   if (p1.state === "idle" || p1.state === "walk") {
@@ -794,7 +821,8 @@ function drawTopHUD(cx, W, H) {
   cx.fillStyle = "#ffffff";
   cx.font = "bold 12px monospace";
   cx.textAlign = "left";
-  cx.fillText(`${p1.config.emoji} ${p1.config.name} (P1)`, 42, barY - 6);
+  const p1Tag = FightState.mode === "online" ? (Net.isHost ? " (TÚ)" : " (RIVAL)") : " (P1)";
+  cx.fillText(`${p1.config.emoji} ${p1.config.name}${p1Tag}`, 42, barY - 6);
   if (p1.cooldown <= 0) {
     cx.fillStyle = "#ffd25e";
     cx.fillText("⚡ ESPECIAL LISTO (X)", 42, barY + barH + 15);
@@ -819,8 +847,8 @@ function drawTopHUD(cx, W, H) {
   cx.fillStyle = "#ffffff";
   cx.font = "bold 12px monospace";
   cx.textAlign = "right";
-  const p2Label = FightState.mode === "cpu" ? " (CPU)" : " (P2)";
-  cx.fillText(`${p2.config.name}${p2Label} ${p2.config.emoji}`, W - 42, barY - 6);
+  const p2Tag = FightState.mode === "online" ? (Net.isHost ? " (RIVAL)" : " (TÚ)") : (FightState.mode === "cpu" ? " (CPU)" : " (P2)");
+  cx.fillText(`${p2.config.name}${p2Tag} ${p2.config.emoji}`, W - 42, barY - 6);
 
   // Center Timer & Round Count
   cx.textAlign = "center";
