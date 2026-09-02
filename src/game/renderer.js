@@ -946,15 +946,44 @@ function drawHUD(cx) {
     cx.textAlign = "left";
   }
 
+  // CHARACTER QUICK BADGE (18 COMPAÑEROS DISPONIBLES)
+  const dockX = isSmall ? 10 : 16;
+  const dockY = H - SAFEB - (isSmall ? 30 : 36);
+  const dockW = isSmall ? 140 : 180;
+  const dockH = isSmall ? 24 : 28;
+
+  cx.fillStyle = "rgba(10, 14, 30, 0.88)";
+  cx.fillRect(dockX, dockY, dockW, dockH);
+  cx.strokeStyle = "#ffd25e";
+  cx.lineWidth = 1;
+  cx.strokeRect(dockX, dockY, dockW, dockH);
+
+  cx.font = isSmall ? "14px sans-serif" : "16px sans-serif";
+  cx.fillText(C.emoji, dockX + 6, dockY + (isSmall ? 17 : 20));
+
+  cx.font = isSmall ? "bold 9px monospace" : "bold 10px monospace";
+  cx.fillStyle = "#ffd25e";
+  cx.fillText(C.name.split(" ")[0].toUpperCase(), dockX + (isSmall ? 26 : 30), dockY + (isSmall ? 11 : 13));
+
+  cx.font = isSmall ? "8px monospace" : "9px monospace";
+  cx.fillStyle = "#8fa3d9";
+  cx.fillText(`⇄ CAMBIO (${GameState.charIdx + 1}/18)`, dockX + (isSmall ? 26 : 30), dockY + (isSmall ? 20 : 23));
+
   if (switchBanner > 0) {
-    const by = H - SAFEB - 34;
-    cx.font = "bold 14px monospace";
+    const bannerY = isSmall ? 80 : 96;
+    cx.fillStyle = "rgba(8, 12, 28, 0.95)";
+    cx.fillRect(W / 2 - 180, bannerY - 14, 360, 36);
+    cx.strokeStyle = "#ffd25e";
+    cx.lineWidth = 1;
+    cx.strokeRect(W / 2 - 180, bannerY - 14, 360, 36);
+
+    cx.font = "bold 13px monospace";
     cx.textAlign = "center";
-    cx.fillStyle = "#b6f542";
-    cx.fillText("→ " + C.emoji + " " + C.name + " — " + C.ab, W / 2, by);
-    cx.font = "11px monospace";
-    cx.fillStyle = "#9fb4e8";
-    cx.fillText(C.tip, W / 2, by + 16);
+    cx.fillStyle = "#ffd25e";
+    cx.fillText(`💨 POOF! → ¡${C.name}!`, W / 2, bannerY + 2);
+    cx.font = "10px monospace";
+    cx.fillStyle = "#59d8ff";
+    cx.fillText(`✦ ${C.ab} · ${C.tip}`, W / 2, bannerY + 16);
     cx.textAlign = "left";
   }
 

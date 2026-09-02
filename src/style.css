@@ -2018,3 +2018,757 @@ body.gameboy-mode .gameboy-deck {
   box-shadow: 0 4px 15px rgba(255, 77, 94, 0.4);
 }
 
+/* =============================================================================
+   GAME DESIGN SYSTEM: UNIFIED PIXEL SCREENS (BOARD REFERENCE)
+   ============================================================================= */
+
+.pixel-modal-box {
+  background: #090e1f;
+  border: 3px solid #2a3962;
+  border-radius: 12px;
+  box-shadow: 0 0 0 2px #040710, 0 16px 36px rgba(0, 0, 0, 0.85);
+  color: #fff;
+  font-family: inherit;
+  box-sizing: border-box;
+  max-width: 94vw;
+  position: relative;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header-pixel {
+  text-align: center;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #1a2544;
+  margin-bottom: 12px;
+}
+
+.pixel-title-wood {
+  font-size: clamp(16px, 3.2vw, 22px);
+  font-weight: 900;
+  color: #ffd25e;
+  letter-spacing: 0.12em;
+  text-shadow: 0 2px 0 #6e3d00, 0 0 10px rgba(255, 200, 80, 0.4);
+}
+
+.pixel-title-gold {
+  font-size: clamp(20px, 4vw, 28px);
+  font-weight: 900;
+  color: #ffd700;
+  letter-spacing: 0.14em;
+  text-shadow: 0 3px 0 #7a4a00, 0 0 16px rgba(255, 215, 0, 0.6);
+}
+
+.pixel-sub-cyan {
+  font-size: clamp(9px, 1.8vw, 11px);
+  font-weight: 800;
+  color: #59d8ff;
+  letter-spacing: 0.1em;
+  margin-top: 3px;
+}
+
+/* 03. SELECCIÓN DE EQUIPO MODAL */
+.team-select-modal {
+  width: 580px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 16px;
+  gap: 12px;
+}
+
+.team-showcase-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: rgba(14, 21, 46, 0.9);
+  border: 2px solid #22325c;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.team-nav-arrow {
+  background: #182344;
+  border: 2px solid #33477d;
+  color: #ffd25e;
+  font-size: 16px;
+  width: 34px;
+  height: 38px;
+  border-radius: 6px;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #0d152c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.team-nav-arrow:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 #0d152c;
+}
+
+.team-hero-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+}
+
+.team-avatar-frame {
+  width: 72px;
+  height: 72px;
+  background: radial-gradient(circle, #203060 0%, #0c1226 100%);
+  border: 2px solid #ffcc00;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 12px rgba(255, 204, 0, 0.35);
+}
+
+.team-avatar-display {
+  font-size: 40px;
+}
+.team-showcase-img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.team-hero-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.team-hero-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.team-hero-name {
+  font-size: 14px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.08em;
+}
+
+.team-hero-form {
+  font-size: 10px;
+  color: #8fa3d9;
+  font-style: italic;
+}
+
+/* Stat bars */
+.team-stat-bars {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 10px;
+  margin: 4px 0;
+}
+
+.stat-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 9px;
+  font-weight: 900;
+  color: #8ea1d0;
+}
+
+.pixel-bar-track {
+  width: 65px;
+  height: 7px;
+  background: #111a36;
+  border: 1px solid #22325c;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.p-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ffd25e 0%, #ff8800 100%);
+  border-radius: 2px;
+}
+
+.team-ability-pill {
+  background: rgba(8, 12, 28, 0.7);
+  border: 1px solid #2a3962;
+  border-radius: 6px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ab-icon {
+  color: #ffd25e;
+  font-size: 13px;
+}
+
+.ab-texts {
+  display: flex;
+  flex-direction: column;
+}
+
+.ab-name {
+  font-size: 10px;
+  font-weight: 900;
+  color: #59d8ff;
+  letter-spacing: 0.06em;
+}
+
+.ab-desc {
+  font-size: 9px;
+  color: #cbd7f5;
+  line-height: 1.2;
+}
+
+/* TU EQUIPO (3/3) TRAY */
+.squad-tray-box {
+  background: #0d142c;
+  border: 2px dashed #ffc857;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.squad-tray-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.squad-title {
+  font-size: 11px;
+  font-weight: 900;
+  color: #ffd25e;
+  letter-spacing: 0.1em;
+}
+
+.squad-hint {
+  font-size: 9px;
+  color: #8fa3d9;
+}
+
+.squad-slots-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.squad-slot {
+  flex: 1;
+  max-width: 140px;
+  background: #141f3e;
+  border: 2px solid #293d70;
+  border-radius: 8px;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+}
+
+.squad-slot.active {
+  border-color: #ffd25e;
+  background: #1e2c56;
+  box-shadow: 0 0 10px rgba(255, 210, 94, 0.4);
+}
+
+.slot-num {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  background: #ffd25e;
+  color: #211200;
+  font-size: 8px;
+  font-weight: 900;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slot-img-wrap {
+  width: 34px;
+  height: 34px;
+  background: #090e1f;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.squad-slot-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.slot-name {
+  font-size: 10px;
+  font-weight: 900;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.team-pixel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+  gap: 6px;
+  max-height: 140px;
+  overflow-y: auto;
+  padding: 6px 2px;
+}
+
+.roster-toggle-label {
+  font-size: 9px;
+  font-weight: 900;
+  color: #8fa3d9;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+.team-modal-actions {
+  display: flex;
+  justify-content: center;
+  padding-top: 6px;
+}
+
+/* 05. INTRO DEL NIVEL (BRIEFING CARD) */
+.briefing-card {
+  width: 440px;
+  padding: 20px;
+  gap: 14px;
+  text-align: center;
+}
+
+.briefing-header {
+  border-bottom: 2px solid #1c2748;
+  padding-bottom: 10px;
+}
+
+.briefing-world-tag {
+  font-size: 10px;
+  font-weight: 900;
+  color: #ffc857;
+  letter-spacing: 0.16em;
+}
+
+.briefing-title {
+  font-size: clamp(16px, 3.5vw, 22px);
+  color: #fff;
+  font-weight: 900;
+  margin: 4px 0;
+  letter-spacing: 0.08em;
+}
+
+.briefing-stars {
+  color: #ffd700;
+  font-size: 15px;
+  letter-spacing: 0.2em;
+}
+
+.briefing-req-box {
+  background: #111a36;
+  border: 1px solid #273762;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.req-label {
+  font-size: 9px;
+  font-weight: 900;
+  color: #8fa3d9;
+  letter-spacing: 0.1em;
+}
+
+.req-ability-pill {
+  background: #19274e;
+  border: 1px solid #59d8ff;
+  border-radius: 20px;
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.req-icon {
+  font-size: 18px;
+}
+
+.req-txt {
+  font-size: 11px;
+  font-weight: 900;
+  color: #59d8ff;
+}
+
+.req-desc {
+  font-size: 10px;
+  color: #cbd7f5;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.briefing-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* 08. MENÚ DE PAUSA */
+.pause-modal {
+  width: 320px;
+  padding: 18px;
+  gap: 12px;
+  text-align: center;
+}
+
+.pause-actions-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-danger-wood {
+  background: linear-gradient(180deg, #d32f2f 0%, #8b0000 100%) !important;
+  color: #fff !important;
+  border-color: #ff6b6b !important;
+  box-shadow: 0 4px 0 #500000 !important;
+}
+
+/* 09 & 10. NIVEL COMPLETADO & MVP DEL RETREAT */
+.win-modal {
+  width: 480px;
+  padding: 20px;
+  gap: 12px;
+  text-align: center;
+}
+
+.win-stars-row {
+  font-size: 32px;
+  color: #ffd700;
+  letter-spacing: 0.25em;
+  filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.7));
+  margin-bottom: 2px;
+}
+
+.win-time-badge {
+  font-size: 12px;
+  font-weight: 800;
+  color: #8fa3d9;
+  margin-top: 4px;
+}
+
+.win-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  background: #101833;
+  border: 1px solid #23335e;
+  border-radius: 8px;
+  padding: 8px;
+}
+
+.win-stat-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-lbl {
+  font-size: 8px;
+  font-weight: 900;
+  color: #7b8ebb;
+}
+
+.stat-val {
+  font-size: 13px;
+  font-weight: 900;
+  color: #fff;
+}
+
+/* MVP OF THE RETREAT CARD */
+.win-mvp-card {
+  background: linear-gradient(135deg, rgba(255, 200, 87, 0.15) 0%, rgba(16, 24, 54, 0.9) 100%);
+  border: 2px solid #ffd25e;
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 0 14px rgba(255, 210, 94, 0.25);
+  text-align: left;
+}
+
+.mvp-trophy {
+  font-size: 26px;
+  filter: drop-shadow(0 0 8px #ffaa00);
+}
+
+.mvp-avatar-box {
+  width: 44px;
+  height: 44px;
+  background: #090e1f;
+  border: 1px solid #ffd25e;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.mvp-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.mvp-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.mvp-label {
+  font-size: 8px;
+  font-weight: 900;
+  color: #ffd25e;
+  letter-spacing: 0.12em;
+}
+
+.mvp-name {
+  font-size: 14px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.08em;
+}
+
+.mvp-stat {
+  font-size: 9px;
+  color: #b6f542;
+  font-weight: 800;
+}
+
+/* XP BAR */
+.win-xp-bar-box {
+  background: #111a36;
+  border: 1px solid #23335e;
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.xp-title-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  font-weight: 900;
+  color: #8fa3d9;
+}
+
+.xp-val-green {
+  color: #b6f542;
+  font-size: 11px;
+}
+
+.xp-track {
+  width: 100%;
+  height: 8px;
+  background: #080c1d;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.xp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #59d8ff 0%, #b6f542 100%);
+  border-radius: 4px;
+}
+
+.xp-level-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9px;
+  font-weight: 900;
+  color: #cbd7f5;
+}
+
+.win-actions-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.go-actions-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* =============================================================================
+   TOUCH BAR DE COMPAÑEROS (ENCIMA DE LA CRUCETA EN MOBILE)
+   ============================================================================= */
+.gb-touchbar-container {
+  width: 100%;
+  background: #060a17;
+  border-top: 2px solid #1a2748;
+  border-bottom: 2px solid #151f38;
+  padding: 4px 8px 6px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  z-index: 20;
+}
+
+.gb-touchbar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  padding: 0 2px;
+}
+
+.touchbar-label {
+  color: #7d90c0;
+}
+
+.touchbar-active-name {
+  color: #ffd25e;
+  font-size: 9px;
+  font-weight: 900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60%;
+}
+
+.gb-touchbar-track {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  padding: 2px 2px 4px;
+  scrollbar-width: none;
+}
+.gb-touchbar-track::-webkit-scrollbar {
+  display: none;
+}
+
+.gb-touch-chip {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: #0f162e;
+  border: 1.5px solid #23335e;
+  border-radius: 8px;
+  padding: 4px 6px;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  transition: transform 0.1s ease, border-color 0.15s ease, background 0.15s ease;
+  min-width: 44px;
+}
+
+.gb-touch-chip:active {
+  transform: scale(0.92);
+}
+
+.gb-touch-chip.active {
+  border-color: #ffd25e;
+  background: linear-gradient(180deg, #2c220c 0%, #151004 100%);
+  box-shadow: 0 0 10px rgba(255, 210, 94, 0.45);
+  transform: translateY(-2px);
+}
+
+.touch-chip-avatar {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.touch-chip-img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.touch-chip-emoji {
+  font-size: 19px;
+}
+
+.touch-chip-name {
+  font-size: 8px;
+  font-weight: 900;
+  color: #c0d0f5;
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+}
+
+.gb-touch-chip.active .touch-chip-name {
+  color: #ffd25e;
+}
+
+.active-hero-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #111a36;
+  border: 1px solid #ffd25e;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.active-hero-texts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.active-name {
+  font-size: 12px;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.06em;
+}
+
+.active-ab {
+  font-size: 10px;
+  color: #59d8ff;
+  font-weight: 800;
+}
+
+
+

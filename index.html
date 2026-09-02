@@ -129,12 +129,74 @@
     </div>
   </div>
 
-  <!-- TEAM SELECT MODAL -->
+  <!-- 03. SELECCIÓN DE COMPAÑERO (ROSTER COMPLETO DE 18 HÉROES) -->
   <div id="teamOv" class="overlay hidden">
-    <div class="title-big" style="font-size:clamp(16px,3vw,26px);">ELIGE COMPAÑERO</div>
-    <div class="sub">18 héroes de Clevergy · cada uno con su habilidad</div>
-    <div id="teamGrid"></div>
-    <button class="btn alt" id="teamClose">SELECCIONAR Y CERRAR (T)</button>
+    <div class="pixel-modal-box team-select-modal">
+      <div class="modal-header-pixel">
+        <div class="pixel-title-wood">PLANTILLA CLEVERGY</div>
+        <div class="pixel-sub-cyan">18 COMPAÑEROS DISPONIBLES · PUEDES CAMBIAR ENTRE TODOS EN CUALQUIER MOMENTO</div>
+      </div>
+
+      <!-- HERO HIGHLIGHT CAROUSEL -->
+      <div class="team-showcase-box">
+        <button class="team-nav-arrow" id="teamHeroPrev" aria-label="Anterior">◀</button>
+        <div class="team-hero-card">
+          <div class="team-avatar-frame">
+            <div id="teamHeroAvatar" class="team-avatar-display">🪰</div>
+          </div>
+          <div class="team-hero-info">
+            <div class="team-hero-title-row">
+              <span id="teamHeroName" class="team-hero-name">1. ALEJANDRO R.</span>
+              <span id="teamHeroForm" class="team-hero-form">Mosca boxeadora</span>
+            </div>
+
+            <!-- Segmented Pixel Stat Bars -->
+            <div class="team-stat-bars">
+              <div class="stat-row"><span class="lbl">FUERZA</span><div class="pixel-bar-track"><div id="teamBarPwr" class="p-fill" style="width: 80%;"></div></div></div>
+              <div class="stat-row"><span class="lbl">VELOCIDAD</span><div class="pixel-bar-track"><div id="teamBarSpd" class="p-fill" style="width: 75%;"></div></div></div>
+              <div class="stat-row"><span class="lbl">VUELO</span><div class="pixel-bar-track"><div id="teamBarFly" class="p-fill" style="width: 90%;"></div></div></div>
+              <div class="stat-row"><span class="lbl">CAOS</span><div class="pixel-bar-track"><div id="teamBarChaos" class="p-fill" style="width: 70%;"></div></div></div>
+            </div>
+
+            <!-- Ability Pill -->
+            <div class="team-ability-pill">
+              <span class="ab-icon">✦</span>
+              <div class="ab-texts">
+                <span id="teamHeroAb" class="ab-name">PUÑO MOSCA</span>
+                <span id="teamHeroTip" class="ab-desc">X: puñetazo · mantén salto para planear</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button class="team-nav-arrow" id="teamHeroNext" aria-label="Siguiente">▶</button>
+      </div>
+
+      <!-- ACTIVE HERO QUICK BAR -->
+      <div class="squad-tray-box">
+        <div class="squad-tray-header">
+          <span class="squad-title">COMPAÑERO ACTIVO:</span>
+          <span class="squad-hint">Toca cualquier compañero abajo para seleccionarlo al instante</span>
+        </div>
+        <div class="active-hero-summary" id="teamActiveSummary">
+          <img id="teamActiveImg" src="/sprites/alejandro/avatar.png" alt="Activo" class="squad-slot-img">
+          <div class="active-hero-texts">
+            <span id="teamActiveName" class="active-name">ALEJANDRO R.</span>
+            <span id="teamActiveAb" class="active-ab">✦ PUÑO MOSCA</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMPLETE 18 ROSTER GRID (SELECT ANY COWORKER) -->
+      <div class="team-roster-section">
+        <div class="roster-toggle-label">TODOS LOS COMPAÑEROS (TOCA UNO PARA ELEGIRLO):</div>
+        <div id="teamGrid" class="team-pixel-grid"></div>
+      </div>
+
+      <!-- CONFIRM BUTTON -->
+      <div class="team-modal-actions">
+        <button class="pixel-btn btn-play-wood" id="teamClose">JUGAR CON ESTE COMPAÑERO ✔</button>
+      </div>
+    </div>
   </div>
 
   <!-- WORLD MAP (MAPA DE AVENTURA ESTILO ANGRY BIRDS / SPRINT ODYSSEY) -->
@@ -277,27 +339,128 @@
     </div>
   </div>
 
-  <!-- WIN -->
+  <!-- 05. INTRO DEL NIVEL (BRIEFING CARD) -->
+  <div id="levelBriefingModal" class="overlay hidden">
+    <div class="pixel-modal-box briefing-card">
+      <div class="briefing-header">
+        <div class="briefing-world-tag" id="bfWorldTag">MUNDO 1 - THE OFFICE</div>
+        <h2 class="briefing-title" id="bfLevelTitle">NIVEL 01: TRABAJO EN EQUIPO</h2>
+        <div class="briefing-stars">★★★</div>
+      </div>
+      <div class="briefing-body">
+        <div class="briefing-req-box">
+          <span class="req-label">HABILIDAD RECOMENDADA:</span>
+          <div class="req-ability-pill" id="bfReqPill">
+            <span class="req-icon" id="bfReqIcon">🧗</span>
+            <span class="req-txt" id="bfReqTxt">ESCALAR PAREDES (ANA / JOSU)</span>
+          </div>
+          <p class="req-desc" id="bfReqDesc">Supera los bugs 404, escala las paredes de contención y alcanza el servidor central.</p>
+        </div>
+      </div>
+      <div class="briefing-actions">
+        <button class="pixel-btn btn-play-wood" id="bfBtnPlay">JUGAR NIVEL ▶</button>
+        <button class="pixel-btn btn-wood" id="bfBtnBack">VOLVER ↩</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 08. MENÚ DE PAUSA -->
+  <div id="pauseOv" class="overlay hidden">
+    <div class="pixel-modal-box pause-modal">
+      <div class="modal-header-pixel">
+        <div class="pixel-title-wood">PAUSA</div>
+        <div class="pixel-sub-cyan">EXPEDICIÓN EN ESPERA</div>
+      </div>
+      <div class="pause-actions-stack">
+        <button class="pixel-btn btn-play-wood" id="btnResumeGame">CONTINUAR ▶</button>
+        <button class="pixel-btn btn-wood" id="btnRestartLevel">REINICIAR 🔄</button>
+        <button class="pixel-btn btn-wood" id="btnPauseTeam">CAMBIAR EQUIPO 👥</button>
+        <button class="pixel-btn btn-wood" id="btnPauseCtrl">AJUSTES / CONTROLES ⚙</button>
+        <button class="pixel-btn btn-danger-wood" id="btnPauseExit">SALIR AL MENÚ 🏠</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 09 & 10. NIVEL COMPLETADO & MVP DEL RETREAT -->
   <div id="winOv" class="overlay hidden">
-    <div class="title-big" id="rankTitle" style="font-size:clamp(22px,5vw,40px);"></div>
-    <div class="boot" id="winTxt"></div>
-    <div id="lbWin"></div>
-    <div style="display:flex;gap:12px;margin-top:16px;flex-wrap:wrap;justify-content:center;">
-      <button class="btn btn-hero" id="btnWinNextWorld">SIGUIENTE MUNDO ▶</button>
-      <button class="btn" id="btnWinMap">🗺️ VOLVER AL MAPA</button>
-      <button class="btn alt" id="restartBtn">REPETIR NIVEL</button>
+    <div class="pixel-modal-box win-modal">
+      <div class="win-header">
+        <div class="win-stars-row">
+          <span class="win-star s1">★</span>
+          <span class="win-star s2">★</span>
+          <span class="win-star s3">★</span>
+        </div>
+        <div class="pixel-title-gold" id="rankTitle">¡NIVEL COMPLETADO!</div>
+        <div class="win-time-badge" id="winTimeTxt">⏱️ 03:42.18</div>
+      </div>
+
+      <div class="boot hidden" id="winTxt"></div>
+      <div id="lbWin" class="hidden"></div>
+
+      <!-- Stats summary -->
+      <div class="win-stats-grid">
+        <div class="win-stat-cell">
+          <span class="stat-lbl">RETOS SUPERADOS</span>
+          <span class="stat-val" id="winRetosTxt">3 / 3</span>
+        </div>
+        <div class="win-stat-cell">
+          <span class="stat-lbl">COMPAÑEROS USADOS</span>
+          <span class="stat-val" id="winCharsTxt">3 / 3</span>
+        </div>
+        <div class="win-stat-cell">
+          <span class="stat-lbl">CAMBIOS REALIZADOS</span>
+          <span class="stat-val" id="winSwitchesTxt">12</span>
+        </div>
+      </div>
+
+      <!-- MVP OF THE RETREAT -->
+      <div class="win-mvp-card">
+        <div class="mvp-trophy">🏆</div>
+        <div class="mvp-avatar-box">
+          <img id="winMvpImg" src="/sprites/ana/avatar.png" alt="MVP" class="mvp-img">
+        </div>
+        <div class="mvp-details">
+          <div class="mvp-label">MVP DEL NIVEL</div>
+          <div class="mvp-name" id="winMvpName">ANA</div>
+          <div class="mvp-stat" id="winMvpStat">Usada 17 veces en momentos clave</div>
+        </div>
+      </div>
+
+      <!-- XP Reward & Progression -->
+      <div class="win-xp-bar-box">
+        <div class="xp-title-row">
+          <span>EXPERIENCIA DE EQUIPO</span>
+          <span class="xp-val-green">+850 XP</span>
+        </div>
+        <div class="xp-track"><div class="xp-fill" style="width: 78%;"></div></div>
+        <div class="xp-level-row">
+          <span>NIVEL 12</span>
+          <span class="xp-arrow">➔</span>
+          <span style="color:#ffd25e;">NIVEL 13 (¡NUEVA HABILIDAD!)</span>
+        </div>
+      </div>
+
+      <div class="win-actions-row">
+        <button class="pixel-btn btn-play-wood" id="btnWinNextWorld">CONTINUAR ▶</button>
+        <button class="pixel-btn btn-wood" id="btnWinMap">🗺️ MAPA DE MUNDOS</button>
+        <button class="pixel-btn btn-wood" id="restartBtn">REPETIR NIVEL 🔄</button>
+      </div>
     </div>
   </div>
 
   <!-- GAME OVER -->
   <div id="goOv" class="overlay hidden">
-    <div class="title-big" style="color:#fff;">MEETING ETERNA</div>
-    <div class="sub">"¿Tienes 5 minutos?" te ha alcanzado demasiadas veces.</div>
-    <div class="panel" id="goStats" style="text-align:center;"></div>
-    <div style="display:flex;gap:12px;margin-top:14px;flex-wrap:wrap;justify-content:center;">
-      <button class="btn" id="retryBtn">REINTENTAR NIVEL</button>
-      <button class="btn alt" id="btnGoMap">🗺️ VOLVER AL MAPA</button>
-      <button class="btn alt" id="goBackMenuBtn">MENÚ PRINCIPAL</button>
+    <div class="pixel-modal-box go-modal">
+      <div class="modal-header-pixel">
+        <div class="pixel-title-wood" style="color:#ff4d5e;">MEETING ETERNA</div>
+        <div class="pixel-sub-cyan">"¿Tienes 5 minutos?" te ha alcanzado</div>
+      </div>
+      <div class="panel" id="goStats" style="text-align:center;margin:12px 0;"></div>
+      <div class="go-actions-stack">
+        <button class="pixel-btn btn-play-wood" id="retryBtn">REINTENTAR NIVEL 🔄</button>
+        <button class="pixel-btn btn-wood" id="btnGoMap">🗺️ VOLVER AL MAPA</button>
+        <button class="pixel-btn btn-wood" id="goBackMenuBtn">MENÚ PRINCIPAL 🏠</button>
+      </div>
     </div>
   </div>
 
@@ -310,6 +473,15 @@
 
   <!-- GAME BOY CONTROLLER DECK (VERTICAL / PORTRAIT) -->
   <div id="gameboyDeck" class="gameboy-deck">
+    <!-- TOUCH BAR DE 18 COMPAÑEROS (ENCIMA DE LA CRUCETA) -->
+    <div class="gb-touchbar-container" id="gbTouchBarContainer">
+      <div class="gb-touchbar-header">
+        <span class="touchbar-label">👥 TOCA PARA CAMBIAR:</span>
+        <span class="touchbar-active-name" id="touchbarActiveName">ALEJANDRO R.</span>
+      </div>
+      <div class="gb-touchbar-track" id="gbTouchBarTrack"></div>
+    </div>
+
     <!-- MAIN CONTROLS ROW: D-PAD LEFT, ACTIONS RIGHT -->
     <div class="gb-controls-area">
       <!-- D-PAD (CRUCETA) -->

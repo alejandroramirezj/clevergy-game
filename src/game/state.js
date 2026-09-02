@@ -8,6 +8,10 @@ import { submitScore } from "./leaderboard.js";
 export const GameState = {
   status: "boot", // boot, ready, play, gameover, win
   charIdx: 0,
+  squad: [0, 1, 2], // 3 chosen teammates for the mission!
+  squadActiveSlot: 0, // 0, 1, or 2
+  charUsage: {}, // Tracks switches/usage per coworker for the MVP of the retreat!
+  levelSwitches: 0,
   switchBanner: 0,
   teamOpen: false,
   currentWorld: 1,
@@ -191,9 +195,25 @@ export function respawn() {
   P.ball = false;
 }
 
-export function switchChar(dir) {
-  if (GameState.status !== "play") return;
-  GameState.charIdx = (GameState.charIdx + dir + CHARS.length) % CHARS.length;
+export function spawnPoofParticles(x, y) {
+  for (let i = 0; i < 14; i++) {
+    const angle = (Math.PI * 2 * i) / 14 + (Math.random() - 0.5);
+    const spd = 2 + Math.random() * 4;
+    GameState.particles.push({
+      x: x + 13,
+      y: y + 16,
+      vx: Math.cos(angle) * spd,
+      vy: Math.sin(angle) * spd - 1,
+      t: 0.4 + Math.random() * 0.25,
+      col: i % 2 === 0 ? "#ffffff" : "#ffd25e",
+      size: 4 + Math.random() * 3
+    });
+  }
+}
+
+export function switchToChar(targetCharIdx) {
+  if (targetCharIdx < 0 || targetCharIdx >= CHARS.length) return;
+  GameState.charIdx = targetCharIdx;
   GameState.P.ball = false;
   GameState.P.roll = 0;
   GameState.P.slide = 0;
@@ -201,6 +221,25 @@ export function switchChar(dir) {
   anim.name = "idle";
   anim.frame = 0;
   anim.t = 0;
-  GameState.switchBanner = 1.6;
-  sfx(520, 0.06, "square");
+  GameState.switchBanner = 2.0;
+  GameState.levelSwitches = (GameState.levelSwitches || 0) + 1;
+
+  const curChar = CHARS[GameState.charIdx];
+  if (curChar) {
+    GameState.charUsage[curChar.id] = (GameState.charUsage[curChar.id] || 0) + 1;
+    msg2(`✦ ${curChar.ab}: ${curChar.tip}`, 3.5);
+  }
+
+  spawnPoofParticles(GameState.P.x, GameState.P.y);
+  try {
+    sfx(640, 0.08, "triangle");
+    sfx(880, 0.06, "sine");
+  } catch (e) {}
+
+  window.dispatchEvent(new CustomEvent("char_switched", { detail: { charIdx: GameState.charIdx } }));
+}
+
+export function switchChar(dir) {
+  const nextIdx = (GameState.charIdx + dir + CHARS.length) % CHARS.length;
+  switchToChar(nextIdx);
 }

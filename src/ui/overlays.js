@@ -1,6 +1,6 @@
 import { BOOT_LINES } from "../config/constants.js";
 import { CHARS } from "../config/characters.js";
-import { GameState, respawn, fmtT, switchChar } from "../game/state.js";
+import { GameState, respawn, fmtT, switchToChar } from "../game/state.js";
 import { sfx } from "../engine/audio.js";
 import { anim, getCharacterAvatar } from "../engine/sprites.js";
 import { fetchGlobalLeaderboard } from "../game/leaderboard.js";
@@ -23,28 +23,85 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
   const spotlightTip = document.getElementById("spotlightTip");
   const barSpd = document.getElementById("barSpd");
   const barJump = document.getElementById("barJump");
-
-  // Modals
-  const lbOv = document.getElementById("lbOv");
-  const lbModalContent = document.getElementById("lbModalContent");
-  const btnRefreshLB = document.getElementById("btnRefreshLB");
-  const btnCloseLB = document.getElementById("btnCloseLB");
-
-  const ctrlOv = document.getElementById("ctrlOv");
-  const btnCloseCtrl = document.getElementById("btnCloseCtrl");
-
+  const teamOv = document.getElementById("teamOv");
+  const teamGrid = document.getElementById("teamGrid");
+  const teamClose = document.getElementById("teamClose");
   const bootOv = document.getElementById("bootOv");
   const bootTxt = document.getElementById("bootTxt");
   const pressSkipStory = document.getElementById("pressSkipStory");
 
-  const teamOv = document.getElementById("teamOv");
-  const teamGrid = document.getElementById("teamGrid");
-  const teamClose = document.getElementById("teamClose");
+  const lbOv = document.getElementById("lbOv");
+  const lbModalContent = document.getElementById("lbModalContent");
+  const btnCloseLB = document.getElementById("btnCloseLB");
+  const btnRefreshLB = document.getElementById("btnRefreshLB");
+
+  const ctrlOv = document.getElementById("ctrlOv");
+  const btnCloseCtrl = document.getElementById("btnCloseCtrl");
 
   const retryBtn = document.getElementById("retryBtn");
   const restartBtn = document.getElementById("restartBtn");
   const winToMenuBtn = document.getElementById("winToMenuBtn");
   const goBackMenuBtn = document.getElementById("goBackMenuBtn");
+
+  // Mobile Quick Touch Bar of 18 Heroes (Right above the D-Pad)
+  const gbTouchBarTrack = document.getElementById("gbTouchBarTrack");
+  const touchbarActiveName = document.getElementById("touchbarActiveName");
+
+  function renderTouchBar() {
+    if (!gbTouchBarTrack) return;
+    gbTouchBarTrack.innerHTML = "";
+
+    CHARS.forEach((c, i) => {
+      const chip = document.createElement("div");
+      const isCur = i === GameState.charIdx;
+      chip.className = `gb-touch-chip ${isCur ? "active" : ""}`;
+      chip.dataset.idx = i;
+      chip.title = `${c.name} (${c.ab})`;
+
+      const av = getCharacterAvatar(c.id);
+      const iconHtml = av
+        ? `<img src="${av}" class="touch-chip-img" alt="${c.name}">`
+        : `<span class="touch-chip-emoji">${c.emoji}</span>`;
+
+      chip.innerHTML = `
+        <div class="touch-chip-avatar">${iconHtml}</div>
+        <span class="touch-chip-name">${c.name.split(" ")[0]}</span>
+      `;
+
+      // Pointerdown for ultra-fast instant tactile switch without 300ms click delay
+      chip.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        switchToChar(i);
+        updateSpotlight();
+      });
+
+      gbTouchBarTrack.appendChild(chip);
+    });
+  }
+  renderTouchBar();
+
+  function updateTouchBarActive(charIdx) {
+    if (!gbTouchBarTrack) return;
+    const chips = gbTouchBarTrack.querySelectorAll(".gb-touch-chip");
+    chips.forEach((ch, idx) => {
+      const isAct = idx === charIdx;
+      ch.classList.toggle("active", isAct);
+      if (isAct) {
+        ch.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+      }
+    });
+    const c = CHARS[charIdx];
+    if (touchbarActiveName && c) {
+      touchbarActiveName.textContent = `${c.name.toUpperCase()} · ✦ ${c.ab}`;
+    }
+  }
+
+  window.addEventListener("char_switched", (e) => {
+    const charIdx = e.detail?.charIdx ?? GameState.charIdx;
+    updateTouchBarActive(charIdx);
+    updateSpotlight();
+  });
 
   // Load saved name
   try {
@@ -56,6 +113,7 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
   function updateSpotlight() {
     const c = CHARS[GameState.charIdx];
     if (!c) return;
+
     if (spotlightAvatar) {
       const av = getCharacterAvatar(c.id);
       if (av) {
@@ -65,48 +123,43 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
       }
     }
     if (spotlightName) spotlightName.textContent = c.name;
-    if (spotlightForm) spotlightForm.textContent = c.form;
-    if (spotlightAb) spotlightAb.textContent = `✦ HABILIDAD: ${c.ab}`;
+    if (spotlightForm) spotlightForm.textContent = `FORMA: ${c.form.toUpperCase()}`;
+    if (spotlightAb) spotlightAb.textContent = `✦ HABILIDAD: ${c.ab.toUpperCase()}`;
     if (spotlightTip) spotlightTip.textContent = c.tip;
 
-    // Normalizing stats: spd 2.4 - 5.4, jump 8.5 - 16.5
-    if (barSpd) {
-      const spdPct = Math.round(((c.spd - 2.0) / (5.6 - 2.0)) * 100);
-      barSpd.style.width = Math.max(15, Math.min(100, spdPct)) + "%";
-    }
-    if (barJump) {
-      const jmpPct = Math.round(((c.jump - 8.0) / (16.5 - 8.0)) * 100);
-      barJump.style.width = Math.max(15, Math.min(100, jmpPct)) + "%";
-    }
+    if (barSpd) barSpd.style.width = Math.min(100, Math.max(20, (c.spd / 5.4) * 100)) + "%";
+    if (barJump) barJump.style.width = Math.min(100, Math.max(20, (c.jump / 12) * 100)) + "%";
 
-    if (teamGrid) {
-      [...teamGrid.children].forEach((el, i) => {
-        el.classList.toggle("sel", i === GameState.charIdx);
+    const campfireArc = document.getElementById("campfireCharactersArc");
+    if (campfireArc) {
+      [...campfireArc.children].forEach((el, i) => {
+        const isSel = i === GameState.charIdx;
+        el.classList.toggle("active-hero", isSel);
+        const tag = el.querySelector(".campfire-p1-tag");
+        if (tag) tag.classList.toggle("hidden", !isSel);
       });
     }
 
-    // Update Campfire Stage selection
-    const campfireTokens = document.querySelectorAll(".campfire-char-node");
-    campfireTokens.forEach((el, i) => {
-      const isSel = i === GameState.charIdx;
-      el.classList.toggle("active-hero", isSel);
-      const p1 = el.querySelector(".campfire-p1-tag");
-      if (p1) p1.classList.toggle("hidden", !isSel);
-    });
+    const activeCardName = document.getElementById("campfireActiveName");
+    const activeCardAb = document.getElementById("campfireActiveAb");
+    if (activeCardName) activeCardName.textContent = c.name.toUpperCase();
+    if (activeCardAb) activeCardAb.textContent = `✦ ${c.ab.toUpperCase()}`;
+
+    updateTouchBarActive(GameState.charIdx);
   }
 
   // Exact coordinates for characters encircling the campfire on the illuminated ground (630x300 canvas)
   const CAMPFIRE_SPOTS = [
-    { x: 120, y: 155, z: 6, scale: 1.0 },   // 0: alejandro (boxer fly left flank)
-    { x: 175, y: 125, z: 4, scale: 0.95 },  // 1: ale (oil bottle left-mid)
-    { x: 230, y: 102, z: 3, scale: 0.9 },   // 2: alvaroM (calculator back-left)
-    { x: 285, y: 90,  z: 2, scale: 0.88 },  // 3: alvaroP (mic back-center-left)
-    { x: 345, y: 90,  z: 2, scale: 0.88 },  // 4: ana (lion climber back-center-right)
-    { x: 400, y: 102, z: 3, scale: 0.9 },   // 5: beltran (thimble back-right)
-    { x: 455, y: 125, z: 4, scale: 0.95 },  // 6: bruno (totem right-mid)
-    { x: 505, y: 155, z: 6, scale: 1.0 },   // 7: gonzalo (broccoli right flank)
-    { x: 535, y: 195, z: 7, scale: 1.05 },  // 8: javi (communist flag right foreground)
-    { x: 475, y: 225, z: 8, scale: 1.05 },  // 9: jesus (cruzcampo right foreground)
+    { x: 195, y: 125, z: 4, scale: 0.95 },  // 0: alejandro (fly left-mid)
+    { x: 420, y: 130, z: 4, scale: 0.95 },  // 1: ale (oil right-mid)
+    { x: 260, y: 102, z: 3, scale: 0.9 },   // 2: alvaroM (calculator back-left)
+    { x: 375, y: 100, z: 3, scale: 0.9 },   // 3: alvaroP (mic back-right)
+    { x: 318, y: 88,  z: 2, scale: 0.88 },  // 4: ana (lioness back-center)
+    { x: 215, y: 80,  z: 2, scale: 0.86 },  // 5: beltran (bell back-left-high)
+    { x: 480, y: 155, z: 5, scale: 0.98 },  // 6: bruno (mask right flank)
+    { x: 140, y: 150, z: 5, scale: 0.98 },  // 7: gonzalo (totem left flank)
+    { x: 490, y: 210, z: 7, scale: 1.05 },  // 8: javi (broccoli right foreground)
+    { x: 450, y: 235, z: 8, scale: 1.08 },  // 9: jesus (hammer front-right)
     { x: 415, y: 240, z: 9, scale: 1.08 },  // 10: pablo (orange front-right)
     { x: 350, y: 245, z: 10, scale: 1.1 },  // 11: manu (muscle front-center-right)
     { x: 285, y: 245, z: 10, scale: 1.1 },  // 12: maca (volleyball front-center-left)
@@ -149,17 +202,8 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
 
       d.addEventListener("click", (e) => {
         e.stopPropagation();
-        GameState.charIdx = i;
-        GameState.P.ball = false;
-        GameState.P.roll = 0;
-        GameState.P.slide = 0;
-        anim.lock = null;
-        anim.name = "idle";
-        anim.frame = 0;
-        anim.t = 0;
-        GameState.switchBanner = 1.6;
+        switchToChar(i);
         updateSpotlight();
-        try { sfx(700, 0.08, "square"); } catch (err) {}
       });
 
       campfireArc.appendChild(d);
@@ -180,7 +224,7 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
   }
   renderCampfireCharacters();
 
-  // Populate team selector (18 characters in modal)
+  // Populate complete team selector
   CHARS.forEach((c, i) => {
     const d = document.createElement("div");
     d.className = "tcell";
@@ -195,23 +239,78 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
       <div class="fm">${c.form}</div>
     `;
     d.addEventListener("click", () => {
-      GameState.charIdx = i;
-      GameState.P.ball = false;
-      GameState.P.roll = 0;
-      GameState.P.slide = 0;
-      anim.lock = null;
-      anim.name = "idle";
-      anim.frame = 0;
-      anim.t = 0;
-      GameState.switchBanner = 1.6;
+      switchToChar(i);
+      updateTeamShowcase(i);
       updateSpotlight();
-      toggleTeam(true);
       sfx(700, 0.08);
     });
     teamGrid.appendChild(d);
   });
 
-  updateSpotlight();
+  // Team Showcase Carousel elements
+  let showcaseCharIdx = 0;
+  const teamHeroAvatar = document.getElementById("teamHeroAvatar");
+  const teamHeroName = document.getElementById("teamHeroName");
+  const teamHeroForm = document.getElementById("teamHeroForm");
+  const teamHeroAb = document.getElementById("teamHeroAb");
+  const teamHeroTip = document.getElementById("teamHeroTip");
+  const teamBarPwr = document.getElementById("teamBarPwr");
+  const teamBarSpd = document.getElementById("teamBarSpd");
+  const teamBarFly = document.getElementById("teamBarFly");
+  const teamBarChaos = document.getElementById("teamBarChaos");
+  const teamActiveImg = document.getElementById("teamActiveImg");
+  const teamActiveName = document.getElementById("teamActiveName");
+  const teamActiveAb = document.getElementById("teamActiveAb");
+
+  function updateTeamShowcase(cIdx) {
+    showcaseCharIdx = (cIdx + CHARS.length) % CHARS.length;
+    const c = CHARS[showcaseCharIdx];
+    if (!c) return;
+
+    if (teamHeroAvatar) {
+      const av = getCharacterAvatar(c.id);
+      teamHeroAvatar.innerHTML = av ? `<img src="${av}" class="team-showcase-img" alt="${c.name}">` : c.emoji;
+    }
+    if (teamHeroName) teamHeroName.textContent = `${showcaseCharIdx + 1}. ${c.name}`;
+    if (teamHeroForm) teamHeroForm.textContent = c.form;
+    if (teamHeroAb) teamHeroAb.textContent = c.ab;
+    if (teamHeroTip) teamHeroTip.textContent = c.tip;
+
+    if (teamActiveImg) teamActiveImg.src = getCharacterAvatar(c.id) || "";
+    if (teamActiveName) teamActiveName.textContent = c.name.toUpperCase();
+    if (teamActiveAb) teamActiveAb.textContent = `✦ ${c.ab.toUpperCase()} (${c.form})`;
+
+    // Segmented stats
+    if (teamBarSpd) teamBarSpd.style.width = Math.min(100, Math.max(20, (c.spd / 5.4) * 100)) + "%";
+    if (teamBarFly) teamBarFly.style.width = Math.min(100, Math.max(20, (c.jump / 12) * 100)) + "%";
+    if (teamBarPwr) teamBarPwr.style.width = ((c.id === "alejandro" || c.id === "manu" || c.id === "jesus") ? 95 : 65) + "%";
+    if (teamBarChaos) teamBarChaos.style.width = ((c.id === "bruno" || c.id === "maca" || c.id === "pablo") ? 95 : 55) + "%";
+
+    if (teamGrid) {
+      [...teamGrid.children].forEach((el, i) => {
+        el.classList.toggle("sel", i === showcaseCharIdx);
+      });
+    }
+  }
+
+  const teamHeroPrev = document.getElementById("teamHeroPrev");
+  const teamHeroNext = document.getElementById("teamHeroNext");
+  teamHeroPrev?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    updateTeamShowcase(showcaseCharIdx - 1);
+    switchToChar(showcaseCharIdx);
+    updateSpotlight();
+    try { sfx(660, 0.06); } catch (e) {}
+  });
+  teamHeroNext?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    updateTeamShowcase(showcaseCharIdx + 1);
+    switchToChar(showcaseCharIdx);
+    updateSpotlight();
+    try { sfx(660, 0.06); } catch (e) {}
+  });
+
+  updateTeamShowcase(0);
 
   function toggleTeam(forceClose) {
     const currentlyOpen = !teamOv.classList.contains("hidden");
@@ -219,11 +318,16 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     teamOv.classList.toggle("hidden", !wantOpen);
     GameState.teamOpen = wantOpen;
     if (wantOpen) {
-      updateSpotlight();
+      updateTeamShowcase(GameState.charIdx);
     }
   }
 
-  if (teamClose) teamClose.addEventListener("click", () => toggleTeam(true));
+  if (teamClose) {
+    teamClose.addEventListener("click", () => {
+      toggleTeam(true);
+      try { sfx(880, 0.1, "triangle"); } catch (e) {}
+    });
+  }
   if (btnChangeChar) btnChangeChar.addEventListener("click", () => toggleTeam(false));
 
   const btnOpenMapMenu = document.getElementById("btnOpenMapMenu");
@@ -233,21 +337,6 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
       if (onOpenMap) onOpenMap();
     });
   }
-
-  const btnHeroPrev = document.getElementById("btnHeroPrev");
-  const btnHeroNext = document.getElementById("btnHeroNext");
-  btnHeroPrev?.addEventListener("click", (e) => {
-    e.stopPropagation();
-    switchChar(-1);
-    updateSpotlight();
-    try { sfx(880, 0.08); } catch (err) {}
-  });
-  btnHeroNext?.addEventListener("click", (e) => {
-    e.stopPropagation();
-    switchChar(1);
-    updateSpotlight();
-    try { sfx(880, 0.08); } catch (err) {}
-  });
 
   // Leaderboard Modal logic (Cloudflare D1)
   async function renderLeaderboardModal() {
@@ -389,6 +478,128 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     }
   });
 
+  // 08. PAUSE OVERLAY HANDLERS
+  const pauseOv = document.getElementById("pauseOv");
+  const btnResumeGame = document.getElementById("btnResumeGame");
+  const btnRestartLevel = document.getElementById("btnRestartLevel");
+  const btnPauseTeam = document.getElementById("btnPauseTeam");
+  const btnPauseCtrl = document.getElementById("btnPauseCtrl");
+  const btnPauseExit = document.getElementById("btnPauseExit");
+
+  function togglePause(forceOpen) {
+    if (!pauseOv) return;
+    const isCurrentlyPaused = !pauseOv.classList.contains("hidden");
+    const wantPause = forceOpen !== undefined ? forceOpen : !isCurrentlyPaused;
+    pauseOv.classList.toggle("hidden", !wantPause);
+
+    if (wantPause) {
+      GameState.prevStatusBeforePause = GameState.status;
+      GameState.status = "pause";
+      try { sfx(440, 0.08, "square"); } catch (e) {}
+    } else {
+      GameState.status = GameState.prevStatusBeforePause || "play";
+      try { sfx(660, 0.08, "triangle"); } catch (e) {}
+    }
+  }
+
+  btnResumeGame?.addEventListener("click", () => togglePause(false));
+  btnRestartLevel?.addEventListener("click", () => {
+    togglePause(false);
+    respawn();
+    GameState.P.hp = 5;
+    GameState.status = "play";
+  });
+  btnPauseTeam?.addEventListener("click", () => {
+    toggleTeam(false);
+  });
+  btnPauseCtrl?.addEventListener("click", () => {
+    if (ctrlOv) ctrlOv.classList.remove("hidden");
+  });
+  btnPauseExit?.addEventListener("click", () => {
+    togglePause(false);
+    window.location.reload();
+  });
+
+  // 05. LEVEL BRIEFING CARD HANDLERS
+  const levelBriefingModal = document.getElementById("levelBriefingModal");
+  const bfWorldTag = document.getElementById("bfWorldTag");
+  const bfLevelTitle = document.getElementById("bfLevelTitle");
+  const bfReqIcon = document.getElementById("bfReqIcon");
+  const bfReqTxt = document.getElementById("bfReqTxt");
+  const bfReqDesc = document.getElementById("bfReqDesc");
+  const bfBtnPlay = document.getElementById("bfBtnPlay");
+  const bfBtnBack = document.getElementById("bfBtnBack");
+
+  let onBriefingPlayCallback = null;
+  function showLevelBriefing(w, onPlay) {
+    if (!levelBriefingModal) {
+      if (onPlay) onPlay();
+      return;
+    }
+    onBriefingPlayCallback = onPlay;
+
+    const reqs = {
+      1: { icon: "🧗", txt: "ESCALAR PAREDES (ANA / JOSU)", desc: "Supera los bugs 404, escala las paredes de contención y alcanza el servidor central." },
+      2: { icon: "🥊", txt: "ROMPER OBSTÁCULOS (ALEJANDRO / JESÚS)", desc: "Abrete paso entre la jungla de APIs y corta las conexiones bloqueadas." },
+      3: { icon: "🏃", txt: "VELOCIDAD Y VUELO (SILVIA / PALOMA)", desc: "Circuito contra reloj para entregar el sprint antes del cierre de Q4." },
+      4: { icon: "⚡", txt: "ESCUDO Y REFLEJOS (BELTRÁN / JUAN)", desc: "Resiste los ataques de la All-Hands eterna y esquiva los micrófonos abiertos." },
+      5: { icon: "✦", txt: "TRABAJO EN EQUIPO (TODO EL EQUIPO)", desc: "El gran reto final en la nieve. Utiliza las 3 habilidades para vencer a The Deadline." },
+      6: { icon: "🥊", txt: "COMBATE 1v1 (TU MEJOR COMPAÑERO)", desc: "Pelea de código en el cuadrilátero contra la CPU o un compañero online." }
+    };
+    const req = reqs[w.id] || reqs[1];
+
+    if (bfWorldTag) bfWorldTag.textContent = `MUNDO ${w.id} - ${w.name.toUpperCase()}`;
+    if (bfLevelTitle) bfLevelTitle.textContent = `NIVEL 01: ${w.subtitle ? w.subtitle.toUpperCase() : "EXPEDICIÓN"}`;
+    if (bfReqIcon) bfReqIcon.textContent = req.icon;
+    if (bfReqTxt) bfReqTxt.textContent = req.txt;
+    if (bfReqDesc) bfReqDesc.textContent = req.desc;
+
+    levelBriefingModal.classList.remove("hidden");
+    try { sfx(700, 0.08, "triangle"); } catch (e) {}
+  }
+
+  bfBtnPlay?.addEventListener("click", () => {
+    levelBriefingModal?.classList.add("hidden");
+    if (onBriefingPlayCallback) onBriefingPlayCallback();
+  });
+  bfBtnBack?.addEventListener("click", () => {
+    levelBriefingModal?.classList.add("hidden");
+  });
+
+  // 09. LEVEL COMPLETED & MVP CALCULATION
+  window.addEventListener("level_completed", () => {
+    updateWinScreenMVP();
+  });
+  function updateWinScreenMVP() {
+    const winTimeTxt = document.getElementById("winTimeTxt");
+    const winRetosTxt = document.getElementById("winRetosTxt");
+    const winCharsTxt = document.getElementById("winCharsTxt");
+    const winSwitchesTxt = document.getElementById("winSwitchesTxt");
+    const winMvpImg = document.getElementById("winMvpImg");
+    const winMvpName = document.getElementById("winMvpName");
+    const winMvpStat = document.getElementById("winMvpStat");
+
+    if (winTimeTxt) winTimeTxt.textContent = `⏱️ ${(GameState.gameTime || 0).toFixed(2)}s`;
+    if (winRetosTxt) winRetosTxt.textContent = `3 / 3 ⭐`;
+    if (winCharsTxt) winCharsTxt.textContent = `3 / 3`;
+    if (winSwitchesTxt) winSwitchesTxt.textContent = String(GameState.levelSwitches || 8);
+
+    // Calculate MVP based on GameState.charUsage
+    let maxUsage = 0;
+    let mvpCharId = "alejandro";
+    Object.entries(GameState.charUsage || {}).forEach(([id, count]) => {
+      if (count > maxUsage) {
+        maxUsage = count;
+        mvpCharId = id;
+      }
+    });
+
+    const mvpChar = CHARS.find(c => c.id === mvpCharId) || CHARS[GameState.charIdx] || CHARS[0];
+    if (winMvpImg) winMvpImg.src = getCharacterAvatar(mvpChar.id) || "";
+    if (winMvpName) winMvpName.textContent = mvpChar.name;
+    if (winMvpStat) winMvpStat.textContent = `Usado/a ${Math.max(1, maxUsage)} veces en momentos clave`;
+  }
+
   // Game over and win handlers
   if (retryBtn) {
     retryBtn.addEventListener("click", () => {
@@ -455,5 +666,12 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     });
   }
 
-  return { toggleTeam, tryStart: triggerStart, updateSpotlight };
+  return {
+    toggleTeam,
+    tryStart: triggerStart,
+    updateSpotlight,
+    togglePause,
+    showLevelBriefing,
+    updateWinScreenMVP
+  };
 }

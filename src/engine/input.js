@@ -72,7 +72,7 @@ export const downK = isDown;
 export const jumpK = isJump;
 export const abilK = isSpecial;
 
-export function initInput({ onSwitchChar, onToggleTeam, onToggleMusic, onTryStart, onOpenMap }) {
+export function initInput({ onSwitchChar, onSwitchSlot, onToggleTeam, onToggleMusic, onTryStart, onOpenMap, onPause }) {
   window.addEventListener("keydown", (e) => {
     if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Space", "Tab"].includes(e.code)) {
       e.preventDefault();
@@ -83,6 +83,10 @@ export function initInput({ onSwitchChar, onToggleTeam, onToggleMusic, onTryStar
     if (e.code === "Tab") {
       e.shiftKey ? onSwitchChar(-1) : onSwitchChar(1);
     }
+    if (e.code === "Digit1" || e.code === "Numpad1") onSwitchSlot ? onSwitchSlot(0) : onSwitchChar(1);
+    if (e.code === "Digit2" || e.code === "Numpad2") onSwitchSlot ? onSwitchSlot(1) : onSwitchChar(1);
+    if (e.code === "Digit3" || e.code === "Numpad3") onSwitchSlot ? onSwitchSlot(2) : onSwitchChar(1);
+    if (e.code === "Escape") onPause ? onPause() : null;
     if (e.code === "KeyT") onToggleTeam();
     if (e.code === "KeyM") onToggleMusic();
     if (e.code === "Enter") onTryStart();

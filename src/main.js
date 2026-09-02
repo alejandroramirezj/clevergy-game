@@ -4,12 +4,13 @@ import { initLevelGrid, moveX, moveY, touchingWall, rectsHit, tileAt } from "./e
 import { sfx, startMusic, toggleMusic } from "./engine/audio.js";
 import { initSprites, updateAnim, anim } from "./engine/sprites.js";
 import { initInput, left, right, upK, downK, jumpK, abilK } from "./engine/input.js";
-import { GameState, initCoffees, hurt, respawn, msg, msg2, switchChar, addScore } from "./game/state.js";
+import { GameState, initCoffees, hurt, respawn, msg, msg2, switchChar, switchToChar, addScore } from "./game/state.js";
 import { doAbility } from "./game/abilities.js";
 import { draw } from "./game/renderer.js";
 import { initOverlays } from "./ui/overlays.js";
 import { initWorldMap } from "./ui/worldMap.js";
 import { loadWorld } from "./game/levelLoader.js";
+import { WORLDS } from "./config/worlds.js";
 import { updateProjectiles, updateMinions, updateEnemies, updateBoss, winGame } from "./game/enemies.js";
 import { startFight, updateFight, drawFight, FightState } from "./game/fighting.js";
 import { showFightLobby, hideFightLobby, drawFightLobby, updateFightLobby } from "./ui/fightLobby.js";
@@ -448,23 +449,32 @@ initSprites();
 fitCanvas();
 
 let toggleTeamFn = () => {};
+let showBriefingFn = (w, cb) => cb();
 
 const worldMap = initWorldMap({
   onSelectWorld: (worldId) => {
-    startGame(worldId);
+    const w = WORLDS.find((x) => x.id === worldId) || WORLDS[0];
+    showBriefingFn(w, () => {
+      startGame(worldId);
+    });
   },
   onOpenTeam: () => toggleTeamFn()
 });
 
-const { toggleTeam, tryStart, updateSpotlight } = initOverlays({
-  onStartGame: () => startGame(1),
+const { toggleTeam, tryStart, updateSpotlight, togglePause, showLevelBriefing } = initOverlays({
+  onStartGame: () => {
+    const w = WORLDS[0];
+    showLevelBriefing(w, () => startGame(1));
+  },
   onOpenMap: () => worldMap.showWorldMap(),
   onNextWorld: () => {
     const nextId = Math.min(5, (GameState.currentWorld || 1) + 1);
-    startGame(nextId);
+    const w = WORLDS.find((x) => x.id === nextId) || WORLDS[0];
+    showLevelBriefing(w, () => startGame(nextId));
   }
 });
 toggleTeamFn = toggleTeam;
+showBriefingFn = showLevelBriefing;
 
 initInput({
   onSwitchChar: (dir) => {
@@ -472,6 +482,12 @@ initInput({
     updateSpotlight();
     worldMap.renderMap();
   },
+  onSwitchSlot: (slotIdx) => {
+    switchToChar(slotIdx);
+    updateSpotlight();
+    worldMap.renderMap();
+  },
+  onPause: () => togglePause(),
   onToggleTeam: () => toggleTeam(),
   onToggleMusic: () => {
     const on = toggleMusic();

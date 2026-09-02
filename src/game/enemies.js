@@ -479,6 +479,8 @@ TOTAL .............. <span style="color:#b6f542">${finalScore}</span>
   const lbWin = document.getElementById("lbWin");
   if (lbWin) lbWin.innerHTML = `<div style="color:var(--cyan);margin:12px 0;font-size:13px;">⚡ Sincronizando con Cloudflare D1...</div>`;
 
+  window.dispatchEvent(new CustomEvent("level_completed"));
+
   const winOv = document.getElementById("winOv");
   if (winOv) winOv.classList.remove("hidden");
 
