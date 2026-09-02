@@ -753,20 +753,33 @@ function drawPlayer(cx) {
   const bob = P.onGround && Math.abs(P.vx) > 0.5 ? Math.abs(Math.sin(time * 12)) * 2 : 0;
   const animated = !P.ball && P.roll <= 0 && ANIM[C.id] && ANIM[C.id].ready;
 
+  // KAPLAY-inspired Squash & Stretch Transform around feet pivot
+  cx.save();
+  const scaleX = P.scaleX || 1;
+  const scaleY = P.scaleY || 1;
+  if (scaleX !== 1 || scaleY !== 1) {
+    const footX = P.x + P.w / 2;
+    const footY = P.y + P.h;
+    cx.translate(footX, footY);
+    cx.scale(scaleX, scaleY);
+    cx.translate(-footX, -footY);
+  }
+
   if (animated) {
     drawAnimatedPlayer(cx, P, C.id, bob);
   } else if (s) {
     const img = P.face < 0 ? s.flip : s.img;
-    cx.save();
     if (P.ball || P.roll > 0) {
+      cx.save();
       cx.translate(P.x + P.w / 2, P.y + P.h - s.h / 2);
       cx.rotate(time * 12 * P.face);
       cx.drawImage(img, -s.w / 2, -s.h / 2);
+      cx.restore();
     } else {
       cx.drawImage(img, Math.floor(P.x + P.w / 2 - s.w / 2), Math.floor(P.y + P.h - s.h - bob));
     }
-    cx.restore();
   }
+  cx.restore();
 
   const shieldOn = C.id === "beltran" && abilK() && P.shieldE > 0;
   if (shieldOn) {
