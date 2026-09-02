@@ -96,6 +96,28 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     }
   }
 
+  const gbTouchBarContainer = document.getElementById("gbTouchBarContainer");
+  const btnCloseTouchbar = document.getElementById("btnCloseTouchbar");
+  const gbSelect = document.getElementById("gbSelect");
+
+  if (btnCloseTouchbar && gbTouchBarContainer) {
+    btnCloseTouchbar.addEventListener("click", (e) => {
+      e.stopPropagation();
+      gbTouchBarContainer.classList.add("collapsed");
+    });
+  }
+
+  if (gbSelect && gbTouchBarContainer) {
+    gbSelect.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isCollapsed = gbTouchBarContainer.classList.contains("collapsed");
+      gbTouchBarContainer.classList.toggle("collapsed", !isCollapsed);
+      if (isCollapsed) {
+        updateTouchBarActive(GameState.charIdx);
+      }
+    });
+  }
+
   window.addEventListener("char_switched", (e) => {
     const charIdx = e.detail?.charIdx ?? GameState.charIdx;
     updateTouchBarActive(charIdx);
@@ -459,6 +481,7 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     lbOv.classList.add("hidden");
     ctrlOv.classList.add("hidden");
     teamOv.classList.add("hidden");
+    if (gbTouchBarContainer) gbTouchBarContainer.classList.add("collapsed");
 
     onStartGame();
   }

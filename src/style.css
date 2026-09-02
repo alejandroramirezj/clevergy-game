@@ -978,18 +978,18 @@ body.gameboy-mode .gameboy-deck {
 
 .gb-dpad {
   position: relative;
-  width: 154px;
-  height: 154px;
+  width: 136px;
+  height: 136px;
   background: transparent;
-  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.6));
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.6));
 }
 
 .gb-dpad-center {
   position: absolute;
-  top: 50px;
-  left: 50px;
-  width: 54px;
-  height: 54px;
+  top: 45px;
+  left: 45px;
+  width: 46px;
+  height: 46px;
   background: #111422;
   box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.9);
   border-radius: 6px;
@@ -1000,7 +1000,7 @@ body.gameboy-mode .gameboy-deck {
   background: #1d243c;
   border: 1px solid #2e3b62;
   color: #8fa5d8;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: bold;
   display: flex;
   align-items: center;
@@ -1008,7 +1008,7 @@ body.gameboy-mode .gameboy-deck {
   cursor: pointer;
   touch-action: none;
   user-select: none;
-  box-shadow: 0 5px 0 #0b0d18, inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 0 #0b0d18, inset 0 1px 0 rgba(255, 255, 255, 0.15);
   transition: transform 0.04s, background 0.05s, box-shadow 0.04s;
 }
 
@@ -1022,33 +1022,33 @@ body.gameboy-mode .gameboy-deck {
 
 .gb-up {
   top: 0;
-  left: 50px;
-  width: 54px;
-  height: 52px;
+  left: 45px;
+  width: 46px;
+  height: 46px;
   border-radius: 8px 8px 0 0;
 }
 
 .gb-down {
   bottom: 0;
-  left: 50px;
-  width: 54px;
-  height: 52px;
+  left: 45px;
+  width: 46px;
+  height: 46px;
   border-radius: 0 0 8px 8px;
 }
 
 .gb-left {
-  top: 50px;
+  top: 45px;
   left: 0;
-  width: 52px;
-  height: 54px;
+  width: 46px;
+  height: 46px;
   border-radius: 8px 0 0 8px;
 }
 
 .gb-right {
-  top: 50px;
+  top: 45px;
   right: 0;
-  width: 52px;
-  height: 54px;
+  width: 46px;
+  height: 46px;
   border-radius: 0 8px 8px 0;
 }
 
@@ -1061,10 +1061,10 @@ body.gameboy-mode .gameboy-deck {
 
 .gb-btn-group {
   display: flex;
-  gap: 20px;
-  transform: rotate(-18deg);
+  gap: 16px;
+  transform: rotate(-16deg);
   background: rgba(14, 18, 36, 0.85);
-  padding: 12px 18px;
+  padding: 8px 14px;
   border-radius: 46px;
   border: 1px solid rgba(56, 70, 130, 0.6);
   box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6), 0 8px 24px rgba(0, 0, 0, 0.5);
@@ -1074,17 +1074,17 @@ body.gameboy-mode .gameboy-deck {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   position: relative;
 }
 
 .gb-action-btn {
-  width: 68px;
-  height: 68px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   border: none;
   font-family: inherit;
-  font-size: 26px;
+  font-size: 23px;
   font-weight: 900;
   cursor: pointer;
   touch-action: none;
@@ -2636,12 +2636,26 @@ body.gameboy-mode .gameboy-deck {
   background: #060a17;
   border-top: 2px solid #1a2748;
   border-bottom: 2px solid #151f38;
-  padding: 4px 8px 6px;
+  padding: 3px 8px 5px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 3px;
   z-index: 20;
+  max-height: 72px;
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, padding 0.25s ease, border-color 0.2s ease;
+}
+
+.gb-touchbar-container.collapsed {
+  max-height: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 .gb-touchbar-header {
@@ -2660,22 +2674,44 @@ body.gameboy-mode .gameboy-deck {
 
 .touchbar-active-name {
   color: #ffd25e;
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 900;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 60%;
+  max-width: 55%;
+}
+
+.gb-touchbar-close {
+  background: #111a36;
+  border: 1px solid #2e3d64;
+  color: #8fa5d8;
+  border-radius: 4px;
+  width: 17px;
+  height: 17px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 900;
+  cursor: pointer;
+  padding: 0;
+  touch-action: manipulation;
+}
+
+.gb-touchbar-close:active {
+  background: #2e3d64;
+  color: #fff;
 }
 
 .gb-touchbar-track {
   display: flex;
-  gap: 6px;
+  gap: 5px;
   overflow-x: auto;
   overflow-y: hidden;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
-  padding: 2px 2px 4px;
+  padding: 1px 2px 3px;
   scrollbar-width: none;
 }
 .gb-touchbar-track::-webkit-scrollbar {
@@ -2687,16 +2723,16 @@ body.gameboy-mode .gameboy-deck {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 1px;
   background: #0f162e;
   border: 1.5px solid #23335e;
-  border-radius: 8px;
-  padding: 4px 6px;
+  border-radius: 7px;
+  padding: 3px 5px;
   cursor: pointer;
   user-select: none;
   touch-action: manipulation;
   transition: transform 0.1s ease, border-color 0.15s ease, background 0.15s ease;
-  min-width: 44px;
+  min-width: 40px;
 }
 
 .gb-touch-chip:active {
@@ -2706,31 +2742,31 @@ body.gameboy-mode .gameboy-deck {
 .gb-touch-chip.active {
   border-color: #ffd25e;
   background: linear-gradient(180deg, #2c220c 0%, #151004 100%);
-  box-shadow: 0 0 10px rgba(255, 210, 94, 0.45);
-  transform: translateY(-2px);
+  box-shadow: 0 0 8px rgba(255, 210, 94, 0.45);
+  transform: translateY(-1px);
 }
 
 .touch-chip-avatar {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .touch-chip-img {
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   object-fit: contain;
   image-rendering: pixelated;
 }
 
 .touch-chip-emoji {
-  font-size: 19px;
+  font-size: 16px;
 }
 
 .touch-chip-name {
-  font-size: 8px;
+  font-size: 7.5px;
   font-weight: 900;
   color: #c0d0f5;
   white-space: nowrap;
