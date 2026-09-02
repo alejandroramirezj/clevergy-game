@@ -27,12 +27,25 @@ export function initWorldMap({ onSelectWorld, onOpenTeam }) {
 
   let selectedWorld = null;
 
+  function updateStageBanner(w) {
+    const badge = document.getElementById("stageBannerBadge");
+    const title = document.getElementById("stageBannerTitle");
+    const sub = document.getElementById("stageBannerSub");
+    if (badge) badge.textContent = `MUNDO ${w.id}`;
+    if (title) {
+      title.textContent = w.name.toUpperCase();
+      title.style.color = w.accentColor || "#ffc857";
+    }
+    if (sub) sub.textContent = `${(w.subtitle || "").toUpperCase()} · JEFE: ${w.bossName || ""}`;
+  }
+
   function renderMap() {
     const progress = loadWorldProgress();
     const completedCount = progress.completed.length;
 
-    if (mapProgressBadge) {
-      mapProgressBadge.innerHTML = `⭐ <span>${completedCount}/${WORLDS.length}</span> MUNDOS DOMINADOS`;
+    const mapProgressTxt = document.getElementById("mapProgressTxt");
+    if (mapProgressTxt) {
+      mapProgressTxt.textContent = `${completedCount}/${WORLDS.length} MUNDOS`;
     }
 
     // Update active hero display on map
@@ -48,16 +61,27 @@ export function initWorldMap({ onSelectWorld, onOpenTeam }) {
     if (!mapNodesContainer) return;
     mapNodesContainer.innerHTML = "";
 
+    const isPortrait = window.innerHeight > window.innerWidth;
+    
+    // Set default selected world if none selected yet
+    if (!selectedWorld) {
+      const defaultId = progress.currentWorldId || 1;
+      selectedWorld = WORLDS.find(w => w.id === defaultId) || WORLDS[0];
+    }
+    updateStageBanner(selectedWorld);
+
     WORLDS.forEach((w, idx) => {
       const unlocked = isWorldUnlocked(w.id, progress);
       const isCompleted = Boolean(progress && progress.completed && progress.completed.includes(w.id));
-      const isCurrent = Boolean(progress && progress.currentWorldId === w.id);
+      const isSelected = selectedWorld && selectedWorld.id === w.id;
       const rank = (progress && progress.ranks && progress.ranks[w.id]) || "";
 
+      const coords = (isPortrait && w.mapCoordsPortrait) ? w.mapCoordsPortrait : w.mapCoords;
+
       const node = document.createElement("div");
-      node.className = `map-node ${unlocked ? "unlocked" : "locked"} ${isCompleted ? "completed" : ""} ${isCurrent ? "current" : ""}`;
-      node.style.left = `${w.mapCoords.x}%`;
-      node.style.top = `${w.mapCoords.y}%`;
+      node.className = `map-node ${unlocked ? "unlocked" : "locked"} ${isCompleted ? "completed" : ""} ${isSelected ? "selected" : ""}`;
+      node.style.left = `${coords.x}%`;
+      node.style.top = `${coords.y}%`;
       node.dataset.worldId = w.id;
 
       let badgeHtml = "";
@@ -69,12 +93,17 @@ export function initWorldMap({ onSelectWorld, onOpenTeam }) {
         badgeHtml = `<div class="node-status-pulse" title="Disponible"></div>`;
       }
 
-      // If this is where the player is resting
+      // If this is the currently selected world, render the hero standing on the node!
       let heroSpriteHtml = "";
-      if (isCurrent && unlocked) {
+      if (isSelected && unlocked) {
         const av = getCharacterAvatar(curChar.id);
         if (av) {
-          heroSpriteHtml = `<img src="${av}" class="map-player-pin" alt="Jugador">`;
+          heroSpriteHtml = `
+            <div class="map-hero-token">
+              <div class="map-hero-disc"></div>
+              <img src="${av}" class="map-player-pin" alt="${curChar.name}">
+            </div>
+          `;
         }
       }
 
@@ -82,23 +111,33 @@ export function initWorldMap({ onSelectWorld, onOpenTeam }) {
         <div class="node-aura"></div>
         <div class="node-circle" style="border-color:${w.accentColor}">
           <span class="node-icon">${w.iconEmoji}</span>
+          <span class="node-stage-num">${w.id}</span>
           ${badgeHtml}
           ${heroSpriteHtml}
         </div>
         <div class="node-label">
-          <span class="node-num">MUNDO ${w.id}</span>
           <span class="node-name">${w.name}</span>
         </div>
       `;
 
       node.addEventListener("click", () => {
         if (!unlocked) {
-          sfx(220, 0.12, "sawtooth");
+          try { sfx(220, 0.12, "sawtooth"); } catch (e) {}
           alert(`🔒 ¡Mundo bloqueado! Primero debes superar el Mundo ${w.id - 1}.`);
           return;
         }
-        // If clicking already selected world, or first click, open card
-        openWorldCard(w, progress);
+
+        // If clicking already selected node, play directly!
+        if (selectedWorld && selectedWorld.id === w.id) {
+          hideWorldMap();
+          try { sfx.coin(); } catch (e) {}
+          if (onSelectWorld) onSelectWorld(w.id);
+          return;
+        }
+
+        selectedWorld = w;
+        try { sfx(660, 0.08, "sine"); } catch (e) {}
+        renderMap();
       });
 
       mapNodesContainer.appendChild(node);
@@ -107,7 +146,8 @@ export function initWorldMap({ onSelectWorld, onOpenTeam }) {
 
   function openWorldCard(w, progress) {
     selectedWorld = w;
-    sfx(600, 0.08, "square");
+    try { sfx(600, 0.08, "square"); } catch (e) {}
+    updateStageBanner(w);
 
     if (wcIcon) wcIcon.textContent = w.iconEmoji || "🎯";
     if (wcTitle) {
@@ -137,11 +177,22 @@ export function initWorldMap({ onSelectWorld, onOpenTeam }) {
 
   function closeWorldCard() {
     if (worldCardModal) worldCardModal.classList.add("hidden");
-    selectedWorld = null;
   }
 
   if (btnCloseWc) {
     btnCloseWc.addEventListener("click", closeWorldCard);
+  }
+
+  const btnPlayMapDirect = document.getElementById("btnPlayMapDirect");
+  if (btnPlayMapDirect) {
+    btnPlayMapDirect.addEventListener("click", () => {
+      const worldId = selectedWorld ? selectedWorld.id : 1;
+      hideWorldMap();
+      try { sfx.coin(); } catch (e) {}
+      if (onSelectWorld) {
+        onSelectWorld(worldId);
+      }
+    });
   }
 
   if (btnPlayWorld) {
@@ -150,7 +201,7 @@ export function initWorldMap({ onSelectWorld, onOpenTeam }) {
       const worldId = selectedWorld.id;
       closeWorldCard();
       hideWorldMap();
-      sfx(880, 0.15, "triangle");
+      try { sfx(880, 0.15, "triangle"); } catch (e) {}
       if (onSelectWorld) {
         onSelectWorld(worldId);
       }
@@ -168,6 +219,12 @@ export function initWorldMap({ onSelectWorld, onOpenTeam }) {
       hideWorldMap();
     });
   }
+
+  window.addEventListener("resize", () => {
+    if (GameState.worldMapOpen) {
+      renderMap();
+    }
+  });
 
   function showWorldMap() {
     renderMap();

@@ -1223,141 +1223,160 @@ body.gameboy-mode .gameboy-deck {
 }
 
 /* =========================================================================
-   WORLD MAP (MAPA DE AVENTURA - 5 MUNDOS)
+   WORLD MAP (MAPA DE AVENTURA ESTILO ANGRY BIRDS / SPRINT ODYSSEY)
    ========================================================================= */
 
 .world-map-overlay {
-  background: radial-gradient(circle at 50% 30%, #151a36 0%, #080b16 100%) !important;
-  display: flex;
-  flex-direction: column;
-  padding: 12px 16px 20px;
-  box-sizing: border-box;
-  overflow: hidden;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: radial-gradient(circle at 50% 15%, #19254c 0%, #0c1226 60%, #050814 100%) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: max(16px, env(safe-area-inset-top, 24px)) 16px max(14px, env(safe-area-inset-bottom, 20px)) !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
   z-index: 50;
+  gap: 6px;
 }
 
+/* Map Header */
 .map-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  max-width: 960px;
-  margin: 0 auto 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--panel-border);
-  gap: 10px;
-  flex-wrap: wrap;
+  max-width: 860px;
+  margin: 0 auto;
+  padding-bottom: 4px;
+  z-index: 30;
 }
 
-.map-brand {
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-}
-
-.map-logo {
-  font-size: clamp(14px, 2.5vw, 20px);
-  font-weight: 900;
-  color: #fff;
-  letter-spacing: 0.08em;
-  text-shadow: 0 0 10px rgba(89, 216, 255, 0.4);
-}
-
-.map-sub {
-  font-size: 10px;
-  color: var(--cyan);
-  letter-spacing: 0.12em;
-  font-weight: bold;
-}
-
-.map-header-actions {
+.map-header-left,
+.map-header-right {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
 .map-badge-progress {
-  background: rgba(255, 200, 87, 0.15);
-  border: 1px solid rgba(255, 200, 87, 0.4);
-  color: var(--amber);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 210, 94, 0.15);
+  border: 1px solid rgba(255, 210, 94, 0.5);
+  color: #ffd25e;
   font-size: 11px;
   font-weight: 900;
-  padding: 5px 10px;
-  border-radius: 8px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.08em;
 }
 
 .map-hero-pill {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: #18203d;
-  border: 1px solid var(--panel-border);
-  padding: 3px 8px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: bold;
+  gap: 8px;
+  background: rgba(18, 26, 56, 0.9);
+  border: 1px solid #3c4b82;
+  padding: 4px 12px;
+  border-radius: 24px;
+  font-size: 12px;
+  font-weight: 900;
   color: #fff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
 }
 
 .map-hero-avatar {
-  width: 26px;
-  height: 26px;
+  width: 28px;
+  height: 28px;
   object-fit: contain;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
 }
 
 .btn-micro {
-  background: #252e50;
-  border: 1px solid #3c4b82;
-  color: var(--cyan);
+  background: #253360;
+  border: 1px solid #59d8ff;
+  color: #59d8ff;
   font-size: 9px;
   font-weight: 900;
-  padding: 3px 6px;
-  border-radius: 6px;
+  padding: 3px 8px;
+  border-radius: 12px;
   cursor: pointer;
+  letter-spacing: 0.06em;
+  transition: background 0.15s, color 0.15s;
 }
 
-.btn-micro:hover {
-  background: var(--cyan);
-  color: #0b0e1a;
+.btn-micro:active {
+  background: #59d8ff;
+  color: #080c1a;
 }
 
-.btn-icon {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid var(--panel-border);
-  color: #fff;
-  font-size: 14px;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  cursor: pointer;
+/* STAGE BANNER (Like Image 2: "MESETA DE COBALTO / COLINAS PLUMOSAS") */
+.map-stage-banner {
   display: flex;
-  align-items: center;
   justify-content: center;
-  transition: transform 0.1s, background 0.15s;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  z-index: 25;
+  pointer-events: none;
 }
 
-.btn-icon:hover {
-  background: var(--red);
-  transform: scale(1.1);
+.stage-banner-wood {
+  background: linear-gradient(180deg, rgba(28, 38, 76, 0.92) 0%, rgba(12, 17, 38, 0.96) 100%);
+  border: 2px solid #59d8ff;
+  border-radius: 14px;
+  padding: 6px 20px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75), 0 0 18px rgba(89, 216, 255, 0.3);
+  animation: bannerBob 3s ease-in-out infinite alternate;
 }
 
-/* Map Viewport & Trail */
+@keyframes bannerBob {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-3px); }
+}
+
+.stage-banner-badge {
+  font-size: 9.5px;
+  font-weight: 900;
+  color: #ffd25e;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.stage-banner-title {
+  font-size: clamp(16px, 4.2vw, 22px);
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 0.08em;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  margin: 1px 0;
+}
+
+.stage-banner-sub {
+  font-size: 10px;
+  color: #8fa3d9;
+  letter-spacing: 0.06em;
+}
+
+/* MAP VIEWPORT & FULL-SCREEN ADVENTURE TRAIL */
 .map-viewport {
   position: relative;
   flex: 1;
   width: 100%;
-  max-width: 960px;
+  max-width: 860px;
   margin: 0 auto;
-  min-height: 380px;
   background: 
-    radial-gradient(ellipse at bottom, #11172e 0%, #070a14 100%),
-    repeating-linear-gradient(0deg, rgba(89, 216, 255, 0.02) 0px, rgba(89, 216, 255, 0.02) 1px, transparent 1px, transparent 20px),
-    repeating-linear-gradient(90deg, rgba(89, 216, 255, 0.02) 0px, rgba(89, 216, 255, 0.02) 1px, transparent 1px, transparent 20px);
-  border: 2px solid var(--panel-border);
-  border-radius: 16px;
-  box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8), 0 8px 30px rgba(0, 0, 0, 0.6);
+    radial-gradient(ellipse at center, rgba(24, 35, 74, 0.6) 0%, rgba(8, 11, 24, 0.92) 100%),
+    repeating-linear-gradient(0deg, rgba(89, 216, 255, 0.015) 0px, rgba(89, 216, 255, 0.015) 1px, transparent 1px, transparent 24px),
+    repeating-linear-gradient(90deg, rgba(89, 216, 255, 0.015) 0px, rgba(89, 216, 255, 0.015) 1px, transparent 1px, transparent 24px);
+  border: 2px solid #2c3a6b;
+  border-radius: 20px;
+  box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.85), 0 10px 30px rgba(0, 0, 0, 0.7);
   overflow: hidden;
 }
 
@@ -1369,20 +1388,28 @@ body.gameboy-mode .gameboy-deck {
   pointer-events: none;
 }
 
+.landscape-trail {
+  display: block;
+}
+
+.portrait-trail {
+  display: none;
+}
+
 .trail-line-bg {
   fill: none;
-  stroke: rgba(14, 18, 38, 0.9);
-  stroke-width: 16px;
+  stroke: rgba(16, 22, 48, 0.95);
+  stroke-width: 22px;
   stroke-linecap: round;
 }
 
 .trail-line-dash {
   fill: none;
-  stroke: var(--cyan);
-  stroke-width: 5px;
-  stroke-dasharray: 10 14;
+  stroke: #ffd25e;
+  stroke-width: 7px;
+  stroke-dasharray: 12 16;
   stroke-linecap: round;
-  filter: drop-shadow(0 0 8px var(--cyan));
+  filter: drop-shadow(0 0 10px rgba(255, 210, 94, 0.7));
 }
 
 .map-nodes-container {
@@ -1392,7 +1419,7 @@ body.gameboy-mode .gameboy-deck {
   height: 100%;
 }
 
-/* Individual Nodes */
+/* Individual Stage Nodes */
 .map-node {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -1402,62 +1429,162 @@ body.gameboy-mode .gameboy-deck {
   cursor: pointer;
   z-index: 10;
   transition: transform 0.15s ease;
+  user-select: none;
+  touch-action: none;
 }
 
-.map-node:hover {
-  transform: translate(-50%, -50%) scale(1.12);
-  z-index: 20;
+.map-node:hover,
+.map-node.selected {
+  transform: translate(-50%, -50%) scale(1.14);
+  z-index: 25;
 }
 
 .node-circle {
   position: relative;
-  width: 60px;
-  height: 60px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
-  background: #141b36;
+  background: linear-gradient(145deg, #1b254a 0%, #0d1226 100%);
   border: 3px solid #59d8ff;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.7), inset 0 2px 6px rgba(255, 255, 255, 0.15);
-  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), inset 0 2px 6px rgba(255, 255, 255, 0.2);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.map-node.selected .node-circle {
+  border-color: #ffd25e !important;
+  box-shadow: 0 0 24px rgba(255, 210, 94, 0.8), 0 8px 24px rgba(0, 0, 0, 0.9), inset 0 2px 6px rgba(255, 255, 255, 0.3);
 }
 
 .node-icon {
-  font-size: 28px;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.7));
+  font-size: 26px;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.8));
+}
+
+/* Stage Number Badge (1, 2, 3, 4, 5, 6) */
+.node-stage-num {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffd25e;
+  color: #0a0d1c;
+  font-size: 11px;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #0a0d1c;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
 }
 
 .node-label {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 6px;
-  background: rgba(11, 14, 28, 0.85);
-  border: 1px solid rgba(89, 216, 255, 0.3);
-  padding: 3px 8px;
+  margin-top: 4px;
+  background: rgba(10, 14, 30, 0.9);
+  border: 1px solid rgba(89, 216, 255, 0.35);
+  padding: 2px 8px;
   border-radius: 6px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7);
   pointer-events: none;
   white-space: nowrap;
 }
 
-.node-num {
-  font-size: 8px;
-  font-weight: 900;
-  color: var(--cyan);
-  letter-spacing: 0.1em;
+.map-node.selected .node-label {
+  border-color: #ffd25e;
+  background: rgba(22, 28, 56, 0.95);
 }
 
 .node-name {
-  font-size: 11px;
-  font-weight: bold;
-  color: #fff;
+  font-size: 10.5px;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: 0.04em;
 }
 
-/* Locked node */
+/* Hero Player Token on Selected Node (like Red in Image 2) */
+.map-hero-token {
+  position: absolute;
+  top: -38px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  animation: heroBounce 1.2s ease-in-out infinite alternate;
+}
+
+.map-hero-disc {
+  position: absolute;
+  bottom: -4px;
+  width: 36px;
+  height: 10px;
+  background: radial-gradient(ellipse at center, rgba(255, 210, 94, 0.8) 0%, rgba(255, 210, 94, 0) 70%);
+  border-radius: 50%;
+  filter: blur(1px);
+}
+
+.map-player-pin {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.85));
+}
+
+@keyframes heroBounce {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-7px); }
+}
+
+/* Status Badges */
+.node-status-star {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  background: #241c09;
+  border: 1px solid #ffd25e;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+}
+
+.node-status-lock {
+  position: absolute;
+  top: -6px;
+  left: -6px;
+  background: #1c0e12;
+  border: 1px solid var(--red);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+}
+
+.node-status-pulse {
+  position: absolute;
+  inset: -6px;
+  border: 2px solid #59d8ff;
+  border-radius: 50%;
+  animation: pulseRing 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+  pointer-events: none;
+}
+
+/* Locked Node */
 .map-node.locked {
-  filter: grayscale(0.8) opacity(0.65);
+  filter: grayscale(0.8) opacity(0.6);
   cursor: not-allowed;
 }
 
@@ -1466,198 +1593,120 @@ body.gameboy-mode .gameboy-deck {
   background: #0d1122;
 }
 
-.node-status-lock {
-  position: absolute;
-  bottom: -4px;
-  right: -4px;
-  background: #241416;
-  border: 1px solid var(--red);
+/* BOTTOM ACTION DOCK (Like Image 2: Round Back Button + Big Golden ¡JUGAR! Button) */
+.map-bottom-dock {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 6px;
+  z-index: 30;
+}
+
+/* Round Back Button (Orange with curved arrow like Image 2) */
+.btn-round-back {
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
-  width: 22px;
-  height: 22px;
+  background: linear-gradient(145deg, #ff9500 0%, #d46d00 100%);
+  border: 3px solid #ffe28a;
+  box-shadow: 0 5px 0 #8f4600, 0 8px 18px rgba(0, 0, 0, 0.6);
+  color: #ffffff;
+  font-size: 24px;
+  font-weight: 900;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+  touch-action: none;
+  transition: transform 0.08s ease, filter 0.1s ease;
 }
 
-/* Completed node */
-.map-node.completed .node-circle {
-  border-color: var(--amber) !important;
-  box-shadow: 0 0 16px rgba(255, 200, 87, 0.5), inset 0 2px 6px rgba(255, 200, 87, 0.3);
+.btn-round-back:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 #8f4600;
+  filter: brightness(1.2);
 }
 
-.node-status-star {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  background: #2b220d;
-  border: 1px solid var(--amber);
-  border-radius: 12px;
-  padding: 1px 5px;
+/* Big Golden Play Button (Like Image 2) */
+.btn-play-golden {
+  min-width: 190px;
+  height: 56px;
+  border-radius: 28px;
+  background: linear-gradient(180deg, #ffd700 0%, #ff9900 100%);
+  border: 3px solid #fff5cc;
+  box-shadow: 0 6px 0 #b35900, 0 10px 24px rgba(255, 170, 0, 0.5);
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 2px;
-  font-size: 10px;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 26px;
+  touch-action: none;
+  transition: transform 0.08s ease, filter 0.1s ease;
+  animation: goldenPulse 2s infinite ease-in-out;
+}
+
+@keyframes goldenPulse {
+  0% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(255, 170, 0, 0.4)); }
+  50% { transform: scale(1.02); filter: drop-shadow(0 0 18px rgba(255, 200, 0, 0.7)); }
+  100% { transform: scale(1); filter: drop-shadow(0 0 8px rgba(255, 170, 0, 0.4)); }
+}
+
+.btn-play-golden:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #b35900;
+  filter: brightness(1.2);
+}
+
+.btn-play-golden-txt {
+  font-size: 22px;
   font-weight: 900;
-  color: var(--amber);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.8);
+  color: #ffffff;
+  text-shadow: 0 2px 0 #994400, 0 0 10px rgba(0, 0, 0, 0.5);
+  letter-spacing: 0.08em;
+  font-family: inherit;
 }
 
-.node-rank {
-  font-size: 9px;
-  color: #fff;
+.btn-play-golden-hand {
+  font-size: 22px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+  animation: handBounce 1.2s infinite alternate;
 }
 
-/* Current active player pin */
-.map-player-pin {
-  position: absolute;
-  top: -38px;
-  width: 38px;
-  height: 38px;
-  object-fit: contain;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.8));
-  animation: pinBounce 1.2s ease-in-out infinite alternate;
-}
-
-@keyframes pinBounce {
+@keyframes handBounce {
   0% { transform: translateY(0); }
-  100% { transform: translateY(-8px); }
+  100% { transform: translateY(-4px); }
 }
 
-.node-status-pulse {
-  position: absolute;
-  inset: -6px;
-  border: 2px solid var(--cyan);
-  border-radius: 50%;
-  animation: pulseRing 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
-  pointer-events: none;
+.dock-spacer {
+  width: 56px;
+  height: 56px;
+  visibility: hidden;
 }
 
-@keyframes pulseRing {
-  0% { transform: scale(0.95); opacity: 1; }
-  100% { transform: scale(1.35); opacity: 0; }
-}
+/* =========================================================================
+   RESPONSIVE ADVENTURE TRAIL: PORTRAIT MOBILE (S-CURVE VERTICAL)
+   ========================================================================= */
 
-/* World Detail Modal */
-.world-card-modal {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 90%;
-  max-width: 440px;
-  background: #131936;
-  border: 2px solid var(--cyan);
-  border-radius: 14px;
-  padding: 20px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.9), 0 0 24px rgba(89, 216, 255, 0.3);
-  z-index: 100;
-  animation: modalPop 0.2s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-}
-
-.wc-top {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.wc-emoji {
-  font-size: 40px;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6));
-}
-
-.wc-headings {
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-}
-
-.wc-title {
-  font-size: 20px;
-  font-weight: 900;
-  color: #fff;
-  margin: 0;
-  letter-spacing: 0.05em;
-}
-
-.wc-sub {
-  font-size: 11px;
-  color: var(--cyan);
-  font-weight: bold;
-  margin-top: 2px;
-}
-
-.wc-desc {
-  font-size: 12px;
-  color: #c4d1f2;
-  line-height: 1.5;
-  margin: 10px 0 14px;
-  text-align: left;
-}
-
-.wc-meta {
-  background: rgba(9, 12, 26, 0.8);
-  border: 1px solid var(--panel-border);
-  padding: 10px 14px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  text-align: left;
-}
-
-.wc-boss {
-  font-size: 11px;
-  font-weight: 900;
-  color: #ff6b81;
-}
-
-.wc-record {
-  font-size: 11px;
-  color: #a2b4e0;
-}
-
-.wc-done {
-  color: var(--amber);
-  font-weight: 900;
-}
-
-.wc-pending {
-  color: #7b88aa;
-}
-
-.wc-actions {
-  display: flex;
-  gap: 12px;
-}
-
-@media (max-width: 768px) {
-  .world-map-overlay {
-    padding: 8px 8px 12px;
-    justify-content: flex-start;
+@media (max-width: 768px), (max-aspect-ratio: 1/1) {
+  .landscape-trail {
+    display: none !important;
   }
-  .map-header {
-    margin-bottom: 6px;
-    padding-bottom: 6px;
-    gap: 6px;
+  .portrait-trail {
+    display: block !important;
   }
   .map-viewport {
-    width: 100%;
-    aspect-ratio: 16 / 10;
-    min-height: 280px;
-    max-height: 62vh;
-    flex: none;
-    margin: 4px auto 0;
-    border-radius: 12px;
+    border-radius: 14px;
   }
   .map-node {
-    transform: translate(-50%, -50%) scale(0.9);
+    transform: translate(-50%, -50%) scale(1);
+  }
+  .map-node:hover,
+  .map-node.selected {
+    transform: translate(-50%, -50%) scale(1.12);
   }
 }
 

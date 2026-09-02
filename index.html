@@ -163,35 +163,65 @@
     <button class="btn alt" id="teamClose">SELECCIONAR Y CERRAR (T)</button>
   </div>
 
-  <!-- WORLD MAP (MAPA DE AVENTURA - 5 MUNDOS) -->
+  <!-- WORLD MAP (MAPA DE AVENTURA ESTILO ANGRY BIRDS / SPRINT ODYSSEY) -->
   <div id="worldMapOv" class="overlay hidden world-map-overlay">
+    <!-- TOP HEADER (CON RESPETO AL NOTCH / SAFE AREA) -->
     <div class="map-header">
-      <div class="map-brand">
-        <span class="map-logo">RETREAT: THE LEGEND OF THE TEAM</span>
-        <span class="map-sub">MAPA DE AVENTURA · 6 MUNDOS</span>
+      <div class="map-header-left">
+        <div id="mapProgressBadge" class="map-badge-progress">
+          <span class="star-icon">⭐</span>
+          <span id="mapProgressTxt">0/6 MUNDOS</span>
+        </div>
       </div>
-      <div class="map-header-actions">
-        <div id="mapProgressBadge" class="map-badge-progress">⭐ 0/6 MUNDOS DOMINADOS</div>
+
+      <div class="map-header-right">
         <div id="mapHeroBadge" class="map-hero-pill">
           <img id="mapHeroImg" src="/sprites/alejandro/avatar.png" class="map-hero-avatar" alt="Héroe">
           <span id="mapHeroName">ALEJANDRO R.</span>
-          <button id="btnMapTeam" class="btn-micro">👥 EQUIPO</button>
+          <button id="btnMapTeam" class="btn-micro" title="Cambiar Compañero">👥 EQUIPO</button>
         </div>
-        <button id="btnCloseMap" class="btn-icon" title="Volver al menú">✕</button>
       </div>
     </div>
 
+    <!-- CURRENT SELECTED STAGE FLOATING BANNER (Like "MESETA DE COBALTO / COLINAS PLUMOSAS") -->
+    <div class="map-stage-banner" id="mapStageBanner">
+      <div class="stage-banner-wood">
+        <div class="stage-banner-badge" id="stageBannerBadge">MUNDO 1</div>
+        <div class="stage-banner-title" id="stageBannerTitle">THE OFFICE</div>
+        <div class="stage-banner-sub" id="stageBannerSub">OFICINAS CENTRALES · JEFE: EMAIL CHAIN</div>
+      </div>
+    </div>
+
+    <!-- MAP VIEWPORT (FULL-BLEED WINDING TRAIL) -->
     <div class="map-viewport">
       <!-- Background SVG Trail connecting the 6 nodes -->
-      <svg class="map-trail-svg" viewBox="0 0 1000 600" preserveAspectRatio="none">
+      <svg class="map-trail-svg landscape-trail" viewBox="0 0 1000 600" preserveAspectRatio="none">
         <path class="trail-line-bg" d="M 120 384 Q 200 240 280 192 T 480 348 T 700 180 T 880 312 Q 720 468 500 468 Q 280 468 120 384" />
         <path class="trail-line-dash" d="M 120 384 Q 200 240 280 192 T 480 348 T 700 180 T 880 312 Q 720 468 500 468 Q 280 468 120 384" />
+      </svg>
+      <svg class="map-trail-svg portrait-trail" viewBox="0 0 400 800" preserveAspectRatio="none">
+        <path class="trail-line-bg" d="M 104 672 C 104 600, 296 630, 296 560 C 296 490, 104 500, 104 432 C 104 360, 296 370, 296 304 C 296 230, 112 240, 112 176 C 112 120, 260 130, 260 72" />
+        <path class="trail-line-dash" d="M 104 672 C 104 600, 296 630, 296 560 C 296 490, 104 500, 104 432 C 104 360, 296 370, 296 304 C 296 230, 112 240, 112 176 C 112 120, 260 130, 260 72" />
       </svg>
       <!-- Interactive Nodes Container -->
       <div id="mapNodesContainer" class="map-nodes-container"></div>
     </div>
 
-    <!-- World Detail Modal -->
+    <!-- BOTTOM FLOATING ACTION DOCK (Like Image 2: Round Back Button + Big Golden ¡JUGAR! Button) -->
+    <div class="map-bottom-dock">
+      <button id="btnCloseMap" class="btn-round-back" aria-label="Volver al Menú" title="Volver">
+        <span>↩</span>
+      </button>
+
+      <button id="btnPlayMapDirect" class="btn-play-golden" aria-label="Jugar Mundo">
+        <span class="btn-play-golden-txt">¡JUGAR!</span>
+        <span class="btn-play-golden-hand">👆</span>
+      </button>
+
+      <div class="dock-spacer"></div>
+    </div>
+
+    <!-- World Detail Modal (Optional) -->
     <div id="worldCardModal" class="world-card-modal hidden">
       <div class="wc-content">
         <div class="wc-top">
