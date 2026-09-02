@@ -130,7 +130,7 @@ export function initWorldMap({ onSelectWorld, onOpenTeam }) {
         // If clicking already selected node, play directly!
         if (selectedWorld && selectedWorld.id === w.id) {
           hideWorldMap();
-          try { sfx.coin(); } catch (e) {}
+          try { sfx(880, 0.1, "triangle"); } catch (e) {}
           if (onSelectWorld) onSelectWorld(w.id);
           return;
         }
@@ -185,10 +185,11 @@ export function initWorldMap({ onSelectWorld, onOpenTeam }) {
 
   const btnPlayMapDirect = document.getElementById("btnPlayMapDirect");
   if (btnPlayMapDirect) {
-    btnPlayMapDirect.addEventListener("click", () => {
-      const worldId = selectedWorld ? selectedWorld.id : 1;
+    btnPlayMapDirect.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const worldId = (selectedWorld && selectedWorld.id) ? selectedWorld.id : 1;
       hideWorldMap();
-      try { sfx.coin(); } catch (e) {}
+      try { sfx(880, 0.1, "triangle"); } catch (err) {}
       if (onSelectWorld) {
         onSelectWorld(worldId);
       }
@@ -217,6 +218,8 @@ export function initWorldMap({ onSelectWorld, onOpenTeam }) {
   if (btnCloseMap) {
     btnCloseMap.addEventListener("click", () => {
       hideWorldMap();
+      const menuOv = document.getElementById("menuOv");
+      if (menuOv) menuOv.classList.remove("hidden");
     });
   }
 

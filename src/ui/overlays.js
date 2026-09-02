@@ -138,13 +138,13 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     e.stopPropagation();
     switchChar(-1);
     updateSpotlight();
-    try { sfx.coin(); } catch (err) {}
+    try { sfx(880, 0.08); } catch (err) {}
   });
   btnHeroNext?.addEventListener("click", (e) => {
     e.stopPropagation();
     switchChar(1);
     updateSpotlight();
-    try { sfx.coin(); } catch (err) {}
+    try { sfx(880, 0.08); } catch (err) {}
   });
 
   // Leaderboard Modal logic (Cloudflare D1)
