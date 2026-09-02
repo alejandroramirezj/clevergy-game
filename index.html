@@ -473,15 +473,6 @@
 
   <!-- GAME BOY CONTROLLER DECK (VERTICAL / PORTRAIT) -->
   <div id="gameboyDeck" class="gameboy-deck">
-    <!-- TOUCH BAR DE 18 COMPAÑEROS (ENCIMA DE LA CRUCETA) -->
-    <div class="gb-touchbar-container" id="gbTouchBarContainer">
-      <div class="gb-touchbar-header">
-        <span class="touchbar-label">👥 TOCA PARA CAMBIAR:</span>
-        <span class="touchbar-active-name" id="touchbarActiveName">ALEJANDRO R.</span>
-      </div>
-      <div class="gb-touchbar-track" id="gbTouchBarTrack"></div>
-    </div>
-
     <!-- MAIN CONTROLS ROW: D-PAD LEFT, ACTIONS RIGHT -->
     <div class="gb-controls-area">
       <!-- D-PAD (CRUCETA) -->
@@ -500,17 +491,17 @@
         <div class="gb-btn-group">
           <div class="gb-action-col">
             <button class="gb-action-btn gb-btn-b" id="gbB" aria-label="Habilidad">B</button>
-            <span class="gb-action-label">HABILIDAD</span>
+            <span class="gb-action-label" id="gbLabelB">TREPAR</span>
           </div>
           <div class="gb-action-col">
             <button class="gb-action-btn gb-btn-a" id="gbA" aria-label="Salto">A</button>
-            <span class="gb-action-label">SALTO</span>
+            <span class="gb-action-label" id="gbLabelA">SALTAR</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Bottom Row: MAPA, EQUIPO & CAMBIO + Speaker Grill -->
+    <!-- Bottom Row: MAPA & EQUIPO (Actions secundarias de menor protagonismo) -->
     <div class="gb-bottom-area">
       <div class="gb-system-btns">
         <div class="gb-pill-wrapper">
@@ -520,10 +511,6 @@
         <div class="gb-pill-wrapper">
           <button class="gb-pill-btn" id="gbSelect" aria-label="Equipo">EQUIPO</button>
           <span class="gb-pill-label">👥 EQUIPO</span>
-        </div>
-        <div class="gb-pill-wrapper">
-          <button class="gb-pill-btn" id="gbStart" aria-label="Cambio">CAMBIO</button>
-          <span class="gb-pill-label">⇄ CAMBIO</span>
         </div>
       </div>
 

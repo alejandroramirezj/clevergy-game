@@ -8,7 +8,7 @@ import { abilK } from "../engine/input.js";
 
 const WORLD_SIGNS = {
   1: [
-    { x: 3, y: 14, t: "🏢 THE OFFICE — OFICINAS CENTRALES" },
+    { x: 3, y: 10.5, t: "🏢 THE OFFICE" },
     { x: 18, y: 14, t: "← mover · ↑ saltar" },
     { x: 44, y: 7, t: "FIREWALL DE RED: ¡CUIDADO!" },
     { x: 60, y: 14, t: "SUBE POR LOS ESCRITORIOS" },
@@ -819,115 +819,126 @@ function drawHUD(cx) {
 
   const isSmall = W < 540;
 
-  // Hearts
-  const heartSpacing = isSmall ? 18 : 26;
-  const heartTop = isSmall ? 10 : 14;
+  // 1. TOP HUD (Clean hierarchy: ❤️ Hearts | MUNDO X · NAME | ⏱️ Time ⭐ Score)
+  const topY = isSmall ? 10 : 14;
+  const heartSpacing = isSmall ? 16 : 22;
+
+  // Hearts on left
   for (let i = 0; i < 5; i++) {
-    cx.fillStyle = i < P.hp ? "#ff4d5e" : "#2a3566";
+    cx.fillStyle = i < P.hp ? "#ff4d5e" : "#1a2444";
     const hx = (isSmall ? 10 : 16) + i * heartSpacing;
     if (isSmall) {
-      cx.fillRect(hx, heartTop, 7, 7);
-      cx.fillRect(hx + 8, heartTop, 7, 7);
-      cx.fillRect(hx, heartTop + 5, 15, 6);
-      cx.fillRect(hx + 3, heartTop + 11, 9, 4);
-      cx.fillRect(hx + 6, heartTop + 15, 3, 2);
+      cx.fillRect(hx, topY, 6, 6);
+      cx.fillRect(hx + 7, topY, 6, 6);
+      cx.fillRect(hx, topY + 4, 13, 5);
+      cx.fillRect(hx + 2, topY + 9, 9, 3);
+      cx.fillRect(hx + 5, topY + 12, 3, 2);
     } else {
-      cx.fillRect(hx, heartTop, 9, 9);
-      cx.fillRect(hx + 11, heartTop, 9, 9);
-      cx.fillRect(hx, heartTop + 6, 20, 8);
-      cx.fillRect(hx + 4, heartTop + 14, 12, 5);
-      cx.fillRect(hx + 8, heartTop + 19, 4, 3);
+      cx.fillRect(hx, topY, 8, 8);
+      cx.fillRect(hx + 9, topY, 8, 8);
+      cx.fillRect(hx, topY + 5, 17, 7);
+      cx.fillRect(hx + 3, topY + 12, 11, 4);
+      cx.fillRect(hx + 7, topY + 16, 3, 2);
     }
   }
 
-  // World Badge
+  // World Name in the Center (Prominent visual weight)
   const curW = WORLDS.find(w => w.id === (GameState.currentWorld || 1)) || WORLDS[0];
-  const badgeTop = isSmall ? 28 : 38;
-  const badgeH = isSmall ? 15 : 18;
-  const badgeW = isSmall ? 170 : 280;
-  cx.fillStyle = "rgba(10, 14, 30, 0.9)";
-  cx.fillRect(isSmall ? 10 : 16, badgeTop, badgeW, badgeH);
-  cx.strokeStyle = curW.accentColor || "#59d8ff";
-  cx.lineWidth = 1;
-  cx.strokeRect(isSmall ? 10 : 16, badgeTop, badgeW, badgeH);
-  cx.fillStyle = curW.accentColor || "#59d8ff";
-  cx.font = isSmall ? "bold 9px monospace" : "bold 11px monospace";
-  cx.fillText(`${curW.iconEmoji} MUNDO ${curW.id}: ${curW.name.toUpperCase()}`, (isSmall ? 10 : 16) + 6, badgeTop + (isSmall ? 11 : 13));
+  cx.textAlign = "center";
+  cx.font = isSmall ? "bold 11px monospace" : "bold 13px monospace";
+  cx.fillStyle = "#59d8ff";
+  cx.fillText(`MUNDO ${curW.id} · ${curW.name.toUpperCase()}`, W / 2, isSmall ? 19 : 22);
 
-  // Char plate
-  if (isSmall) {
-    const plateY = 46;
-    cx.fillStyle = "rgba(14,19,43,0.85)";
-    cx.fillRect(10, plateY, 160, 32);
-    cx.strokeStyle = "#2a3566";
-    cx.strokeRect(10, plateY, 160, 32);
-    cx.font = "bold 11px monospace";
-    cx.fillStyle = "#fff";
-    cx.fillText(C.emoji + " " + C.name, 16, plateY + 14);
-    if (C.cd > 0) {
-      cx.fillStyle = "#1c2450";
-      cx.fillRect(16, plateY + 20, 90, 4);
-      cx.fillStyle = P.cool > 0 ? "#565f75" : "#b6f542";
-      cx.fillRect(16, plateY + 20, 90 * (1 - Math.max(0, P.cool) / C.cd), 4);
-    }
-
-    // Compact meters in portrait
-    if (C.id === "alejandro") meter(cx, 10, plateY + 36, "VUELO", P.flyMeter, "#9fb8e8");
-    if (C.id === "paloma") meter(cx, 10, plateY + 36, "VUELO", P.stamina, "#ffffff");
-    if (C.id === "beltran") meter(cx, 10, plateY + 36, "ESCUDO", P.shieldE, "#59d8ff");
-    if (C.id === "joseluis") {
-      cx.fillStyle = "#59d8ff";
-      cx.font = "9px monospace";
-      cx.fillText("IMPRESIONES: " + (3 - GameState.printed.length) + "/3", 10, plateY + 44);
-    }
-  } else {
-    const plateY = 60;
-    cx.fillStyle = "rgba(14,19,43,0.9)";
-    cx.fillRect(16, plateY, 280, 50);
-    cx.strokeStyle = "#2a3566";
-    cx.strokeRect(16, plateY, 280, 50);
-    cx.font = "15px monospace";
-    cx.fillStyle = "#fff";
-    cx.fillText(C.emoji + " " + C.name, 26, plateY + 20);
-    cx.font = "10px monospace";
-    cx.fillStyle = "#9fb4e8";
-    cx.fillText(C.form + " · " + C.ab, 26, plateY + 34);
-
-    // Cooldown bar
-    if (C.cd > 0) {
-      cx.fillStyle = "#1c2450";
-      cx.fillRect(26, plateY + 40, 120, 5);
-      cx.fillStyle = P.cool > 0 ? "#565f75" : "#b6f542";
-      cx.fillRect(26, plateY + 40, 120 * (1 - Math.max(0, P.cool) / C.cd), 5);
-    }
-
-    // Meters
-    if (C.id === "alejandro") meter(cx, 310, plateY + 10, "VUELO", P.flyMeter, "#9fb8e8");
-    if (C.id === "paloma") meter(cx, 310, plateY + 10, "VUELO", P.stamina, "#ffffff");
-    if (C.id === "beltran") meter(cx, 310, plateY + 10, "ESCUDO", P.shieldE, "#59d8ff");
-    if (C.id === "joseluis") {
-      cx.fillStyle = "#59d8ff";
-      cx.font = "11px monospace";
-      cx.fillText("IMPRESIONES: " + (3 - GameState.printed.length) + "/3", 310, plateY + 22);
-    }
-  }
-
-  // Score & Time (top right)
+  // Time & Score on Right
   cx.textAlign = "right";
-  cx.font = isSmall ? "bold 15px monospace" : "bold 18px monospace";
-  cx.fillStyle = "#b6f542";
-  cx.fillText(String(score).padStart(6, "0"), W - (isSmall ? 10 : 16), isSmall ? 22 : 30);
-  cx.font = isSmall ? "10px monospace" : "12px monospace";
-  cx.fillStyle = "#9fb4e8";
-  cx.fillText("⏱ " + fmtT(gameTime) + " · ☕ " + coffeeCount, W - (isSmall ? 10 : 16), isSmall ? 36 : 48);
-
-  if (combo > 1) {
-    cx.font = isSmall ? "bold 13px monospace" : "bold 16px monospace";
-    cx.fillStyle = "#ffc857";
-    cx.fillText("COMBO x" + Math.min(5, combo), W - (isSmall ? 10 : 16), isSmall ? 52 : 70);
-  }
+  cx.font = isSmall ? "bold 11px monospace" : "bold 13px monospace";
+  cx.fillStyle = "#ffffff";
+  cx.fillText(`⏱️ ${fmtT(gameTime)}   ⭐ ${String(score).padStart(3, "0")}`, W - (isSmall ? 10 : 16), isSmall ? 19 : 22);
   cx.textAlign = "left";
 
+  // Combo multiplier (if active)
+  if (combo > 1) {
+    cx.font = isSmall ? "bold 11px monospace" : "bold 13px monospace";
+    cx.fillStyle = "#ffd25e";
+    cx.fillText("COMBO x" + Math.min(5, combo), W - (isSmall ? 10 : 16) - 130, isSmall ? 19 : 22);
+  }
+
+  // 2. ACTIVE CHARACTER PANEL (Top-Left: 🦁 ANA / ✦ TREPAR / ⚡ ENERGÍA ████████)
+  const plateX = isSmall ? 10 : 16;
+  const plateY = isSmall ? 28 : 34;
+  const plateW = isSmall ? 150 : 185;
+  const plateH = isSmall ? 36 : 42;
+
+  cx.fillStyle = "rgba(10, 15, 34, 0.88)";
+  cx.fillRect(plateX, plateY, plateW, plateH);
+  cx.strokeStyle = "#25345c";
+  cx.lineWidth = 1;
+  cx.strokeRect(plateX, plateY, plateW, plateH);
+
+  // Line 1: 🦁 ANA
+  cx.font = isSmall ? "bold 12px monospace" : "bold 13px monospace";
+  cx.fillStyle = "#ffffff";
+  cx.fillText(`${C.emoji} ${C.name}`, plateX + 8, plateY + (isSmall ? 13 : 15));
+
+  // Line 2: ✦ TREPAR (or hero's ability)
+  cx.font = isSmall ? "bold 9px monospace" : "bold 10px monospace";
+  cx.fillStyle = "#59d8ff";
+  cx.fillText(`✦ ${C.ab.toUpperCase()}`, plateX + 8, plateY + (isSmall ? 23 : 26));
+
+  // Line 3: ⚡ ENERGÍA ████████
+  const barY = plateY + (isSmall ? 26 : 29);
+  cx.font = "bold 8px monospace";
+  cx.fillStyle = "#ffd25e";
+  cx.fillText("⚡ ENERGÍA", plateX + 8, barY + 6);
+
+  const meterX = plateX + (isSmall ? 62 : 68);
+  const meterW = isSmall ? 80 : 108;
+  cx.fillStyle = "#0c1228";
+  cx.fillRect(meterX, barY, meterW, 7);
+  cx.strokeStyle = "#1d2b50";
+  cx.strokeRect(meterX, barY, meterW, 7);
+
+  // Energy fill (cooldown or special gauge)
+  let chargeRatio = 1;
+  if (C.id === "alejandro") chargeRatio = P.flyMeter;
+  else if (C.id === "paloma") chargeRatio = P.stamina;
+  else if (C.id === "beltran") chargeRatio = P.shieldE;
+  else if (C.cd > 0) chargeRatio = 1 - Math.max(0, P.cool) / C.cd;
+
+  cx.fillStyle = chargeRatio < 0.25 ? "#ff4d5e" : (P.cool > 0 ? "#5a6888" : "#38ef7d");
+  cx.fillRect(meterX + 1, barY + 1, (meterW - 2) * Math.max(0, Math.min(1, chargeRatio)), 5);
+
+  // 3. BRIEF VISUAL ACTION PROMPT: B · TREPAR 🧗↑
+  if (msg2T > 0) {
+    const actionIcons = {
+      ana: "🧗↑",
+      alejandro: "🥊",
+      paloma: "🪽↑",
+      beltran: "🛡️",
+      silvia: "⚡»",
+      maca: "🏐"
+    };
+    const actIcon = actionIcons[C.id] || "✦";
+    const badgeTxt = `B · ${C.ab.toUpperCase()} ${actIcon}`;
+
+    const bw = isSmall ? 140 : 170;
+    const bx = (W - bw) / 2;
+    const by = isSmall ? 70 : 85;
+
+    cx.fillStyle = "rgba(10, 16, 38, 0.92)";
+    cx.fillRect(bx, by, bw, 22);
+    cx.strokeStyle = "#59d8ff";
+    cx.lineWidth = 1;
+    cx.strokeRect(bx, by, bw, 22);
+
+    cx.font = isSmall ? "bold 10px monospace" : "bold 11px monospace";
+    cx.textAlign = "center";
+    cx.fillStyle = "#ffd25e";
+    cx.fillText(badgeTxt, W / 2, by + (isSmall ? 15 : 16));
+    cx.textAlign = "left";
+  }
+
+  // General boss/event message
   if (msgT > 0) {
     cx.font = "bold 20px monospace";
     cx.textAlign = "center";
@@ -938,52 +949,19 @@ function drawHUD(cx) {
     cx.textAlign = "left";
   }
 
-  if (msg2T > 0) {
-    cx.font = "12px monospace";
-    cx.textAlign = "center";
-    cx.fillStyle = "#9fb4e8";
-    cx.fillText(msg2Txt, W / 2, 148);
-    cx.textAlign = "left";
-  }
-
-  // CHARACTER QUICK BADGE (18 COMPAÑEROS DISPONIBLES)
-  const dockX = isSmall ? 10 : 16;
-  const dockY = H - SAFEB - (isSmall ? 30 : 36);
-  const dockW = isSmall ? 140 : 180;
-  const dockH = isSmall ? 24 : 28;
-
-  cx.fillStyle = "rgba(10, 14, 30, 0.88)";
-  cx.fillRect(dockX, dockY, dockW, dockH);
-  cx.strokeStyle = "#ffd25e";
-  cx.lineWidth = 1;
-  cx.strokeRect(dockX, dockY, dockW, dockH);
-
-  cx.font = isSmall ? "14px sans-serif" : "16px sans-serif";
-  cx.fillText(C.emoji, dockX + 6, dockY + (isSmall ? 17 : 20));
-
-  cx.font = isSmall ? "bold 9px monospace" : "bold 10px monospace";
-  cx.fillStyle = "#ffd25e";
-  cx.fillText(C.name.split(" ")[0].toUpperCase(), dockX + (isSmall ? 26 : 30), dockY + (isSmall ? 11 : 13));
-
-  cx.font = isSmall ? "8px monospace" : "9px monospace";
-  cx.fillStyle = "#8fa3d9";
-  cx.fillText(`⇄ CAMBIO (${GameState.charIdx + 1}/18)`, dockX + (isSmall ? 26 : 30), dockY + (isSmall ? 20 : 23));
-
+  // Switch banner (when switching heroes)
   if (switchBanner > 0) {
-    const bannerY = isSmall ? 80 : 96;
+    const bannerY = isSmall ? 68 : 82;
     cx.fillStyle = "rgba(8, 12, 28, 0.95)";
-    cx.fillRect(W / 2 - 180, bannerY - 14, 360, 36);
+    cx.fillRect(W / 2 - 140, bannerY - 12, 280, 26);
     cx.strokeStyle = "#ffd25e";
     cx.lineWidth = 1;
-    cx.strokeRect(W / 2 - 180, bannerY - 14, 360, 36);
+    cx.strokeRect(W / 2 - 140, bannerY - 12, 280, 26);
 
-    cx.font = "bold 13px monospace";
+    cx.font = "bold 11px monospace";
     cx.textAlign = "center";
     cx.fillStyle = "#ffd25e";
-    cx.fillText(`💨 POOF! → ¡${C.name}!`, W / 2, bannerY + 2);
-    cx.font = "10px monospace";
-    cx.fillStyle = "#59d8ff";
-    cx.fillText(`✦ ${C.ab} · ${C.tip}`, W / 2, bannerY + 16);
+    cx.fillText(`💨 ¡${C.name}! · ✦ ${C.ab.toUpperCase()}`, W / 2, bannerY + 5);
     cx.textAlign = "left";
   }
 

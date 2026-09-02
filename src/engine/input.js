@@ -28,8 +28,7 @@ export function setInputMode(mode) {
     const tB = document.getElementById("tB");
     if (tB) tB.textContent = "⚡";
   } else {
-    if (gbLabelA) gbLabelA.textContent = "SALTO";
-    if (gbLabelB) gbLabelB.textContent = "HABILIDAD";
+    if (gbLabelA) gbLabelA.textContent = "SALTAR";
     const tS = document.getElementById("tS");
     if (tS) tS.textContent = "⇄";
     const tB = document.getElementById("tB");

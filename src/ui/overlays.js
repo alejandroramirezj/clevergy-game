@@ -43,63 +43,7 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
   const winToMenuBtn = document.getElementById("winToMenuBtn");
   const goBackMenuBtn = document.getElementById("goBackMenuBtn");
 
-  // Mobile Quick Touch Bar of 18 Heroes (Right above the D-Pad)
-  const gbTouchBarTrack = document.getElementById("gbTouchBarTrack");
-  const touchbarActiveName = document.getElementById("touchbarActiveName");
-
-  function renderTouchBar() {
-    if (!gbTouchBarTrack) return;
-    gbTouchBarTrack.innerHTML = "";
-
-    CHARS.forEach((c, i) => {
-      const chip = document.createElement("div");
-      const isCur = i === GameState.charIdx;
-      chip.className = `gb-touch-chip ${isCur ? "active" : ""}`;
-      chip.dataset.idx = i;
-      chip.title = `${c.name} (${c.ab})`;
-
-      const av = getCharacterAvatar(c.id);
-      const iconHtml = av
-        ? `<img src="${av}" class="touch-chip-img" alt="${c.name}">`
-        : `<span class="touch-chip-emoji">${c.emoji}</span>`;
-
-      chip.innerHTML = `
-        <div class="touch-chip-avatar">${iconHtml}</div>
-        <span class="touch-chip-name">${c.name.split(" ")[0]}</span>
-      `;
-
-      // Pointerdown for ultra-fast instant tactile switch without 300ms click delay
-      chip.addEventListener("pointerdown", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        switchToChar(i);
-        updateSpotlight();
-      });
-
-      gbTouchBarTrack.appendChild(chip);
-    });
-  }
-  renderTouchBar();
-
-  function updateTouchBarActive(charIdx) {
-    if (!gbTouchBarTrack) return;
-    const chips = gbTouchBarTrack.querySelectorAll(".gb-touch-chip");
-    chips.forEach((ch, idx) => {
-      const isAct = idx === charIdx;
-      ch.classList.toggle("active", isAct);
-      if (isAct) {
-        ch.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-      }
-    });
-    const c = CHARS[charIdx];
-    if (touchbarActiveName && c) {
-      touchbarActiveName.textContent = `${c.name.toUpperCase()} · ✦ ${c.ab}`;
-    }
-  }
-
-  window.addEventListener("char_switched", (e) => {
-    const charIdx = e.detail?.charIdx ?? GameState.charIdx;
-    updateTouchBarActive(charIdx);
+  window.addEventListener("char_switched", () => {
     updateSpotlight();
   });
 
@@ -145,7 +89,33 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     if (activeCardName) activeCardName.textContent = c.name.toUpperCase();
     if (activeCardAb) activeCardAb.textContent = `✦ ${c.ab.toUpperCase()}`;
 
-    updateTouchBarActive(GameState.charIdx);
+    // Update Mobile Controller Deck Action Labels: A -> SALTAR, B -> [HABILIDAD]
+    const gbLabelB = document.getElementById("gbLabelB");
+    if (gbLabelB) {
+      const actionNames = {
+        ana: "TREPAR",
+        alejandro: "PUÑO",
+        paloma: "VOLAR",
+        beltran: "ESCUDO",
+        alvaroM: "CALCULAR",
+        alvaroP: "PODCAST",
+        ale: "DESLIZAR",
+        bruno: "TÓTEM",
+        gonzalo: "CLONAR",
+        javi: "MARCHA",
+        jesus: "SMASH",
+        joseluis: "IMPRIMIR",
+        josu: "REBOTE",
+        juan: "CALENTAR",
+        maca: "MATE",
+        manu: "PISOTÓN",
+        pablo: "RODAR",
+        silvia: "SPEEDRUN"
+      };
+      gbLabelB.textContent = actionNames[c.id] || c.ab.split(" ")[0].toUpperCase();
+    }
+    const gbLabelA = document.getElementById("gbLabelA");
+    if (gbLabelA) gbLabelA.textContent = "SALTAR";
   }
 
   // Exact coordinates for characters encircling the campfire on the illuminated ground (630x300 canvas)
