@@ -907,50 +907,52 @@ function drawHUD(cx) {
     cx.textAlign = "left";
   }
 
-  // 2. ACTIVE CHARACTER PANEL (Top-Left: 🦁 ANA / ✦ TREPAR / ⚡ ENERGÍA ████████)
+  // 2. ULTRA-COMPACT CHARACTER STRIP (Single sleek pill bar, 13px high, zero screen blockage)
   const plateX = isSmall ? 8 : 14;
-  const plateY = isSmall ? 25 : 32;
-  const plateW = isSmall ? 144 : 185;
-  const plateH = isSmall ? 36 : 42;
+  const plateY = isSmall ? 20 : 27;
+  const plateH = isSmall ? 13 : 16;
 
-  cx.fillStyle = "rgba(10, 15, 34, 0.88)";
+  // Shorten name if needed so it stays ultra-compact
+  const shortName = C.name.length > 11 ? C.name.split(" ")[0] : C.name;
+  const heroLabel = `${C.emoji} ${shortName}`;
+
+  cx.font = isSmall ? "bold 9px monospace" : "bold 10px monospace";
+  const nameW = cx.measureText(heroLabel).width;
+  const meterW = isSmall ? 46 : 64;
+  const plateW = nameW + meterW + (isSmall ? 12 : 16);
+
+  // Sleek translucent background
+  cx.fillStyle = "rgba(8, 14, 30, 0.78)";
   cx.fillRect(plateX, plateY, plateW, plateH);
-  cx.strokeStyle = "#25345c";
+  cx.strokeStyle = "#23335a";
   cx.lineWidth = 1;
   cx.strokeRect(plateX, plateY, plateW, plateH);
 
-  // Line 1: 🦁 ANA
-  cx.font = isSmall ? "bold 12px monospace" : "bold 13px monospace";
+  // Hero Name & Icon
   cx.fillStyle = "#ffffff";
-  cx.fillText(`${C.emoji} ${C.name}`, plateX + 8, plateY + (isSmall ? 13 : 15));
+  cx.fillText(heroLabel, plateX + 4, plateY + (isSmall ? 9.5 : 12));
 
-  // Line 2: ✦ TREPAR (or hero's ability)
-  cx.font = isSmall ? "bold 9px monospace" : "bold 10px monospace";
-  cx.fillStyle = "#59d8ff";
-  cx.fillText(`✦ ${C.ab.toUpperCase()}`, plateX + 8, plateY + (isSmall ? 23 : 26));
+  // Energy / Stamina / Cooldown bar right inside
+  const meterX = plateX + nameW + (isSmall ? 7 : 9);
+  const meterY = plateY + (isSmall ? 3 : 4);
+  const meterH = isSmall ? 7 : 8;
 
-  // Line 3: ⚡ ENERGÍA ████████
-  const barY = plateY + (isSmall ? 26 : 29);
-  cx.font = "bold 8px monospace";
-  cx.fillStyle = "#ffd25e";
-  cx.fillText("⚡ ENERGÍA", plateX + 8, barY + 6);
-
-  const meterX = plateX + (isSmall ? 62 : 68);
-  const meterW = isSmall ? 80 : 108;
   cx.fillStyle = "#0c1228";
-  cx.fillRect(meterX, barY, meterW, 7);
-  cx.strokeStyle = "#1d2b50";
-  cx.strokeRect(meterX, barY, meterW, 7);
+  cx.fillRect(meterX, meterY, meterW, meterH);
+  cx.strokeStyle = "#1a2542";
+  cx.lineWidth = 0.5;
+  cx.strokeRect(meterX, meterY, meterW, meterH);
 
-  // Energy fill (cooldown or special gauge)
+  // Energy fill
   let chargeRatio = 1;
   if (C.id === "alejandro") chargeRatio = P.flyMeter;
   else if (C.id === "paloma") chargeRatio = P.stamina;
   else if (C.id === "beltran") chargeRatio = P.shieldE;
   else if (C.cd > 0) chargeRatio = 1 - Math.max(0, P.cool) / C.cd;
 
-  cx.fillStyle = chargeRatio < 0.25 ? "#ff4d5e" : (P.cool > 0 ? "#5a6888" : "#38ef7d");
-  cx.fillRect(meterX + 1, barY + 1, (meterW - 2) * Math.max(0, Math.min(1, chargeRatio)), 5);
+  const barCol = chargeRatio < 0.25 ? "#ff4d5e" : (P.cool > 0 ? "#5a6888" : "#38ef7d");
+  cx.fillStyle = barCol;
+  cx.fillRect(meterX + 1, meterY + 1, Math.max(0, (meterW - 2) * Math.min(1, chargeRatio)), meterH - 2);
 
   // 3. BRIEF VISUAL ACTION PROMPT: B · TREPAR 🧗↑
   if (msg2T > 0) {
@@ -965,9 +967,9 @@ function drawHUD(cx) {
     const actIcon = actionIcons[C.id] || "✦";
     const badgeTxt = `B · ${C.ab.toUpperCase()} ${actIcon}`;
 
-    const bw = isSmall ? 140 : 170;
+    const bw = isSmall ? 120 : 150;
     const bx = (W - bw) / 2;
-    const by = isSmall ? 70 : 85;
+    const by = isSmall ? 44 : 56;
 
     cx.fillStyle = "rgba(10, 16, 38, 0.92)";
     cx.fillRect(bx, by, bw, 22);
