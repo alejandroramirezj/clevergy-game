@@ -2628,7 +2628,118 @@ body.gameboy-mode .gameboy-deck {
   gap: 8px;
 }
 
+/* =============================================================================
+   TOUCH BAR DE COMPAÑEROS (ENCIMA DE LA CRUCETA EN EL TECLADO)
+   ============================================================================= */
+.gb-touchbar-container {
+  width: 100%;
+  background: #060a17;
+  border-top: 2px solid #1a2748;
+  border-bottom: 2px solid #151f38;
+  padding: 4px 8px 6px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  z-index: 20;
+}
 
+.gb-touchbar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  padding: 0 2px;
+}
+
+.touchbar-label {
+  color: #7d90c0;
+}
+
+.touchbar-active-name {
+  color: #ffd25e;
+  font-size: 9px;
+  font-weight: 900;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60%;
+}
+
+.gb-touchbar-track {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  padding: 2px 2px 4px;
+  scrollbar-width: none;
+}
+.gb-touchbar-track::-webkit-scrollbar {
+  display: none;
+}
+
+.gb-touch-chip {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: #0f162e;
+  border: 1.5px solid #23335e;
+  border-radius: 8px;
+  padding: 4px 6px;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  transition: transform 0.1s ease, border-color 0.15s ease, background 0.15s ease;
+  min-width: 44px;
+}
+
+.gb-touch-chip:active {
+  transform: scale(0.92);
+}
+
+.gb-touch-chip.active {
+  border-color: #ffd25e;
+  background: linear-gradient(180deg, #2c220c 0%, #151004 100%);
+  box-shadow: 0 0 10px rgba(255, 210, 94, 0.45);
+  transform: translateY(-2px);
+}
+
+.touch-chip-avatar {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.touch-chip-img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.touch-chip-emoji {
+  font-size: 19px;
+}
+
+.touch-chip-name {
+  font-size: 8px;
+  font-weight: 900;
+  color: #c0d0f5;
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+}
+
+.gb-touch-chip.active .touch-chip-name {
+  color: #ffd25e;
+}
 
 .active-hero-summary {
   display: flex;
