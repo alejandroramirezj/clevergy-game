@@ -15,6 +15,8 @@ export const Net = {
   onOpponentJoin: null,
   onMatchStart: null,
   onRemoteState: null,
+  onRemoteDamage: null,
+  onRemoteProjectile: null,
   onDisconnect: null,
   status: "idle" // idle | host_waiting | guest_connecting | connected
 };
@@ -128,6 +130,10 @@ function setupConnection(conn) {
       if (Net.onMatchStart) Net.onMatchStart(data.p1Char, data.p2Char);
     } else if (data.type === "fighter_state") {
       if (Net.onRemoteState) Net.onRemoteState(data);
+    } else if (data.type === "combat_damage") {
+      if (Net.onRemoteDamage) Net.onRemoteDamage(data);
+    } else if (data.type === "spawn_projectile") {
+      if (Net.onRemoteProjectile) Net.onRemoteProjectile(data);
     }
   });
 
@@ -180,4 +186,23 @@ export function disconnect() {
   }
   Net.status = "idle";
   Net.remoteCharId = null;
+}
+
+export function sendCombatDamage(targetSide, damage, isCritical, sourceFacing) {
+  if (!Net.conn || !Net.conn.open) return;
+  Net.conn.send({
+    type: "combat_damage",
+    targetSide,
+    damage,
+    isCritical,
+    sourceFacing
+  });
+}
+
+export function sendSpawnProjectile(projectileData) {
+  if (!Net.conn || !Net.conn.open) return;
+  Net.conn.send({
+    type: "spawn_projectile",
+    ...projectileData
+  });
 }

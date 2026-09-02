@@ -7,7 +7,7 @@ import { SPR, ANIM, initSprites, getCharacterAvatar } from "../engine/sprites.js
 import { sfx } from "../engine/audio.js";
 import { GameState } from "./state.js";
 import { isLeft, isRight, isJump, isAttack, isSpecial, setInputMode } from "../engine/input.js";
-import { Net, sendFighterState } from "./fightNet.js";
+import { Net, sendFighterState, sendCombatDamage, sendSpawnProjectile } from "./fightNet.js";
 
 // Stage Platforms (The Office Layout)
 const FLOOR_Y = 430;
@@ -100,11 +100,33 @@ export function startFight(p1CharId, p2CharId, mode, onExit) {
         target.y += (data.y - target.y) * 0.45;
         target.vx = data.vx;
         target.vy = data.vy;
-        target.hp = data.hp;
+        // Never allow remote state to falsely heal/undo damage
+        if (data.hp < target.hp) target.hp = data.hp;
         target.facing = data.facing;
         target.state = data.state;
         target.shieldActive = data.shieldActive;
       }
+    };
+
+    Net.onRemoteDamage = (data) => {
+      const target = data.targetSide === 0 ? FightState.p1 : FightState.p2;
+      const source = data.targetSide === 0 ? FightState.p2 : FightState.p1;
+      if (target && source) {
+        applyDamage(target, source, data.damage, data.isCritical, false);
+      }
+    };
+
+    Net.onRemoteProjectile = (data) => {
+      const owner = data.ownerSide === 0 ? FightState.p1 : FightState.p2;
+      FightState.projectiles.push({
+        kind: data.kind,
+        x: data.x,
+        y: data.y,
+        vx: data.vx,
+        vy: data.vy,
+        owner,
+        t: data.t
+      });
     };
   }
 }
@@ -373,7 +395,7 @@ function performSpecialAbility(attacker, defender) {
     }
   } else if (id === "alvaroM") {
     // ERROR 404: Shoots an exploding calculator projectile
-    FightState.projectiles.push({
+    const proj404 = {
       kind: "404",
       x: attacker.x + attacker.facing * 28,
       y: attacker.y + 15,
@@ -381,11 +403,23 @@ function performSpecialAbility(attacker, defender) {
       vy: -2.5,
       owner: attacker,
       t: 2
-    });
+    };
+    FightState.projectiles.push(proj404);
+    if (FightState.mode === "online") {
+      sendSpawnProjectile({
+        kind: proj404.kind,
+        x: proj404.x,
+        y: proj404.y,
+        vx: proj404.vx,
+        vy: proj404.vy,
+        ownerSide: attacker.side,
+        t: proj404.t
+      });
+    }
     sfx(880, 0.1);
   } else if (id === "alvaroP") {
     // PODCAST WAVE: Sonic wave
-    FightState.projectiles.push({
+    const projWave = {
       kind: "wave",
       x: attacker.x + attacker.facing * 25,
       y: attacker.y + 20,
@@ -393,7 +427,19 @@ function performSpecialAbility(attacker, defender) {
       vy: 0,
       owner: attacker,
       t: 0.5
-    });
+    };
+    FightState.projectiles.push(projWave);
+    if (FightState.mode === "online") {
+      sendSpawnProjectile({
+        kind: projWave.kind,
+        x: projWave.x,
+        y: projWave.y,
+        vx: projWave.vx,
+        vy: projWave.vy,
+        ownerSide: attacker.side,
+        t: projWave.t
+      });
+    }
     sfx(330, 0.18, "sawtooth", 0.06);
   } else {
     // Generic strike
@@ -406,8 +452,11 @@ function performSpecialAbility(attacker, defender) {
   }
 }
 
-function applyDamage(target, source, dmg, isCritical = false) {
+function applyDamage(target, source, dmg, isCritical = false, shouldBroadcast = true) {
   target.hp = Math.max(0, target.hp - dmg);
+  if (FightState.mode === "online" && shouldBroadcast) {
+    sendCombatDamage(target.side, dmg, isCritical, source.facing);
+  }
   // Controlled, realistic recoil (short nudge, stops immediately via friction)
   target.vx = source.facing * (isCritical ? 3.2 : 2.0);
   target.vy = isCritical ? -3.0 : -1.8;

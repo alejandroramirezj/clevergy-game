@@ -37,6 +37,21 @@ html, body {
   background: radial-gradient(ellipse at 50% 40%, #141a3a 0%, #0b0e1a 70%);
 }
 
+#wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.08) 0px,
+    rgba(0, 0, 0, 0.08) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  z-index: 6;
+}
+
 canvas {
   image-rendering: pixelated;
   image-rendering: crisp-edges;

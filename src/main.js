@@ -168,6 +168,16 @@ function startGame(worldId = 1) {
   }
 }
 
+function filterInPlace(arr, predicate) {
+  let writeIdx = 0;
+  for (let i = 0; i < arr.length; i++) {
+    if (predicate(arr[i])) {
+      arr[writeIdx++] = arr[i];
+    }
+  }
+  arr.length = writeIdx;
+}
+
 function update(dt) {
   if (GameState.teamOpen) return;
   const P = GameState.P;
@@ -400,11 +410,11 @@ function update(dt) {
     }
   }
 
-  // Decay printed platforms & hitboxes
-  GameState.printed.forEach((p) => (p.life -= dt));
-  GameState.printed = GameState.printed.filter((p) => p.life > 0);
-  GameState.hitboxes.forEach((h) => (h.t -= dt));
-  GameState.hitboxes = GameState.hitboxes.filter((h) => h.t > 0);
+  // Decay printed platforms & hitboxes in-place (Zero GC allocation)
+  for (let i = 0; i < GameState.printed.length; i++) GameState.printed[i].life -= dt;
+  filterInPlace(GameState.printed, (p) => p.life > 0);
+  for (let i = 0; i < GameState.hitboxes.length; i++) GameState.hitboxes[i].t -= dt;
+  filterInPlace(GameState.hitboxes, (h) => h.t > 0);
 
   updateProjectiles(dt);
   updateMinions(dt);
@@ -418,19 +428,22 @@ function update(dt) {
     }
   }
 
-  GameState.particles.forEach((p) => {
+  // In-place particle & floater updates (Zero GC allocation)
+  for (let i = 0; i < GameState.particles.length; i++) {
+    const p = GameState.particles[i];
     p.x += p.vx;
     p.y += p.vy;
     p.vy += 0.15;
     p.t -= dt;
-  });
-  GameState.particles = GameState.particles.filter((p) => p.t > 0);
+  }
+  filterInPlace(GameState.particles, (p) => p.t > 0);
 
-  GameState.floaters.forEach((f) => {
+  for (let i = 0; i < GameState.floaters.length; i++) {
+    const f = GameState.floaters[i];
     f.y -= 0.5;
     f.t -= dt;
-  });
-  GameState.floaters = GameState.floaters.filter((f) => f.t > 0);
+  }
+  filterInPlace(GameState.floaters, (f) => f.t > 0);
 
   // Smooth camera following
   const targetX = P.x + P.w / 2 - GameState.W / 2;
@@ -506,19 +519,31 @@ initInput({
   onOpenMap: () => worldMap.showWorldMap()
 });
 
+// Fixed Timestep Accumulator for deterministic 60 FPS physics (60Hz / 120Hz / 144Hz parity)
+const FIXED_STEP = 1 / 60;
 let last = performance.now();
+let accumulator = 0;
+
 function loop(now) {
-  const dt = Math.min(0.033, (now - last) / 1000);
+  const frameTime = Math.min((now - last) / 1000, 0.1);
   last = now;
 
   if (GameState.gameMode === "fighting") {
-    updateFightLobby(dt);
+    updateFightLobby(frameTime);
     drawFightLobby(cx);
   } else if (GameState.gameMode === "fighting_active") {
-    updateFight(dt);
+    accumulator += frameTime;
+    while (accumulator >= FIXED_STEP) {
+      updateFight(FIXED_STEP);
+      accumulator -= FIXED_STEP;
+    }
     drawFight(cx);
   } else {
-    if (GameState.status === "play") update(dt);
+    accumulator += frameTime;
+    while (accumulator >= FIXED_STEP) {
+      if (GameState.status === "play") update(FIXED_STEP);
+      accumulator -= FIXED_STEP;
+    }
     if (GameState.status === "play" || GameState.status === "gameover") draw(cx);
   }
 

@@ -965,9 +965,7 @@ function drawHUD(cx) {
     cx.textAlign = "left";
   }
 
-  // CRT Scanlines
-  cx.fillStyle = "rgba(0,0,0,0.08)";
-  for (let y = 0; y < H; y += 4) cx.fillRect(0, y, W, 1);
+  // CRT Scanlines are now accelerated by GPU via CSS #wrap::after
 }
 
 function meter(cx, x, y, label, v, col) {
@@ -984,9 +982,11 @@ function drawLighting(cx) {
   cx.save();
   cx.globalCompositeOperation = "lighter";
 
-  const time = GameState.time;
+  const { time, camX, W } = GameState;
   const P = GameState.P;
   const C = CHARS[GameState.charIdx];
+  const minX = camX - 80;
+  const maxX = camX + W + 80;
 
   // 1. Player ability / punch light
   if (P.atkT > 0 || anim.name === "attack") {
@@ -1017,7 +1017,7 @@ function drawLighting(cx) {
 
   // 3. Coffees pulsing amber glow
   for (const cf of GameState.coffees) {
-    if (cf.got) continue;
+    if (cf.got || cf.x < minX || cf.x > maxX) continue;
     const pulse = Math.sin(time * 3 + cf.t) * 4;
     const grad = cx.createRadialGradient(cf.x + 8, cf.y + 8, 2, cf.x + 8, cf.y + 8, 24 + pulse);
     grad.addColorStop(0, "rgba(255, 205, 80, 0.3)");
@@ -1045,6 +1045,7 @@ function drawLighting(cx) {
 
   // 5. Projectiles glow
   for (const p of GameState.projectiles) {
+    if (p.x < minX || p.x > maxX) continue;
     const col = p.kind === "404" ? "rgba(182, 245, 66, 0.35)" : "rgba(143, 163, 217, 0.35)";
     const grad = cx.createRadialGradient(p.x, p.y, 2, p.x, p.y, 28);
     grad.addColorStop(0, col);
