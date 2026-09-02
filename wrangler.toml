@@ -7,12 +7,3 @@ binding = "DB"
 database_name = "clevergy-game-db"
 database_id = "da13089b-ba68-4729-b6c7-e8ced0ba2fad"
 
-[[durable_objects.bindings]]
-name = "FIGHT_ROOM"
-class_name = "FightRoom"
-script_name = "clevergy-game"
-
-[[migrations]]
-tag = "v1"
-new_classes = ["FightRoom"]
-
