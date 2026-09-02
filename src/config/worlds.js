@@ -14,7 +14,7 @@ export const WORLDS = [
     platformColor: "#283454",
     accentColor: "#59d8ff",
     iconEmoji: "🏢",
-    mapCoords: { x: 12, y: 72 } // % on map trail
+    mapCoords: { x: 12, y: 64 } // % on map trail
   },
   {
     id: 2,
@@ -29,7 +29,7 @@ export const WORLDS = [
     platformColor: "#1d4428",
     accentColor: "#42f584",
     iconEmoji: "🌴",
-    mapCoords: { x: 30, y: 38 }
+    mapCoords: { x: 28, y: 32 }
   },
   {
     id: 3,
@@ -44,7 +44,7 @@ export const WORLDS = [
     platformColor: "#343761",
     accentColor: "#ffc857",
     iconEmoji: "🏰",
-    mapCoords: { x: 50, y: 65 }
+    mapCoords: { x: 48, y: 58 }
   },
   {
     id: 4,
@@ -59,7 +59,7 @@ export const WORLDS = [
     platformColor: "#53267d",
     accentColor: "#d859ff",
     iconEmoji: "📺",
-    mapCoords: { x: 70, y: 32 }
+    mapCoords: { x: 70, y: 30 }
   },
   {
     id: 5,
@@ -74,7 +74,7 @@ export const WORLDS = [
     platformColor: "#223554",
     accentColor: "#ff4d6a",
     iconEmoji: "🔥",
-    mapCoords: { x: 88, y: 55 }
+    mapCoords: { x: 88, y: 52 }
   },
   {
     id: 6,
@@ -89,7 +89,7 @@ export const WORLDS = [
     platformColor: "#25345c",
     accentColor: "#ff4d5e",
     iconEmoji: "🥊",
-    mapCoords: { x: 50, y: 84 }
+    mapCoords: { x: 50, y: 78 }
   }
 ];
 

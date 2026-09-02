@@ -491,7 +491,22 @@ export function drawFight(cx) {
   const W = GameState.W || 960;
   const H = GameState.H || 540;
 
-  drawOfficeStage(cx, W, H);
+  const STAGE_W = 960;
+  const STAGE_H = 540;
+  const scale = Math.min(W / STAGE_W, H / STAGE_H);
+  const ox = Math.round((W - STAGE_W * scale) / 2);
+  const oy = Math.round((H - STAGE_H * scale) / 2);
+
+  cx.save();
+  // Clear full canvas with deep stage backdrop
+  cx.fillStyle = "#060914";
+  cx.fillRect(0, 0, W, H);
+
+  // Center and scale stage
+  cx.translate(ox, oy);
+  cx.scale(scale, scale);
+
+  drawOfficeStage(cx, STAGE_W, STAGE_H);
 
   // Draw Platforms (Office Desks)
   drawOfficeDesks(cx);
@@ -504,12 +519,14 @@ export function drawFight(cx) {
   drawCombatFX(cx);
 
   // Draw Top HUD (Street Fighter style HP bars)
-  drawTopHUD(cx, W, H);
+  drawTopHUD(cx, STAGE_W, STAGE_H);
 
   // Match End Modal
   if (FightState.phase === "match_end") {
-    drawMatchEndModal(cx, W, H);
+    drawMatchEndModal(cx, STAGE_W, STAGE_H);
   }
+
+  cx.restore();
 }
 
 function drawOfficeStage(cx, W, H) {
@@ -879,18 +896,27 @@ function roundRect(cx, x, y, w, h, r) {
   cx.closePath();
 }
 
-// Exit click listener for fight mode
-window.addEventListener("mousedown", (e) => {
+// Exit click listener for fight mode (touch & mouse)
+window.addEventListener("pointerdown", (e) => {
   if (GameState.gameMode !== "fighting_active") return;
   const cv = document.getElementById("cv");
+  if (!cv) return;
   const rect = cv.getBoundingClientRect();
   const W = GameState.W || 960;
   const H = GameState.H || 540;
-  const px = (e.clientX - rect.left) * (W / rect.width);
-  const py = (e.clientY - rect.top) * (H / rect.height);
+  const STAGE_W = 960;
+  const STAGE_H = 540;
+  const scale = Math.min(W / STAGE_W, H / STAGE_H);
+  const ox = (W - STAGE_W * scale) / 2;
+  const oy = (H - STAGE_H * scale) / 2;
+
+  const canvasX = (e.clientX - rect.left) * (W / rect.width);
+  const canvasY = (e.clientY - rect.top) * (H / rect.height);
+  const stageX = (canvasX - ox) / scale;
+  const stageY = (canvasY - oy) / scale;
 
   // Top Map button
-  if (px >= W / 2 - 50 && px <= W / 2 + 50 && py >= 0 && py <= 30) {
+  if (stageX >= STAGE_W / 2 - 50 && stageX <= STAGE_W / 2 + 50 && stageY >= 0 && stageY <= 30) {
     if (FightState.onExit) FightState.onExit();
     return;
   }

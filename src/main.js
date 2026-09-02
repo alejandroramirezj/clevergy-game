@@ -134,15 +134,15 @@ function startGame(worldId = 1) {
     fitCanvas();
     showFightLobby(
       (p1Char, p2Char, mode) => {
-        // Lobby finished — start actual fight
+        // Switch to combat mode and resize canvas
+        GameState.gameMode = "fighting_active";
+        fitCanvas();
         startFight(p1Char, p2Char, mode, () => {
           netDisconnect();
           GameState.gameMode = "platformer";
           worldMap.showWorldMap();
           fitCanvas();
         });
-        GameState.gameMode = "fighting_active";
-        fitCanvas();
       },
       () => {
         // Back to map

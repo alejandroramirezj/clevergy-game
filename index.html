@@ -133,8 +133,8 @@
     <div class="map-viewport">
       <!-- Background SVG Trail connecting the 6 nodes -->
       <svg class="map-trail-svg" viewBox="0 0 1000 600" preserveAspectRatio="none">
-        <path class="trail-line-bg" d="M 120 432 Q 210 270 300 228 T 500 390 T 700 192 T 880 330 Q 720 504 500 504 Q 280 504 120 432" />
-        <path class="trail-line-dash" d="M 120 432 Q 210 270 300 228 T 500 390 T 700 192 T 880 330 Q 720 504 500 504 Q 280 504 120 432" />
+        <path class="trail-line-bg" d="M 120 384 Q 200 240 280 192 T 480 348 T 700 180 T 880 312 Q 720 468 500 468 Q 280 468 120 384" />
+        <path class="trail-line-dash" d="M 120 384 Q 200 240 280 192 T 480 348 T 700 180 T 880 312 Q 720 468 500 468 Q 280 468 120 384" />
       </svg>
       <!-- Interactive Nodes Container -->
       <div id="mapNodesContainer" class="map-nodes-container"></div>
@@ -159,6 +159,62 @@
           <button id="btnPlayWorld" class="btn">▶ JUGAR ESTE MUNDO</button>
           <button id="btnCloseWc" class="btn alt">CANCELAR</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIGHT LOBBY MODAL (CODE CLASH ARENA 1v1 - 100% RESPONSIVE) -->
+  <div id="fightLobbyModal" class="overlay hidden fight-lobby-overlay">
+    <div class="fl-card">
+      <div class="fl-header">
+        <div class="fl-title-group">
+          <div class="fl-badge">🥊 MUNDO 6 · 1v1 ARENA</div>
+          <h2 class="fl-title">CODE CLASH ARENA</h2>
+          <div class="fl-sub">The Office · Batalla del Sprint</div>
+        </div>
+        <button id="btnFlClose" class="btn-icon" title="Volver al mapa">✕</button>
+      </div>
+
+      <!-- Mode Switch: CPU vs Online -->
+      <div class="fl-modes">
+        <button id="flModeCpu" class="fl-mode-btn active">🤖 CONTRA CPU</button>
+        <button id="flModeOnline" class="fl-mode-btn">🌐 2 MÓVILES (ONLINE)</button>
+      </div>
+
+      <!-- Hero Showcase Carousel -->
+      <div class="fl-hero-display">
+        <button id="btnFlPrev" class="fl-nav-btn" aria-label="Anterior">◀</button>
+        <div class="fl-hero-card">
+          <div class="fl-avatar-wrap">
+            <img id="flHeroImg" src="/sprites/alejandro/avatar.png" alt="Hero Avatar" class="fl-hero-avatar">
+          </div>
+          <div class="fl-hero-info">
+            <div id="flHeroName" class="fl-hero-name">🪰 ALEJANDRO R.</div>
+            <div id="flHeroRole" class="fl-hero-role">Forma: Mosca boxeadora</div>
+            <div id="flHeroAb" class="fl-hero-ab">⚡ FLY PUNCH</div>
+            <p id="flHeroTip" class="fl-hero-tip">Guantes de boxeo y vuelo rápido.</p>
+          </div>
+        </div>
+        <button id="btnFlNext" class="fl-nav-btn" aria-label="Siguiente">▶</button>
+      </div>
+
+      <!-- Quick Character Grid for thumb tap -->
+      <div class="fl-team-strip" id="flTeamStrip"></div>
+
+      <!-- Online Room Settings (if online mode) -->
+      <div id="flOnlineBox" class="fl-online-box hidden">
+        <div class="fl-room-badge">🔑 CÓDIGO DE SALA: <span id="flRoomCode">ABCD</span></div>
+        <div class="fl-join-row">
+          <input type="text" id="flJoinInput" class="fl-join-input" maxlength="4" placeholder="CÓDIGO AMIGO">
+          <button id="btnFlJoin" class="btn-micro-action">UNIRME</button>
+        </div>
+        <div id="flOnlineStatus" class="fl-status-text">Comparte el código con tu compañero</div>
+      </div>
+
+      <!-- Actions -->
+      <div class="fl-actions">
+        <button id="btnFlStart" class="btn btn-hero fl-start-btn">🥊 ¡A PELEAR!</button>
+        <button id="btnFlBackMap" class="btn alt">🗺️ VOLVER AL MAPA</button>
       </div>
     </div>
   </div>

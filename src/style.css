@@ -1484,3 +1484,330 @@ body.gameboy-mode .gameboy-deck {
   gap: 12px;
 }
 
+@media (max-width: 768px) {
+  .world-map-overlay {
+    padding: 8px 8px 12px;
+    justify-content: flex-start;
+  }
+  .map-header {
+    margin-bottom: 6px;
+    padding-bottom: 6px;
+    gap: 6px;
+  }
+  .map-viewport {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    min-height: 280px;
+    max-height: 62vh;
+    flex: none;
+    margin: 4px auto 0;
+    border-radius: 12px;
+  }
+  .map-node {
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+}
+
+/* =========================================================================
+   FIGHT LOBBY MODAL (CODE CLASH ARENA 1v1 - 100% RESPONSIVE)
+   ========================================================================= */
+
+.fight-lobby-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  box-sizing: border-box;
+  background: radial-gradient(circle at 50% 30%, rgba(18, 26, 56, 0.95) 0%, rgba(6, 9, 18, 0.98) 100%);
+  z-index: 60;
+  overflow-y: auto;
+}
+
+.fl-card {
+  width: 100%;
+  max-width: 480px;
+  background: linear-gradient(180deg, #101730 0%, #0a0e1e 100%);
+  border: 2px solid #59d8ff;
+  border-radius: 16px;
+  padding: 16px 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(89, 216, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-sizing: border-box;
+}
+
+.fl-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 8px;
+}
+
+.fl-title-group {
+  text-align: left;
+}
+
+.fl-badge {
+  font-size: 10px;
+  font-weight: 900;
+  color: #ff4d5e;
+  letter-spacing: 0.1em;
+  margin-bottom: 2px;
+}
+
+.fl-title {
+  font-size: clamp(16px, 4vw, 22px);
+  margin: 0;
+  color: #fff;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 8px rgba(89, 216, 255, 0.4);
+}
+
+.fl-sub {
+  font-size: 11px;
+  color: var(--cyan);
+  font-weight: bold;
+}
+
+.fl-modes {
+  display: flex;
+  gap: 8px;
+  background: rgba(14, 20, 42, 0.8);
+  padding: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--panel-border);
+}
+
+.fl-mode-btn {
+  flex: 1;
+  padding: 8px 6px;
+  border: none;
+  background: transparent;
+  color: #9fb4e8;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 900;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.fl-mode-btn.active {
+  background: linear-gradient(135deg, #ff4d5e 0%, #d82b3d 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(255, 77, 94, 0.4);
+}
+
+/* Hero Showcase Carousel */
+.fl-hero-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(18, 25, 52, 0.8);
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.fl-nav-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--panel-border);
+  color: #fff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform 0.1s, background 0.15s;
+}
+
+.fl-nav-btn:active {
+  transform: scale(0.92);
+  background: var(--cyan);
+  color: #000;
+}
+
+.fl-hero-card {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.fl-avatar-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #192348;
+  border: 2px solid #59d8ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  box-shadow: 0 0 10px rgba(89, 216, 255, 0.3);
+}
+
+.fl-hero-avatar {
+  width: 54px;
+  height: 54px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.fl-hero-info {
+  flex: 1;
+  text-align: left;
+  min-width: 0;
+}
+
+.fl-hero-name {
+  font-size: 14px;
+  font-weight: 900;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fl-hero-role {
+  font-size: 10px;
+  color: #a2b4e0;
+}
+
+.fl-hero-ab {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 900;
+  color: #ffd25e;
+  background: rgba(255, 210, 94, 0.15);
+  border: 1px solid rgba(255, 210, 94, 0.4);
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin: 3px 0;
+}
+
+.fl-hero-tip {
+  font-size: 10px;
+  color: #8fa2ce;
+  margin: 0;
+  line-height: 1.3;
+}
+
+/* Team Thumb Strip */
+.fl-team-strip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 4px 2px 8px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--cyan) transparent;
+}
+
+.fl-thumb-btn {
+  flex: 0 0 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: #141b36;
+  border: 1px solid var(--panel-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 2px;
+  transition: all 0.12s ease;
+}
+
+.fl-thumb-btn img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.fl-thumb-btn.selected {
+  border-color: #ffd25e;
+  background: #253360;
+  transform: scale(1.08);
+  box-shadow: 0 0 8px #ffd25e;
+}
+
+/* Online Box */
+.fl-online-box {
+  background: rgba(20, 30, 60, 0.85);
+  border: 1px solid #ffd25e;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: center;
+}
+
+.fl-room-badge {
+  font-size: 12px;
+  font-weight: 900;
+  color: #ffd25e;
+}
+
+.fl-join-row {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+}
+
+.fl-join-input {
+  width: 140px;
+  text-transform: uppercase;
+  background: #090e1e;
+  border: 1px solid #59d8ff;
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-family: monospace;
+  font-weight: 900;
+  font-size: 13px;
+  text-align: center;
+  letter-spacing: 2px;
+}
+
+.btn-micro-action {
+  background: #59d8ff;
+  color: #060914;
+  font-weight: 900;
+  font-size: 11px;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.fl-status-text {
+  font-size: 10px;
+  color: #8fa2ce;
+}
+
+.fl-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.fl-start-btn {
+  width: 100%;
+  font-size: 14px;
+  padding: 12px;
+  background: linear-gradient(135deg, #ff4d5e 0%, #c41e30 100%);
+  border: 2px solid #ff8090;
+  box-shadow: 0 4px 15px rgba(255, 77, 94, 0.4);
+}
+
