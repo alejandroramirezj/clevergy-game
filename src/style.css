@@ -822,11 +822,12 @@ body.gameboy-mode .gameboy-deck {
   transition: transform 0.04s, background 0.05s, box-shadow 0.04s;
 }
 
+.gb-dpad-btn.active,
 .gb-dpad-btn:active {
   background: #2e3b62;
-  color: #fff;
+  color: #59d8ff;
   transform: translateY(3px);
-  box-shadow: 0 2px 0 #0b0d18;
+  box-shadow: 0 2px 0 #0b0d18, 0 0 16px rgba(89, 216, 255, 0.5);
 }
 
 .gb-up {
@@ -861,7 +862,7 @@ body.gameboy-mode .gameboy-deck {
   border-radius: 0 8px 8px 0;
 }
 
-/* BOTONES DE ACCIÓN: B & A GRANDES */
+/* BOTONES DE ACCIÓN: B & A CON DIFERENCIACIÓN CROMÁTICA COGNITIVA */
 .gb-actions-container {
   display: flex;
   align-items: center;
@@ -871,12 +872,12 @@ body.gameboy-mode .gameboy-deck {
 .gb-btn-group {
   display: flex;
   gap: 20px;
-  transform: rotate(-24deg);
-  background: rgba(14, 18, 36, 0.75);
+  transform: rotate(-18deg);
+  background: rgba(14, 18, 36, 0.85);
   padding: 12px 18px;
   border-radius: 46px;
-  border: 1px solid rgba(42, 53, 102, 0.5);
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5), 0 8px 20px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(56, 70, 130, 0.6);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6), 0 8px 24px rgba(0, 0, 0, 0.5);
 }
 
 .gb-action-col {
@@ -884,50 +885,81 @@ body.gameboy-mode .gameboy-deck {
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  position: relative;
 }
 
 .gb-action-btn {
-  width: 66px;
-  height: 66px;
+  width: 68px;
+  height: 68px;
   border-radius: 50%;
   border: none;
   font-family: inherit;
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 900;
-  color: #fff;
   cursor: pointer;
   touch-action: none;
   user-select: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.04s ease, box-shadow 0.04s ease;
+  position: relative;
+  transition: transform 0.04s ease, box-shadow 0.04s ease, filter 0.05s ease;
 }
 
+/* Extended Touch Slop (Fitts's Law) */
+.gb-action-btn::after {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+}
+
+/* Botón B (Ataque / Especial / Poder) -> Crimson Ruby */
 .gb-btn-b {
-  background: linear-gradient(145deg, #ff4767 0%, #b81230 100%);
-  box-shadow: 0 6px 0 #61081a, 0 10px 18px rgba(0, 0, 0, 0.6);
+  background: linear-gradient(145deg, #ff2a55 0%, #b80d32 100%);
+  box-shadow: 0 6px 0 #61081a, 0 10px 22px rgba(255, 42, 85, 0.45);
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
 }
 
-.gb-btn-a {
-  background: linear-gradient(145deg, #ff2d52 0%, #9e0b24 100%);
-  box-shadow: 0 6px 0 #520513, 0 10px 18px rgba(0, 0, 0, 0.6);
-}
-
-.gb-action-btn:active {
+.gb-btn-b.active,
+.gb-btn-b:active {
   transform: translateY(4px);
-  box-shadow: 0 2px 0 #520513;
-  filter: brightness(1.2);
+  box-shadow: 0 2px 0 #61081a, 0 0 24px rgba(255, 42, 85, 0.8);
+  filter: brightness(1.25);
+}
+
+/* Botón A (Salto / Puño / Confirmar) -> Emerald Green / Mint Cyan */
+.gb-btn-a {
+  background: linear-gradient(145deg, #00e676 0%, #009944 100%);
+  box-shadow: 0 6px 0 #005a28, 0 10px 22px rgba(0, 230, 118, 0.45);
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.gb-btn-a.active,
+.gb-btn-a:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #005a28, 0 0 24px rgba(0, 230, 118, 0.8);
+  filter: brightness(1.25);
 }
 
 .gb-action-label {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 900;
-  color: var(--cyan);
   letter-spacing: 0.1em;
-  transform: rotate(24deg);
+  transform: rotate(18deg);
   margin-top: 2px;
-  text-shadow: 0 0 6px rgba(89, 216, 255, 0.4);
+}
+
+.gb-action-col:nth-child(1) .gb-action-label {
+  color: #ff6b8b;
+  text-shadow: 0 0 8px rgba(255, 107, 139, 0.7);
+}
+
+.gb-action-col:nth-child(2) .gb-action-label {
+  color: #42f584;
+  text-shadow: 0 0 8px rgba(66, 245, 132, 0.7);
 }
 
 /* Bottom Area: EQUIPO & CAMBIO (Centered) */

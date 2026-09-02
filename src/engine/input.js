@@ -92,16 +92,27 @@ export function initInput({ onSwitchChar, onToggleTeam, onToggleMusic, onTryStar
     keys[e.code] = false;
   });
 
+  function triggerHaptic(duration = 12) {
+    try {
+      if (typeof navigator !== "undefined" && navigator.vibrate) {
+        navigator.vibrate(duration);
+      }
+    } catch (e) {}
+  }
+
   function bindT(id, prop, tap) {
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener("pointerdown", (e) => {
       e.preventDefault();
+      triggerHaptic(14);
+      el.classList.add("active");
       tap ? tap() : (touch[prop] = true);
     });
     ["pointerup", "pointerleave", "pointercancel"].forEach((ev) =>
       el.addEventListener(ev, (e) => {
         e.preventDefault();
+        el.classList.remove("active");
         if (!tap) touch[prop] = false;
       })
     );
@@ -128,11 +139,7 @@ export function initInput({ onSwitchChar, onToggleTeam, onToggleMusic, onTryStar
     }
   });
 
-  // Portrait Game Boy controls
-  bindT("gbLeft", "L");
-  bindT("gbRight", "R");
-  bindT("gbUp", "Up");
-  bindT("gbDown", "Down");
+  // Portrait Game Boy Action & System Buttons
   bindT("gbA", "A");
   bindT("gbB", "B");
   bindT("gbSelect", null, () => onToggleTeam());
@@ -140,4 +147,77 @@ export function initInput({ onSwitchChar, onToggleTeam, onToggleMusic, onTryStar
   bindT("btnGbMap", null, () => {
     if (onOpenMap) onOpenMap();
   });
+
+  // Continuous Thumb-Glide D-Pad (Cognitive Motor Smoothness)
+  const dpad = document.querySelector(".gb-dpad");
+  if (dpad) {
+    let dpadActive = false;
+    let activePointerId = null;
+
+    const btnL = document.getElementById("gbLeft");
+    const btnR = document.getElementById("gbRight");
+    const btnU = document.getElementById("gbUp");
+    const btnD = document.getElementById("gbDown");
+
+    const updateDpadFromPoint = (clientX, clientY) => {
+      const rect = dpad.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dx = clientX - cx;
+      const dy = clientY - cy;
+      const deadzone = 12;
+
+      const newL = dx < -deadzone;
+      const newR = dx > deadzone;
+      const newU = dy < -deadzone;
+      const newD = dy > deadzone;
+
+      if (newL !== touch.L || newR !== touch.R || newU !== touch.Up || newD !== touch.Down) {
+        triggerHaptic(8);
+      }
+
+      touch.L = newL;
+      touch.R = newR;
+      touch.Up = newU;
+      touch.Down = newD;
+
+      btnL?.classList.toggle("active", touch.L);
+      btnR?.classList.toggle("active", touch.R);
+      btnU?.classList.toggle("active", touch.Up);
+      btnD?.classList.toggle("active", touch.Down);
+    };
+
+    dpad.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      dpadActive = true;
+      activePointerId = e.pointerId;
+      try { dpad.setPointerCapture(e.pointerId); } catch (err) {}
+      triggerHaptic(12);
+      updateDpadFromPoint(e.clientX, e.clientY);
+    });
+
+    dpad.addEventListener("pointermove", (e) => {
+      if (!dpadActive || e.pointerId !== activePointerId) return;
+      e.preventDefault();
+      updateDpadFromPoint(e.clientX, e.clientY);
+    });
+
+    const stopDpad = (e) => {
+      if (!dpadActive || (activePointerId !== null && e.pointerId !== activePointerId)) return;
+      e.preventDefault();
+      dpadActive = false;
+      activePointerId = null;
+      touch.L = false;
+      touch.R = false;
+      touch.Up = false;
+      touch.Down = false;
+      btnL?.classList.remove("active");
+      btnR?.classList.remove("active");
+      btnU?.classList.remove("active");
+      btnD?.classList.remove("active");
+    };
+
+    dpad.addEventListener("pointerup", stopDpad);
+    dpad.addEventListener("pointercancel", stopDpad);
+  }
 }
