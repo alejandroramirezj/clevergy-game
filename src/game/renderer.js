@@ -914,7 +914,7 @@ function drawHUD(cx) {
       ana: "🧗↑",
       alejandro: "🥊",
       paloma: "🪽↑",
-      beltran: "🛡️",
+      beltran: "🪡🛡️",
       silvia: "⚡»",
       maca: "🏐"
     };

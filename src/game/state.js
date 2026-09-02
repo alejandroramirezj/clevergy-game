@@ -147,7 +147,22 @@ export function fmtT(s) {
 export function hurt(n) {
   const P = GameState.P;
   if (P.inv > 0 || P.dashT > 0 || P.roll > 0 || P.slide > 0) return;
-  if (CHARS[GameState.charIdx].id === "beltran" && abilK() && P.shieldE > 0) return;
+  if (CHARS[GameState.charIdx].id === "beltran" && (P.shieldOn || P.shieldE > 0.05 && (abilK() || downK()))) {
+    P.shieldE = Math.max(0, P.shieldE - 0.15);
+    triggerAnim("block", "beltran");
+    sfx(1200, 0.08, "triangle");
+    for (let i = 0; i < 6; i++) {
+      GameState.particles.push({
+        x: P.x + (P.face > 0 ? P.w + 12 : -12),
+        y: P.y + P.h / 2 + (Math.random() - 0.5) * 16,
+        vx: (Math.random() - 0.5) * 4,
+        vy: -Math.random() * 3,
+        t: 0.3,
+        col: "#ffe28a"
+      });
+    }
+    return;
+  }
 
   P.hp -= n;
   P.inv = 1.4;

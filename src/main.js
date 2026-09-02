@@ -193,10 +193,19 @@ function update(dt) {
   if (P.inv > 0) P.inv -= dt;
   if (P.atkT > 0) P.atkT -= dt;
 
-  // Beltrán shield energy
-  const shieldOn = C.id === "beltran" && abilK() && P.shieldE > 0 && !frozen;
-  if (shieldOn) P.shieldE -= dt * 0.4;
-  else P.shieldE = Math.min(1, P.shieldE + dt * 0.35);
+  // Beltrán shield energy & guard
+  if (C.id === "beltran") {
+    if (abilK()) P.shieldHold = (P.shieldHold || 0) + dt;
+    else P.shieldHold = 0;
+  }
+  const shieldOn = C.id === "beltran" && (downK() || (P.shieldHold || 0) > 0.18) && P.shieldE > 0 && !frozen;
+  P.shieldOn = shieldOn;
+  if (shieldOn) {
+    P.shieldE = Math.max(0, P.shieldE - dt * 0.35);
+    P.inv = Math.max(P.inv, 0.2);
+  } else {
+    P.shieldE = Math.min(1, P.shieldE + dt * 0.35);
+  }
 
   /* Horizontal movement */
   let sp = C.spd * (P.spdBoost > 0 ? 1.8 : 1);

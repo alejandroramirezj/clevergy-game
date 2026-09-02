@@ -71,7 +71,29 @@ export function doAbility(C) {
       dmg: 1
     });
   } else if (id === "beltran") {
-    // hold-based, handled in physics update loop
+    P.atkT = 0.22;
+    P.cool = C.cd;
+    sfx(820, 0.08, "triangle", 0.06);
+    sfx(1200, 0.05, "sawtooth", 0.04);
+    triggerAnim("attack", "beltran");
+    GameState.hitboxes.push({
+      x: P.face > 0 ? P.x + P.w : P.x - 48,
+      y: P.y + 4,
+      w: 48,
+      h: P.h - 8,
+      t: 0.18,
+      dmg: 1
+    });
+    for (let i = 0; i < 4; i++) {
+      GameState.particles.push({
+        x: P.x + (P.face > 0 ? P.w + 20 : -20),
+        y: P.y + P.h / 2 + (Math.random() - 0.5) * 12,
+        vx: P.face * (3 + Math.random() * 2),
+        vy: (Math.random() - 0.5) * 2,
+        t: 0.25,
+        col: "#59d8ff"
+      });
+    }
   } else if (id === "bruno") {
     P.cool = C.cd;
     const r = Math.floor(Math.random() * 4);

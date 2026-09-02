@@ -211,12 +211,30 @@ export function initSprites() {
     canvH: 340,
     targetH: 60
   });
+
+  // Load Beltrán (dedal azul y aguja) custom high-res pose sprites
+  loadPoses("beltran", {
+    idle: "/sprites/beltran/idle.png",
+    walk: "/sprites/beltran/walk.png",
+    run: "/sprites/beltran/run.png",
+    jump: "/sprites/beltran/jump.png",
+    attack: "/sprites/beltran/attack.png",
+    shield: "/sprites/beltran/shield.png",
+    block: "/sprites/beltran/block.png",
+    death: "/sprites/beltran/death.png"
+  }, {
+    faceRight: true,
+    anchorX: 180,
+    canvW: 420,
+    canvH: 360,
+    targetH: 60
+  });
 }
 
 export const ANIM = {};
 export const anim = { name: "idle", frame: 0, t: 0, lock: null, lockT: 0 };
-export const ANIM_FPS = { idle: 5, walk: 8, run: 12, jump: 8, attack: 14, damage: 10, death: 6, victory: 6 };
-export const ANIM_ONCE = { attack: 1, damage: 1, death: 1 };
+export const ANIM_FPS = { idle: 5, walk: 8, run: 12, jump: 8, attack: 14, damage: 10, death: 6, victory: 6, shield: 6, block: 10 };
+export const ANIM_ONCE = { attack: 1, damage: 1, death: 1, block: 1 };
 
 export function loadPoses(id, poses, options = {}) {
   const images = {};
@@ -276,6 +294,7 @@ export function getCharacterAvatar(charId) {
   if (charId === "alvaroP") return "/sprites/alvaroP/avatar.png";
   if (charId === "ana") return "/sprites/ana/avatar.png";
   if (charId === "alvaroM") return "/sprites/alvaroM/avatar.png";
+  if (charId === "beltran") return "/sprites/beltran/avatar.png";
   const s = SPR[charId];
   if (s && s.img) {
     try {
@@ -290,7 +309,8 @@ export function getCharacterAvatar(charId) {
 export function pickAnim(P) {
   if (anim.lock) return anim.lock;
   if (P.hp <= 0) return "death";
-  if (P.slide > 0) return "attack";
+  if (P.shieldOn) return "shield";
+  if (P.atkT > 0 || P.slide > 0) return "attack";
   if (!P.onGround) return "jump";
   const spd = Math.abs(P.vx);
   if (spd > 4.6) return "run";
