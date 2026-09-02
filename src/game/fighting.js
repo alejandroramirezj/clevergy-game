@@ -6,6 +6,7 @@ import { CHARS } from "../config/characters.js";
 import { SPR, ANIM, initSprites, getCharacterAvatar } from "../engine/sprites.js";
 import { sfx } from "../engine/audio.js";
 import { GameState } from "./state.js";
+import { isLeft, isRight, isJump, isAttack, isSpecial, setInputMode } from "../engine/input.js";
 
 // Stage Platforms (The Office Layout)
 const FLOOR_Y = 430;
@@ -38,21 +39,6 @@ export const FightState = {
   onExit: null,
   winner: null
 };
-
-// Input state for Player 1
-const P1Input = {
-  left: false,
-  right: false,
-  jump: false,
-  attack: false,
-  special: false
-};
-
-export function setFightKey(key, val) {
-  if (P1Input[key] !== undefined) {
-    P1Input[key] = val;
-  }
-}
 
 // ── Fighter Factory ────────────────────────────────────────────────────────────
 function createFighter(charId, side) {
@@ -102,6 +88,7 @@ export function startFight(p1CharId, p2CharId, mode, onExit) {
 
   FightState.p1 = createFighter(p1CharId, 0);
   FightState.p2 = createFighter(p2CharId, 1);
+  setInputMode("fight");
 }
 
 // ── CPU AI ─────────────────────────────────────────────────────────────────────
@@ -163,8 +150,17 @@ export function updateFight(dt) {
     updateCPU(dt, p2, p1);
   }
 
+  // Read Player 1 from unified InputManager
+  const p1Input = {
+    left: isLeft(),
+    right: isRight(),
+    jump: isJump(),
+    attack: isAttack(),
+    special: isSpecial()
+  };
+
   // Update both fighters
-  updateFighter(p1, P1Input, p2, dt);
+  updateFighter(p1, p1Input, p2, dt);
   updateFighter(p2, cpuInput, p1, dt);
 
   // Auto-face opponent when idle/walking
@@ -510,9 +506,6 @@ export function drawFight(cx) {
   // Draw Top HUD (Street Fighter style HP bars)
   drawTopHUD(cx, W, H);
 
-  // Draw On-Screen Touch Controls (if on mobile/touch screen)
-  drawTouchButtons(cx, W, H);
-
   // Match End Modal
   if (FightState.phase === "match_end") {
     drawMatchEndModal(cx, W, H);
@@ -835,38 +828,7 @@ function drawTopHUD(cx, W, H) {
   cx.fillText("🗺️ MAPA", W / 2, 14);
 }
 
-// ── Virtual Touch Controls for Mobile ──────────────────────────────────────────
-function drawTouchButtons(cx, W, H) {
-  const isTouch = window.matchMedia("(pointer:coarse)").matches;
-  if (!isTouch) return;
 
-  const btnY = H - 65;
-  // D-pad Left & Right
-  drawCircleBtn(cx, 60, btnY, 32, "◀", P1Input.left);
-  drawCircleBtn(cx, 135, btnY, 32, "▶", P1Input.right);
-
-  // Action Buttons (Jump, Attack, Special)
-  drawCircleBtn(cx, W - 185, btnY, 28, "▲", P1Input.jump, "#59d8ff");
-  drawCircleBtn(cx, W - 120, btnY, 32, "🥊", P1Input.attack, "#ff4d5e");
-  drawCircleBtn(cx, W - 50, btnY, 32, "⚡", P1Input.special, "#ffd25e");
-}
-
-function drawCircleBtn(cx, x, y, r, label, active, col = "#59d8ff") {
-  cx.save();
-  cx.fillStyle = active ? col : "rgba(18, 28, 56, 0.75)";
-  cx.beginPath();
-  cx.arc(x, y, r, 0, Math.PI * 2);
-  cx.fill();
-  cx.strokeStyle = col;
-  cx.lineWidth = 2;
-  cx.stroke();
-
-  cx.textAlign = "center";
-  cx.fillStyle = active ? "#06101e" : "#ffffff";
-  cx.font = "bold 18px monospace";
-  cx.fillText(label, x, y + 6);
-  cx.restore();
-}
 
 function drawMatchEndModal(cx, W, H) {
   cx.fillStyle = "rgba(4, 9, 22, 0.88)";

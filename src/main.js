@@ -10,9 +10,8 @@ import { draw } from "./game/renderer.js";
 import { initOverlays } from "./ui/overlays.js";
 import { initWorldMap } from "./ui/worldMap.js";
 import { loadWorld } from "./game/levelLoader.js";
-import { initAngryBirds, updateAngryBirds, drawAngryBirds, startLevel as restartABLevel } from "./game/angryBirds.js";
 import { updateProjectiles, updateMinions, updateEnemies, updateBoss, winGame } from "./game/enemies.js";
-import { startFight, updateFight, drawFight, FightState, setFightKey } from "./game/fighting.js";
+import { startFight, updateFight, drawFight, FightState } from "./game/fighting.js";
 import { showFightLobby, hideFightLobby, drawFightLobby, updateFightLobby } from "./ui/fightLobby.js";
 import { disconnect as netDisconnect } from "./game/fightNet.js";
 
@@ -22,8 +21,10 @@ const cx = cv.getContext("2d");
 function fitCanvas() {
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const iw = window.innerWidth, ih = window.innerHeight;
+  const isPortrait = ih > iw;
 
-  if (GameState.gameMode === "angrybirds" || GameState.gameMode === "fighting" || GameState.gameMode === "fighting_active") {
+  // Selection Lobby: fullscreen menu mode
+  if (GameState.gameMode === "fighting") {
     document.body.classList.remove("gameboy-mode");
     document.getElementById("touch")?.classList.add("hidden");
     document.getElementById("gameboyDeck")?.classList.add("hidden");
@@ -50,8 +51,7 @@ function fitCanvas() {
     return;
   }
 
-  const isPortrait = ih > iw;
-
+  // Active Gameplay (Platformer or Fighting Active)
   if (isPortrait) {
     document.body.classList.add("gameboy-mode");
     document.getElementById("touch")?.classList.add("hidden");
@@ -61,9 +61,6 @@ function fitCanvas() {
     const screenH = Math.round(ih * 0.48);
     const screenW = iw;
 
-    // Zoomed-in camera: resolution H = 340, W scales with screen ratio (~300-360)
-    // This makes character 58px tall out of 340px -> 17% of screen height!
-    // On physical phone (390px wide x 380px tall), the character is ~65 physical pixels tall!
     const H = 340;
     const W = Math.round(H * (screenW / screenH));
 
@@ -133,14 +130,6 @@ function startGame(worldId = 1) {
   GameState.currentWorld = worldId;
 
   if (worldId === 6) {
-    GameState.gameMode = "angrybirds";
-    fitCanvas();
-    initAngryBirds(cv, cx, () => {
-      GameState.gameMode = "platformer";
-      worldMap.showWorldMap();
-      fitCanvas();
-    });
-  } else if (worldId === 7) {
     GameState.gameMode = "fighting";
     fitCanvas();
     showFightLobby(
@@ -488,7 +477,8 @@ initInput({
     const on = toggleMusic();
     msg(on ? "MÚSICA: ON" : "MÚSICA: OFF", 1.2);
   },
-  onTryStart: () => tryStart()
+  onTryStart: () => tryStart(),
+  onOpenMap: () => worldMap.showWorldMap()
 });
 
 let last = performance.now();
@@ -496,19 +486,12 @@ function loop(now) {
   const dt = Math.min(0.033, (now - last) / 1000);
   last = now;
 
-  if (GameState.gameMode === "angrybirds") {
-    if (GameState.status === "play") updateAngryBirds(dt);
-    drawAngryBirds(cx);
-  } else if (GameState.gameMode === "fighting") {
+  if (GameState.gameMode === "fighting") {
     updateFightLobby(dt);
     drawFightLobby(cx);
   } else if (GameState.gameMode === "fighting_active") {
     updateFight(dt);
     drawFight(cx);
-    // Detect match end via click handled inside fighting.js
-    if (FightState.phase === "match_end") {
-      // handled by click in fight renderer
-    }
   } else {
     if (GameState.status === "play") update(dt);
     if (GameState.status === "play" || GameState.status === "gameover") draw(cx);
@@ -516,62 +499,5 @@ function loop(now) {
 
   requestAnimationFrame(loop);
 }
-
-window.addEventListener("keydown", (e) => {
-  if (e.code === "KeyR" && GameState.gameMode === "angrybirds") {
-    restartABLevel();
-  }
-  // Fighting keyboard controls (P1)
-  if (GameState.gameMode === "fighting_active") {
-    const map = {
-      ArrowLeft: "left", KeyA: "left",
-      ArrowRight: "right", KeyD: "right",
-      ArrowUp: "jump", KeyW: "jump", Space: "jump",
-      KeyZ: "attack", KeyJ: "attack",
-      KeyX: "special", KeyK: "special"
-    };
-    if (map[e.code]) setFightKey(map[e.code], true);
-  }
-});
-
-window.addEventListener("keyup", (e) => {
-  if (GameState.gameMode === "fighting_active") {
-    const map = {
-      ArrowLeft: "left", KeyA: "left",
-      ArrowRight: "right", KeyD: "right",
-      ArrowUp: "jump", KeyW: "jump", Space: "jump",
-      KeyZ: "attack", KeyJ: "attack",
-      KeyX: "special", KeyK: "special"
-    };
-    if (map[e.code]) setFightKey(map[e.code], false);
-  }
-});
-
-// Touch controls for fighting
-(function setupFightTouch() {
-  const touchKeys = {};
-  window.addEventListener("touchstart", e => {
-    if (GameState.gameMode !== "fighting_active") return;
-    const cv2 = document.getElementById("cv");
-    const rect = cv2.getBoundingClientRect();
-    for (const t of e.changedTouches) {
-      const px = (t.clientX - rect.left) / rect.width;
-      const py = (t.clientY - rect.top) / rect.height;
-      if (py > 0.75) {
-        if (px < 0.2) { setFightKey("left", true); touchKeys[t.identifier] = "left"; }
-        else if (px > 0.8) { setFightKey("right", true); touchKeys[t.identifier] = "right"; }
-        else if (px > 0.35 && px < 0.5) { setFightKey("jump", true); touchKeys[t.identifier] = "jump"; }
-        else if (px > 0.55 && px < 0.7) { setFightKey("attack", true); touchKeys[t.identifier] = "attack"; }
-        else if (px > 0.72) { setFightKey("special", true); touchKeys[t.identifier] = "special"; }
-      }
-    }
-  }, { passive: true });
-  window.addEventListener("touchend", e => {
-    for (const t of e.changedTouches) {
-      const k = touchKeys[t.identifier];
-      if (k) { setFightKey(k, false); delete touchKeys[t.identifier]; }
-    }
-  }, { passive: true });
-})();
 
 requestAnimationFrame(loop);
