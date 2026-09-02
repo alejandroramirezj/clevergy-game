@@ -13,6 +13,7 @@ export const GameState = {
   currentWorld: 1,
   worldTheme: null,
   worldMapOpen: false,
+  gameMode: "platformer", // "platformer" | "angrybirds"
 
   score: 0,
   combo: 0,

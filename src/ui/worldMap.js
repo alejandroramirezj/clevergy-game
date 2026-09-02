@@ -32,7 +32,7 @@ export function initWorldMap({ onSelectWorld, onOpenTeam }) {
     const completedCount = progress.completed.length;
 
     if (mapProgressBadge) {
-      mapProgressBadge.innerHTML = `⭐ <span>${completedCount}/5</span> MUNDOS DOMINADOS`;
+      mapProgressBadge.innerHTML = `⭐ <span>${completedCount}/${WORLDS.length}</span> MUNDOS DOMINADOS`;
     }
 
     // Update active hero display on map
@@ -50,9 +50,9 @@ export function initWorldMap({ onSelectWorld, onOpenTeam }) {
 
     WORLDS.forEach((w, idx) => {
       const unlocked = isWorldUnlocked(w.id, progress);
-      const isCompleted = progress.completed.includes(w.id);
-      const isCurrent = progress.currentWorldId === w.id;
-      const rank = progress.ranks[w.id];
+      const isCompleted = Boolean(progress && progress.completed && progress.completed.includes(w.id));
+      const isCurrent = Boolean(progress && progress.currentWorldId === w.id);
+      const rank = (progress && progress.ranks && progress.ranks[w.id]) || "";
 
       const node = document.createElement("div");
       node.className = `map-node ${unlocked ? "unlocked" : "locked"} ${isCompleted ? "completed" : ""} ${isCurrent ? "current" : ""}`;
@@ -97,6 +97,7 @@ export function initWorldMap({ onSelectWorld, onOpenTeam }) {
           alert(`🔒 ¡Mundo bloqueado! Primero debes superar el Mundo ${w.id - 1}.`);
           return;
         }
+        // If clicking already selected world, or first click, open card
         openWorldCard(w, progress);
       });
 
@@ -108,18 +109,18 @@ export function initWorldMap({ onSelectWorld, onOpenTeam }) {
     selectedWorld = w;
     sfx(600, 0.08, "square");
 
-    if (wcIcon) wcIcon.textContent = w.iconEmoji;
+    if (wcIcon) wcIcon.textContent = w.iconEmoji || "🎯";
     if (wcTitle) {
-      wcTitle.textContent = w.title;
-      wcTitle.style.color = w.accentColor;
+      wcTitle.textContent = w.title || w.name;
+      wcTitle.style.color = w.accentColor || "#59d8ff";
     }
-    if (wcSubtitle) wcSubtitle.textContent = w.subtitle;
-    if (wcDesc) wcDesc.textContent = w.desc;
-    if (wcBoss) wcBoss.textContent = `👾 JEFE: ${w.bossName}`;
+    if (wcSubtitle) wcSubtitle.textContent = w.subtitle || "";
+    if (wcDesc) wcDesc.textContent = w.desc || "";
+    if (wcBoss) wcBoss.textContent = `👾 JEFE: ${w.bossName || "BOSS"}`;
 
-    const isCompleted = progress.completed.includes(w.id);
-    const score = progress.highScores[w.id];
-    const rank = progress.ranks[w.id];
+    const isCompleted = Boolean(progress && progress.completed && progress.completed.includes(w.id));
+    const score = (progress && progress.highScores && progress.highScores[w.id]) || 0;
+    const rank = (progress && progress.ranks && progress.ranks[w.id]) || "";
 
     if (wcRecord) {
       if (isCompleted) {

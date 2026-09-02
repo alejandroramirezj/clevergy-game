@@ -75,6 +75,36 @@ export const WORLDS = [
     accentColor: "#ff4d6a",
     iconEmoji: "🔥",
     mapCoords: { x: 88, y: 55 }
+  },
+  {
+    id: 6,
+    name: "Backlog Fortress",
+    title: "6. Backlog Fortress (Slingshot)",
+    subtitle: "Operación Hotfix Catapult",
+    desc: "¡Físicas estilo Angry Birds! Lanza a los héroes de Clevergy con el Deploy-A-Pult, derriba las torres de servidores legados y elimina a los Errores 404.",
+    bossName: "THE LEGACY MONOLITH",
+    fragmentName: "Trofeo Dorado: Hotfix Legendario",
+    bgClass: "world-angrybirds",
+    bgGradient: ["#0a1826", "#19354d"],
+    platformColor: "#4a6b82",
+    accentColor: "#59d8ff",
+    iconEmoji: "🎯",
+    mapCoords: { x: 50, y: 82 }
+  },
+  {
+    id: 7,
+    name: "Code Clash Arena",
+    title: "7. Code Clash Arena",
+    subtitle: "La Batalla del Sprint",
+    desc: "¡Combate 1v1 en la arena! Pelea contra la CPU o reta a un compañero en otro móvil en tiempo real. ¡El mejor de 3 rounds gana el Sprint!",
+    bossName: "EL COMPAÑERO RIVAL",
+    fragmentName: "Trofeo de Oro: Sprint Champion",
+    bgClass: "world-fight",
+    bgGradient: ["#0f0814", "#1c0f28"],
+    platformColor: "#3d2060",
+    accentColor: "#ff4d5e",
+    iconEmoji: "🥊",
+    mapCoords: { x: 72, y: 75 }
   }
 ];
 

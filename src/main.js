@@ -6,11 +6,15 @@ import { initSprites, updateAnim, anim } from "./engine/sprites.js";
 import { initInput, left, right, upK, downK, jumpK, abilK } from "./engine/input.js";
 import { GameState, initCoffees, hurt, respawn, msg, msg2, switchChar, addScore } from "./game/state.js";
 import { doAbility } from "./game/abilities.js";
-import { spawnEnemies, updateProjectiles, updateMinions, updateEnemies, updateBoss, winGame } from "./game/enemies.js";
 import { draw } from "./game/renderer.js";
 import { initOverlays } from "./ui/overlays.js";
 import { initWorldMap } from "./ui/worldMap.js";
 import { loadWorld } from "./game/levelLoader.js";
+import { initAngryBirds, updateAngryBirds, drawAngryBirds, startLevel as restartABLevel } from "./game/angryBirds.js";
+import { updateProjectiles, updateMinions, updateEnemies, updateBoss, winGame } from "./game/enemies.js";
+import { startFight, updateFight, drawFight, FightState, setFightKey } from "./game/fighting.js";
+import { showFightLobby, hideFightLobby, drawFightLobby, updateFightLobby } from "./ui/fightLobby.js";
+import { disconnect as netDisconnect } from "./game/fightNet.js";
 
 const cv = document.getElementById("cv");
 const cx = cv.getContext("2d");
@@ -18,10 +22,41 @@ const cx = cv.getContext("2d");
 function fitCanvas() {
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const iw = window.innerWidth, ih = window.innerHeight;
+
+  if (GameState.gameMode === "angrybirds" || GameState.gameMode === "fighting" || GameState.gameMode === "fighting_active") {
+    document.body.classList.remove("gameboy-mode");
+    document.getElementById("touch")?.classList.add("hidden");
+    document.getElementById("gameboyDeck")?.classList.add("hidden");
+
+    const H = 540;
+    let W = Math.round(H * (iw / ih));
+    W = Math.max(960, Math.min(1600, W));
+
+    cv.width = Math.round(W * dpr);
+    cv.height = Math.round(H * dpr);
+    cv.style.position = "fixed";
+    cv.style.left = "0";
+    cv.style.top = "0";
+    cv.style.width = iw + "px";
+    cv.style.height = ih + "px";
+
+    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    cx.imageSmoothingEnabled = false;
+
+    GameState.W = W;
+    GameState.H = H;
+    GameState.DPR = dpr;
+    GameState.SAFEB = 0;
+    return;
+  }
+
   const isPortrait = ih > iw;
 
   if (isPortrait) {
     document.body.classList.add("gameboy-mode");
+    document.getElementById("touch")?.classList.add("hidden");
+    document.getElementById("gameboyDeck")?.classList.remove("hidden");
+
     // Game Boy screen takes ~48% of screen height
     const screenH = Math.round(ih * 0.48);
     const screenW = iw;
@@ -49,10 +84,16 @@ function fitCanvas() {
     GameState.SAFEB = 0;
   } else {
     document.body.classList.remove("gameboy-mode");
+    document.getElementById("gameboyDeck")?.classList.add("hidden");
+    const coarse = window.matchMedia("(pointer:coarse)").matches;
+    if (coarse) {
+      document.getElementById("touch")?.classList.remove("hidden");
+    } else {
+      document.getElementById("touch")?.classList.add("hidden");
+    }
     const H = 540;
     let W = Math.round(H * (iw / ih));
     W = Math.max(700, Math.min(1600, W));
-    const coarse = window.matchMedia("(pointer:coarse)").matches;
     const SAFEB = coarse ? 96 : 0;
 
     cv.width = Math.round(W * dpr);
@@ -87,18 +128,54 @@ function startGame(worldId = 1) {
   document.getElementById("winOv")?.classList.add("hidden");
   document.getElementById("goOv")?.classList.add("hidden");
 
-  loadWorld(worldId);
   GameState.status = "play";
   GameState.worldMapOpen = false;
-  fitCanvas();
-  startMusic(() => GameState.status);
-  anim.lock = null;
-  anim.name = "idle";
-  anim.frame = 0;
-  anim.t = 0;
-  sfx(880, 0.1);
-  sfx(1174, 0.15);
-  msg2(CHARS[GameState.charIdx].tip, 4);
+  GameState.currentWorld = worldId;
+
+  if (worldId === 6) {
+    GameState.gameMode = "angrybirds";
+    fitCanvas();
+    initAngryBirds(cv, cx, () => {
+      GameState.gameMode = "platformer";
+      worldMap.showWorldMap();
+      fitCanvas();
+    });
+  } else if (worldId === 7) {
+    GameState.gameMode = "fighting";
+    fitCanvas();
+    showFightLobby(
+      (p1Char, p2Char, mode) => {
+        // Lobby finished — start actual fight
+        startFight(p1Char, p2Char, mode, () => {
+          netDisconnect();
+          GameState.gameMode = "platformer";
+          worldMap.showWorldMap();
+          fitCanvas();
+        });
+        GameState.gameMode = "fighting_active";
+        fitCanvas();
+      },
+      () => {
+        // Back to map
+        netDisconnect();
+        GameState.gameMode = "platformer";
+        worldMap.showWorldMap();
+        fitCanvas();
+      }
+    );
+  } else {
+    GameState.gameMode = "platformer";
+    fitCanvas();
+    loadWorld(worldId);
+    startMusic(() => GameState.status);
+    anim.lock = null;
+    anim.name = "idle";
+    anim.frame = 0;
+    anim.t = 0;
+    sfx(880, 0.1);
+    sfx(1174, 0.15);
+    msg2(CHARS[GameState.charIdx].tip, 4);
+  }
 }
 
 function update(dt) {
@@ -419,10 +496,82 @@ function loop(now) {
   const dt = Math.min(0.033, (now - last) / 1000);
   last = now;
 
-  if (GameState.status === "play") update(dt);
-  if (GameState.status === "play" || GameState.status === "gameover") draw(cx);
+  if (GameState.gameMode === "angrybirds") {
+    if (GameState.status === "play") updateAngryBirds(dt);
+    drawAngryBirds(cx);
+  } else if (GameState.gameMode === "fighting") {
+    updateFightLobby(dt);
+    drawFightLobby(cx);
+  } else if (GameState.gameMode === "fighting_active") {
+    updateFight(dt);
+    drawFight(cx);
+    // Detect match end via click handled inside fighting.js
+    if (FightState.phase === "match_end") {
+      // handled by click in fight renderer
+    }
+  } else {
+    if (GameState.status === "play") update(dt);
+    if (GameState.status === "play" || GameState.status === "gameover") draw(cx);
+  }
 
   requestAnimationFrame(loop);
 }
+
+window.addEventListener("keydown", (e) => {
+  if (e.code === "KeyR" && GameState.gameMode === "angrybirds") {
+    restartABLevel();
+  }
+  // Fighting keyboard controls (P1)
+  if (GameState.gameMode === "fighting_active") {
+    const map = {
+      ArrowLeft: "left", KeyA: "left",
+      ArrowRight: "right", KeyD: "right",
+      ArrowUp: "jump", KeyW: "jump", Space: "jump",
+      KeyZ: "attack", KeyJ: "attack",
+      KeyX: "special", KeyK: "special"
+    };
+    if (map[e.code]) setFightKey(map[e.code], true);
+  }
+});
+
+window.addEventListener("keyup", (e) => {
+  if (GameState.gameMode === "fighting_active") {
+    const map = {
+      ArrowLeft: "left", KeyA: "left",
+      ArrowRight: "right", KeyD: "right",
+      ArrowUp: "jump", KeyW: "jump", Space: "jump",
+      KeyZ: "attack", KeyJ: "attack",
+      KeyX: "special", KeyK: "special"
+    };
+    if (map[e.code]) setFightKey(map[e.code], false);
+  }
+});
+
+// Touch controls for fighting
+(function setupFightTouch() {
+  const touchKeys = {};
+  window.addEventListener("touchstart", e => {
+    if (GameState.gameMode !== "fighting_active") return;
+    const cv2 = document.getElementById("cv");
+    const rect = cv2.getBoundingClientRect();
+    for (const t of e.changedTouches) {
+      const px = (t.clientX - rect.left) / rect.width;
+      const py = (t.clientY - rect.top) / rect.height;
+      if (py > 0.75) {
+        if (px < 0.2) { setFightKey("left", true); touchKeys[t.identifier] = "left"; }
+        else if (px > 0.8) { setFightKey("right", true); touchKeys[t.identifier] = "right"; }
+        else if (px > 0.35 && px < 0.5) { setFightKey("jump", true); touchKeys[t.identifier] = "jump"; }
+        else if (px > 0.55 && px < 0.7) { setFightKey("attack", true); touchKeys[t.identifier] = "attack"; }
+        else if (px > 0.72) { setFightKey("special", true); touchKeys[t.identifier] = "special"; }
+      }
+    }
+  }, { passive: true });
+  window.addEventListener("touchend", e => {
+    for (const t of e.changedTouches) {
+      const k = touchKeys[t.identifier];
+      if (k) { setFightKey(k, false); delete touchKeys[t.identifier]; }
+    }
+  }, { passive: true });
+})();
 
 requestAnimationFrame(loop);
