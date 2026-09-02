@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>RETREAT: THE LEGEND OF THE TEAM · Clevergy</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <script type="module" crossorigin src="/assets/index-B0jN1WUo.js"></script>
+  <script type="module" crossorigin src="/assets/index-BrrbWfos.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-BNgVZZe9.css">
 </head>
 <body>
@@ -44,9 +44,7 @@
             <span class="btn-arrow">▶</span>
           </button>
 
-          <button class="pixel-btn btn-wood" id="btnChangeChar">
-            <span>EQUIPO</span>
-          </button>
+
 
           <button class="pixel-btn btn-wood" id="btnOpenMapMenu">
             <span>MUNDOS</span>
@@ -119,7 +117,7 @@
         <div class="ctrl-card"><span class="kbadge">↑ / W / ESPACIO</span><span>Saltar</span></div>
         <div class="ctrl-card"><span class="kbadge">X / J</span><span>Habilidad especial</span></div>
         <div class="ctrl-card"><span class="kbadge">TAB</span><span>Siguiente compañero</span></div>
-        <div class="ctrl-card"><span class="kbadge">T / 👥</span><span>Ver equipo completo</span></div>
+
         <div class="ctrl-card"><span class="kbadge">M</span><span>Música ON/OFF</span></div>
       </div>
       <div class="panel" style="margin-top:14px;">
@@ -127,76 +125,6 @@
         Recoge las tazas de ☕ para sumar puntos y curarte. ¡Derrota a <b>The Email Chain</b> para recuperar el Retreat!
       </div>
       <button class="btn" id="btnCloseCtrl" style="margin-top:16px;">¡ENTENDIDO!</button>
-    </div>
-  </div>
-
-  <!-- 03. SELECCIÓN DE COMPAÑERO (ROSTER COMPLETO DE 18 HÉROES) -->
-  <div id="teamOv" class="overlay hidden">
-    <div class="pixel-modal-box team-select-modal">
-      <div class="modal-header-pixel">
-        <div class="pixel-title-wood">PLANTILLA CLEVERGY</div>
-        <div class="pixel-sub-cyan">18 COMPAÑEROS DISPONIBLES · PUEDES CAMBIAR ENTRE TODOS EN CUALQUIER MOMENTO</div>
-      </div>
-
-      <!-- HERO HIGHLIGHT CAROUSEL -->
-      <div class="team-showcase-box">
-        <button class="team-nav-arrow" id="teamHeroPrev" aria-label="Anterior">◀</button>
-        <div class="team-hero-card">
-          <div class="team-avatar-frame">
-            <div id="teamHeroAvatar" class="team-avatar-display">🪰</div>
-          </div>
-          <div class="team-hero-info">
-            <div class="team-hero-title-row">
-              <span id="teamHeroName" class="team-hero-name">1. ALEJANDRO R.</span>
-              <span id="teamHeroForm" class="team-hero-form">Mosca boxeadora</span>
-            </div>
-
-            <!-- Segmented Pixel Stat Bars -->
-            <div class="team-stat-bars">
-              <div class="stat-row"><span class="lbl">FUERZA</span><div class="pixel-bar-track"><div id="teamBarPwr" class="p-fill" style="width: 80%;"></div></div></div>
-              <div class="stat-row"><span class="lbl">VELOCIDAD</span><div class="pixel-bar-track"><div id="teamBarSpd" class="p-fill" style="width: 75%;"></div></div></div>
-              <div class="stat-row"><span class="lbl">VUELO</span><div class="pixel-bar-track"><div id="teamBarFly" class="p-fill" style="width: 90%;"></div></div></div>
-              <div class="stat-row"><span class="lbl">CAOS</span><div class="pixel-bar-track"><div id="teamBarChaos" class="p-fill" style="width: 70%;"></div></div></div>
-            </div>
-
-            <!-- Ability Pill -->
-            <div class="team-ability-pill">
-              <span class="ab-icon">✦</span>
-              <div class="ab-texts">
-                <span id="teamHeroAb" class="ab-name">PUÑO MOSCA</span>
-                <span id="teamHeroTip" class="ab-desc">X: puñetazo · mantén salto para planear</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <button class="team-nav-arrow" id="teamHeroNext" aria-label="Siguiente">▶</button>
-      </div>
-
-      <!-- ACTIVE HERO QUICK BAR -->
-      <div class="squad-tray-box">
-        <div class="squad-tray-header">
-          <span class="squad-title">COMPAÑERO ACTIVO:</span>
-          <span class="squad-hint">Toca cualquier compañero abajo para seleccionarlo al instante</span>
-        </div>
-        <div class="active-hero-summary" id="teamActiveSummary">
-          <img id="teamActiveImg" src="/sprites/alejandro/avatar.png" alt="Activo" class="squad-slot-img">
-          <div class="active-hero-texts">
-            <span id="teamActiveName" class="active-name">ALEJANDRO R.</span>
-            <span id="teamActiveAb" class="active-ab">✦ PUÑO MOSCA</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- COMPLETE 18 ROSTER GRID (SELECT ANY COWORKER) -->
-      <div class="team-roster-section">
-        <div class="roster-toggle-label">TODOS LOS COMPAÑEROS (TOCA UNO PARA ELEGIRLO):</div>
-        <div id="teamGrid" class="team-pixel-grid"></div>
-      </div>
-
-      <!-- CONFIRM BUTTON -->
-      <div class="team-modal-actions">
-        <button class="pixel-btn btn-play-wood" id="teamClose">JUGAR CON ESTE COMPAÑERO ✔</button>
-      </div>
     </div>
   </div>
 
@@ -215,7 +143,7 @@
         <div id="mapHeroBadge" class="map-hero-pill">
           <img id="mapHeroImg" src="/sprites/alejandro/avatar.png" class="map-hero-avatar" alt="Héroe">
           <span id="mapHeroName">ALEJANDRO R.</span>
-          <button id="btnMapTeam" class="btn-micro" title="Cambiar Compañero">👥 EQUIPO</button>
+          
         </div>
       </div>
     </div>
@@ -375,7 +303,7 @@
       <div class="pause-actions-stack">
         <button class="pixel-btn btn-play-wood" id="btnResumeGame">CONTINUAR ▶</button>
         <button class="pixel-btn btn-wood" id="btnRestartLevel">REINICIAR 🔄</button>
-        <button class="pixel-btn btn-wood" id="btnPauseTeam">CAMBIAR EQUIPO 👥</button>
+        
         <button class="pixel-btn btn-wood" id="btnPauseCtrl">AJUSTES / CONTROLES ⚙</button>
         <button class="pixel-btn btn-danger-wood" id="btnPauseExit">SALIR AL MENÚ 🏠</button>
       </div>
@@ -468,7 +396,7 @@
   <!-- TOUCH CONTROLS (HORIZONTAL / LANDSCAPE) -->
   <div id="touch">
     <div class="tbtn" id="tL">◀</div><div class="tbtn" id="tR">▶</div>
-    <div class="tbtn" id="tT">👥</div><div class="tbtn" id="tS">⇄</div>
+    <div class="tbtn" id="tS">⇄</div>
     <div class="tbtn" id="tB">✦</div><div class="tbtn" id="tA">▲</div>
   </div>
 
@@ -518,10 +446,7 @@
           <button class="gb-pill-btn" id="btnGbMap" aria-label="Mapa">MAPA</button>
           <span class="gb-pill-label">🗺️ MAPA</span>
         </div>
-        <div class="gb-pill-wrapper">
-          <button class="gb-pill-btn" id="gbSelect" aria-label="Equipo">EQUIPO</button>
-          <span class="gb-pill-label">👥 EQUIPO</span>
-        </div>
+
       </div>
 
       <div class="gb-speaker">

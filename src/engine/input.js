@@ -86,7 +86,6 @@ export function initInput({ onSwitchChar, onSwitchSlot, onToggleTeam, onToggleMu
     if (e.code === "Digit2" || e.code === "Numpad2") onSwitchSlot ? onSwitchSlot(1) : onSwitchChar(1);
     if (e.code === "Digit3" || e.code === "Numpad3") onSwitchSlot ? onSwitchSlot(2) : onSwitchChar(1);
     if (e.code === "Escape") onPause ? onPause() : null;
-    if (e.code === "KeyT") onToggleTeam();
     if (e.code === "KeyM") onToggleMusic();
     if (e.code === "Enter") onTryStart();
   });
@@ -134,18 +133,10 @@ export function initInput({ onSwitchChar, onSwitchSlot, onToggleTeam, onToggleMu
       onSwitchChar(1);
     }
   });
-  bindT("tT", null, () => {
-    if (currentMode === "fight") {
-      if (onOpenMap) onOpenMap();
-    } else {
-      onToggleTeam();
-    }
-  });
 
   // Portrait Game Boy Action & System Buttons
   bindT("gbA", "A");
   bindT("gbB", "B");
-  bindT("gbSelect", null, () => onToggleTeam());
   bindT("gbStart", null, () => onSwitchChar(1));
   bindT("btnGbMap", null, () => {
     if (onOpenMap) onOpenMap();

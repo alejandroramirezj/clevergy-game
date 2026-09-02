@@ -252,8 +252,9 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
   renderCampfireCharacters();
 
   // Populate complete team selector
-  CHARS.forEach((c, i) => {
-    const d = document.createElement("div");
+  if (teamGrid) {
+    CHARS.forEach((c, i) => {
+      const d = document.createElement("div");
     d.className = "tcell";
     d.dataset.i = i;
     const av = getCharacterAvatar(c.id);
@@ -272,7 +273,8 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
       sfx(700, 0.08);
     });
     teamGrid.appendChild(d);
-  });
+    });
+  }
 
   // Team Showcase Carousel elements
   let showcaseCharIdx = 0;
@@ -340,11 +342,12 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
   updateTeamShowcase(0);
 
   function toggleTeam(forceClose) {
+    if (!teamOv) return;
     const currentlyOpen = !teamOv.classList.contains("hidden");
     const wantOpen = forceClose ? false : !currentlyOpen;
     teamOv.classList.toggle("hidden", !wantOpen);
     GameState.teamOpen = wantOpen;
-    if (wantOpen) {
+    if (wantOpen && typeof updateTeamShowcase === "function") {
       updateTeamShowcase(GameState.charIdx);
     }
   }
@@ -458,7 +461,7 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     bootOv.classList.add("hidden");
     lbOv.classList.add("hidden");
     ctrlOv.classList.add("hidden");
-    teamOv.classList.add("hidden");
+    teamOv?.classList.add("hidden");
 
     onStartGame();
   }
@@ -497,10 +500,10 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     if (e.code === "Escape") {
       if (!lbOv.classList.contains("hidden")) closeLeaderboard();
       if (!ctrlOv.classList.contains("hidden")) ctrlOv.classList.add("hidden");
-      if (!teamOv.classList.contains("hidden")) toggleTeam(true);
+      if (teamOv && !teamOv.classList.contains("hidden")) toggleTeam(true);
       if (!bootOv.classList.contains("hidden")) bootOv.classList.add("hidden");
     }
-    if (e.code === "Enter" && !menuOv.classList.contains("hidden") && lbOv.classList.contains("hidden") && ctrlOv.classList.contains("hidden") && teamOv.classList.contains("hidden")) {
+    if (e.code === "Enter" && !menuOv.classList.contains("hidden") && lbOv.classList.contains("hidden") && ctrlOv.classList.contains("hidden") && (!teamOv || teamOv.classList.contains("hidden"))) {
       triggerStart();
     }
   });
