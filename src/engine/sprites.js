@@ -179,6 +179,22 @@ export function initSprites() {
     canvH: 340,
     targetH: 60
   });
+
+  // Load Ana (escaladora leona) custom high-res pose sprites
+  loadPoses("ana", {
+    idle: "/sprites/ana/idle.png",
+    walk: "/sprites/ana/walk.png",
+    run: "/sprites/ana/run.png",
+    jump: "/sprites/ana/jump.png",
+    attack: "/sprites/ana/attack.png",
+    death: "/sprites/ana/death.png"
+  }, {
+    faceRight: true,
+    anchorX: 220,
+    canvW: 560,
+    canvH: 360,
+    targetH: 60
+  });
 }
 
 export const ANIM = {};
@@ -242,6 +258,7 @@ export function getCharacterAvatar(charId) {
   if (charId === "alejandro") return "/sprites/alejandro/avatar.png";
   if (charId === "ale") return "/sprites/ale/avatar.png";
   if (charId === "alvaroP") return "/sprites/alvaroP/avatar.png";
+  if (charId === "ana") return "/sprites/ana/avatar.png";
   const s = SPR[charId];
   if (s && s.img) {
     try {
