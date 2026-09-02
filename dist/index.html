@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>RETREAT: THE LEGEND OF THE TEAM · Clevergy</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <script type="module" crossorigin src="/assets/index-Vnr1PdIt.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CuRsNbxm.css">
+</head>
+<body>
+  <div id="wrap">
+    <canvas id="cv" width="960" height="540"></canvas>
+  </div>
+
+  <!-- MAIN MENU (CAMPFIRE RETREAT RETRO PIXEL ART) -->
+  <div id="menuOv" class="overlay menu-campfire-overlay">
+    <div class="campfire-backdrop"></div>
+    <div class="campfire-warm-overlay"></div>
+
+    <div class="menu-campfire-container">
+      <!-- TOP HEADER: RETREAT LOGO & VERSION -->
+      <div class="menu-pixel-header">
+        <div class="pixel-logo-box">
+          <h1 class="pixel-logo-title">RETREAT</h1>
+          <div class="pixel-logo-sub">THE LEGEND OF THE TEAM</div>
+        </div>
+        <div class="menu-version-tag">v1.0.0</div>
+      </div>
+
+      <!-- MAIN CONTENT: LEFT BUTTONS + CENTER CAMPFIRE GATHERING -->
+      <div class="campfire-main-content">
+        <!-- LEFT: ARCADE WOOD MENU BUTTONS (MATCHING REFERENCE IMAGE) -->
+        <div class="campfire-menu-stack">
+          <!-- Gamer Tag input pill -->
+          <div class="menu-tag-pill">
+            <span class="tag-icon">🎮</span>
+            <input class="name-input" id="nameInput" maxlength="12" placeholder="ANON" autocomplete="off" spellcheck="false" title="Tu Nombre / Tag">
+            <span class="tag-edit">✎</span>
+          </div>
+
+          <button class="pixel-btn btn-play-wood" id="btnPlay">
+            <span>JUGAR</span>
+            <span class="btn-arrow">▶</span>
+          </button>
+
+          <button class="pixel-btn btn-wood" id="btnChangeChar">
+            <span>EQUIPO</span>
+          </button>
+
+          <button class="pixel-btn btn-wood" id="btnOpenMapMenu">
+            <span>MUNDOS</span>
+          </button>
+
+          <button class="pixel-btn btn-wood" id="btnOpenLB">
+            <span>RANKING</span>
+          </button>
+
+          <button class="pixel-btn btn-wood" id="btnOpenCtrl">
+            <span>AJUSTES</span>
+            <span class="gear-icon">⚙</span>
+          </button>
+        </div>
+
+        <!-- CENTER/RIGHT: REAL CAMPFIRE GATHERING WITH CHARACTERS ON GROUND -->
+        <div class="campfire-stage" id="campfireStage">
+          <!-- Central Fireplace Glow & Embers (mapped over the background stones) -->
+          <div class="bonfire-glow-anchor">
+            <div class="bonfire-light-halo"></div>
+            <div class="bonfire-embers" id="bonfireEmbers"></div>
+          </div>
+
+          <!-- Characters seated and standing in a 3D circle around the campfire -->
+          <div class="campfire-characters-arc" id="campfireCharactersArc">
+            <!-- Populated dynamically with all 18 characters positioned on the ground -->
+          </div>
+
+          <!-- Active Character Card -->
+          <div class="campfire-active-card" id="campfireActiveCard">
+            <span class="active-badge">COMPAÑERO ACTIVO:</span>
+            <span class="active-char-name" id="spotlightName">ALEJANDRO R.</span>
+            <span class="active-char-ab" id="spotlightAb">✦ FLY PUNCH</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TERMINAL BOOT STORY (OPTIONAL RE-WATCH) -->
+  <div id="bootOv" class="overlay hidden">
+    <div id="bootTxt" class="boot"></div>
+    <div class="press" id="pressSkipStory">— TOCA O PULSA ENTER PARA SALTAR AL MENÚ —</div>
+  </div>
+
+  <!-- CLOUDFLARE D1 LEADERBOARD MODAL -->
+  <div id="lbOv" class="overlay hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="title-big" style="font-size:clamp(18px,3.5vw,28px);">🏆 CLASIFICACIÓN GLOBAL</div>
+        <div class="sub-status"><span class="pulse-dot"></span> BASE DE DATOS CLOUDFLARE D1 EN VIVO</div>
+      </div>
+      <div id="lbModalContent" class="lb-scroll-box">
+        <div style="color:var(--cyan);margin:20px 0;">Cargando clasificación en tiempo real...</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-menu" id="btnRefreshLB">🔄 ACTUALIZAR</button>
+        <button class="btn alt" id="btnCloseLB">VOLVER (ESC)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTROLS & GUIDE MODAL -->
+  <div id="ctrlOv" class="overlay hidden">
+    <div class="modal-box">
+      <div class="title-big" style="font-size:clamp(18px,3.5vw,26px);">🕹️ CÓMO JUGAR</div>
+      <div class="sub" style="margin-bottom:12px;">Controles para Teclado y Pantalla Táctil</div>
+      <div class="ctrl-grid">
+        <div class="ctrl-card"><span class="kbadge">← → / A D</span><span>Moverse</span></div>
+        <div class="ctrl-card"><span class="kbadge">↑ / W / ESPACIO</span><span>Saltar</span></div>
+        <div class="ctrl-card"><span class="kbadge">X / J</span><span>Habilidad especial</span></div>
+        <div class="ctrl-card"><span class="kbadge">TAB</span><span>Siguiente compañero</span></div>
+        <div class="ctrl-card"><span class="kbadge">T / 👥</span><span>Ver equipo completo</span></div>
+        <div class="ctrl-card"><span class="kbadge">M</span><span>Música ON/OFF</span></div>
+      </div>
+      <div class="panel" style="margin-top:14px;">
+        💡 <b>Mecánicas clave:</b> Encadena enemigos sin tocar el suelo para multiplicar tu <b>COMBO (hasta x5)</b>.<br>
+        Recoge las tazas de ☕ para sumar puntos y curarte. ¡Derrota a <b>The Email Chain</b> para recuperar el Retreat!
+      </div>
+      <button class="btn" id="btnCloseCtrl" style="margin-top:16px;">¡ENTENDIDO!</button>
+    </div>
+  </div>
+
+  <!-- 03. SELECCIÓN DE COMPAÑERO (ROSTER COMPLETO DE 18 HÉROES) -->
+  <div id="teamOv" class="overlay hidden">
+    <div class="pixel-modal-box team-select-modal">
+      <div class="modal-header-pixel">
+        <div class="pixel-title-wood">PLANTILLA CLEVERGY</div>
+        <div class="pixel-sub-cyan">18 COMPAÑEROS DISPONIBLES · PUEDES CAMBIAR ENTRE TODOS EN CUALQUIER MOMENTO</div>
+      </div>
+
+      <!-- HERO HIGHLIGHT CAROUSEL -->
+      <div class="team-showcase-box">
+        <button class="team-nav-arrow" id="teamHeroPrev" aria-label="Anterior">◀</button>
+        <div class="team-hero-card">
+          <div class="team-avatar-frame">
+            <div id="teamHeroAvatar" class="team-avatar-display">🪰</div>
+          </div>
+          <div class="team-hero-info">
+            <div class="team-hero-title-row">
+              <span id="teamHeroName" class="team-hero-name">1. ALEJANDRO R.</span>
+              <span id="teamHeroForm" class="team-hero-form">Mosca boxeadora</span>
+            </div>
+
+            <!-- Segmented Pixel Stat Bars -->
+            <div class="team-stat-bars">
+              <div class="stat-row"><span class="lbl">FUERZA</span><div class="pixel-bar-track"><div id="teamBarPwr" class="p-fill" style="width: 80%;"></div></div></div>
+              <div class="stat-row"><span class="lbl">VELOCIDAD</span><div class="pixel-bar-track"><div id="teamBarSpd" class="p-fill" style="width: 75%;"></div></div></div>
+              <div class="stat-row"><span class="lbl">VUELO</span><div class="pixel-bar-track"><div id="teamBarFly" class="p-fill" style="width: 90%;"></div></div></div>
+              <div class="stat-row"><span class="lbl">CAOS</span><div class="pixel-bar-track"><div id="teamBarChaos" class="p-fill" style="width: 70%;"></div></div></div>
+            </div>
+
+            <!-- Ability Pill -->
+            <div class="team-ability-pill">
+              <span class="ab-icon">✦</span>
+              <div class="ab-texts">
+                <span id="teamHeroAb" class="ab-name">PUÑO MOSCA</span>
+                <span id="teamHeroTip" class="ab-desc">X: puñetazo · mantén salto para planear</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <button class="team-nav-arrow" id="teamHeroNext" aria-label="Siguiente">▶</button>
+      </div>
+
+      <!-- ACTIVE HERO QUICK BAR -->
+      <div class="squad-tray-box">
+        <div class="squad-tray-header">
+          <span class="squad-title">COMPAÑERO ACTIVO:</span>
+          <span class="squad-hint">Toca cualquier compañero abajo para seleccionarlo al instante</span>
+        </div>
+        <div class="active-hero-summary" id="teamActiveSummary">
+          <img id="teamActiveImg" src="/sprites/alejandro/avatar.png" alt="Activo" class="squad-slot-img">
+          <div class="active-hero-texts">
+            <span id="teamActiveName" class="active-name">ALEJANDRO R.</span>
+            <span id="teamActiveAb" class="active-ab">✦ PUÑO MOSCA</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMPLETE 18 ROSTER GRID (SELECT ANY COWORKER) -->
+      <div class="team-roster-section">
+        <div class="roster-toggle-label">TODOS LOS COMPAÑEROS (TOCA UNO PARA ELEGIRLO):</div>
+        <div id="teamGrid" class="team-pixel-grid"></div>
+      </div>
+
+      <!-- CONFIRM BUTTON -->
+      <div class="team-modal-actions">
+        <button class="pixel-btn btn-play-wood" id="teamClose">JUGAR CON ESTE COMPAÑERO ✔</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WORLD MAP (MAPA DE AVENTURA ESTILO ANGRY BIRDS / SPRINT ODYSSEY) -->
+  <div id="worldMapOv" class="overlay hidden world-map-overlay">
+    <!-- TOP HEADER (CON RESPETO AL NOTCH / SAFE AREA) -->
+    <div class="map-header">
+      <div class="map-header-left">
+        <div id="mapProgressBadge" class="map-badge-progress">
+          <span class="star-icon">⭐</span>
+          <span id="mapProgressTxt">0/6 MUNDOS</span>
+        </div>
+      </div>
+
+      <div class="map-header-right">
+        <div id="mapHeroBadge" class="map-hero-pill">
+          <img id="mapHeroImg" src="/sprites/alejandro/avatar.png" class="map-hero-avatar" alt="Héroe">
+          <span id="mapHeroName">ALEJANDRO R.</span>
+          <button id="btnMapTeam" class="btn-micro" title="Cambiar Compañero">👥 EQUIPO</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CURRENT SELECTED STAGE FLOATING BANNER (Like "MESETA DE COBALTO / COLINAS PLUMOSAS") -->
+    <div class="map-stage-banner" id="mapStageBanner">
+      <div class="stage-banner-wood">
+        <div class="stage-banner-badge" id="stageBannerBadge">MUNDO 1</div>
+        <div class="stage-banner-title" id="stageBannerTitle">THE OFFICE</div>
+        <div class="stage-banner-sub" id="stageBannerSub">OFICINAS CENTRALES · JEFE: EMAIL CHAIN</div>
+      </div>
+    </div>
+
+    <!-- MAP VIEWPORT (FULL-BLEED WINDING TRAIL) -->
+    <div class="map-viewport">
+      <!-- Background SVG Trail connecting the 6 nodes -->
+      <svg class="map-trail-svg landscape-trail" viewBox="0 0 1000 600" preserveAspectRatio="none">
+        <path class="trail-line-bg" d="M 120 384 Q 200 240 280 192 T 480 348 T 700 180 T 880 312 Q 720 468 500 468 Q 280 468 120 384" />
+        <path class="trail-line-dash" d="M 120 384 Q 200 240 280 192 T 480 348 T 700 180 T 880 312 Q 720 468 500 468 Q 280 468 120 384" />
+      </svg>
+      <svg class="map-trail-svg portrait-trail" viewBox="0 0 400 800" preserveAspectRatio="none">
+        <path class="trail-line-bg" d="M 104 672 C 104 600, 296 630, 296 560 C 296 490, 104 500, 104 432 C 104 360, 296 370, 296 304 C 296 230, 112 240, 112 176 C 112 120, 260 130, 260 72" />
+        <path class="trail-line-dash" d="M 104 672 C 104 600, 296 630, 296 560 C 296 490, 104 500, 104 432 C 104 360, 296 370, 296 304 C 296 230, 112 240, 112 176 C 112 120, 260 130, 260 72" />
+      </svg>
+      <!-- Interactive Nodes Container -->
+      <div id="mapNodesContainer" class="map-nodes-container"></div>
+    </div>
+
+    <!-- BOTTOM FLOATING ACTION DOCK (Like Image 2: Round Back Button + Big Golden ¡JUGAR! Button) -->
+    <div class="map-bottom-dock">
+      <button id="btnCloseMap" class="btn-round-back" aria-label="Volver al Menú" title="Volver">
+        <span>↩</span>
+      </button>
+
+      <button id="btnPlayMapDirect" class="btn-play-golden" aria-label="Jugar Mundo">
+        <span class="btn-play-golden-txt">¡JUGAR!</span>
+        <span class="btn-play-golden-hand">👆</span>
+      </button>
+
+      <div class="dock-spacer"></div>
+    </div>
+
+    <!-- World Detail Modal (Optional) -->
+    <div id="worldCardModal" class="world-card-modal hidden">
+      <div class="wc-content">
+        <div class="wc-top">
+          <span id="wcIcon" class="wc-emoji">🏢</span>
+          <div class="wc-headings">
+            <h2 id="wcTitle" class="wc-title">1. The Office</h2>
+            <div id="wcSubtitle" class="wc-sub">Oficinas Centrales de Clevergy</div>
+          </div>
+        </div>
+        <p id="wcDesc" class="wc-desc">Supera los bugs 404 y alcanza el Inbox Zero.</p>
+        <div class="wc-meta">
+          <div id="wcBoss" class="wc-boss">👾 JEFE: EMAIL CHAIN</div>
+          <div id="wcRecord" class="wc-record">⚪ PENDIENTE DE DOMINAR</div>
+        </div>
+        <div class="wc-actions">
+          <button id="btnPlayWorld" class="btn">▶ JUGAR ESTE MUNDO</button>
+          <button id="btnCloseWc" class="btn alt">CANCELAR</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FIGHT LOBBY MODAL (CODE CLASH ARENA 1v1 - 100% RESPONSIVE) -->
+  <div id="fightLobbyModal" class="overlay hidden fight-lobby-overlay">
+    <div class="fl-card">
+      <div class="fl-header">
+        <div class="fl-title-group">
+          <div class="fl-badge">🥊 MUNDO 6 · 1v1 ARENA</div>
+          <h2 class="fl-title">CODE CLASH ARENA</h2>
+          <div class="fl-sub">The Office · Batalla del Sprint</div>
+        </div>
+        <button id="btnFlClose" class="btn-icon" title="Volver al mapa">✕</button>
+      </div>
+
+      <!-- Mode Switch: CPU vs Online -->
+      <div class="fl-modes">
+        <button id="flModeCpu" class="fl-mode-btn active">🤖 CONTRA CPU</button>
+        <button id="flModeOnline" class="fl-mode-btn">🌐 2 MÓVILES (ONLINE)</button>
+      </div>
+
+      <!-- Hero Showcase Carousel -->
+      <div class="fl-hero-display">
+        <button id="btnFlPrev" class="fl-nav-btn" aria-label="Anterior">◀</button>
+        <div class="fl-hero-card">
+          <div class="fl-avatar-wrap">
+            <img id="flHeroImg" src="/sprites/alejandro/avatar.png" alt="Hero Avatar" class="fl-hero-avatar">
+          </div>
+          <div class="fl-hero-info">
+            <div id="flHeroName" class="fl-hero-name">🪰 ALEJANDRO R.</div>
+            <div id="flHeroRole" class="fl-hero-role">Forma: Mosca boxeadora</div>
+            <div id="flHeroAb" class="fl-hero-ab">⚡ FLY PUNCH</div>
+            <p id="flHeroTip" class="fl-hero-tip">Guantes de boxeo y vuelo rápido.</p>
+          </div>
+        </div>
+        <button id="btnFlNext" class="fl-nav-btn" aria-label="Siguiente">▶</button>
+      </div>
+
+      <!-- Quick Character Grid for thumb tap -->
+      <div class="fl-team-strip" id="flTeamStrip"></div>
+
+      <!-- Online Room Settings (if online mode) -->
+      <div id="flOnlineBox" class="fl-online-box hidden">
+        <div class="fl-room-badge">
+          🔑 CÓDIGO DE SALA: <span id="flRoomCode">ABCD</span>
+          <button id="btnFlCopyCode" class="btn-micro" style="margin-left:8px;">📋 COPIAR</button>
+        </div>
+        <div class="fl-join-row">
+          <input type="text" id="flJoinInput" class="fl-join-input" maxlength="4" placeholder="CÓDIGO AMIGO">
+          <button id="btnFlJoin" class="btn-micro-action">UNIRME</button>
+        </div>
+        <div id="flOnlineStatus" class="fl-status-text">Comparte el código con tu compañero</div>
+      </div>
+
+      <!-- Actions -->
+      <div class="fl-actions">
+        <button id="btnFlStart" class="btn btn-hero fl-start-btn">🥊 ¡A PELEAR!</button>
+        <button id="btnFlBackMap" class="btn alt">🗺️ VOLVER AL MAPA</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 05. INTRO DEL NIVEL (BRIEFING CARD) -->
+  <div id="levelBriefingModal" class="overlay hidden">
+    <div class="pixel-modal-box briefing-card">
+      <div class="briefing-header">
+        <div class="briefing-world-tag" id="bfWorldTag">MUNDO 1 - THE OFFICE</div>
+        <h2 class="briefing-title" id="bfLevelTitle">NIVEL 01: TRABAJO EN EQUIPO</h2>
+        <div class="briefing-stars">★★★</div>
+      </div>
+      <div class="briefing-body">
+        <div class="briefing-req-box">
+          <span class="req-label">HABILIDAD RECOMENDADA:</span>
+          <div class="req-ability-pill" id="bfReqPill">
+            <span class="req-icon" id="bfReqIcon">🧗</span>
+            <span class="req-txt" id="bfReqTxt">ESCALAR PAREDES (ANA / JOSU)</span>
+          </div>
+          <p class="req-desc" id="bfReqDesc">Supera los bugs 404, escala las paredes de contención y alcanza el servidor central.</p>
+        </div>
+      </div>
+      <div class="briefing-actions">
+        <button class="pixel-btn btn-play-wood" id="bfBtnPlay">JUGAR NIVEL ▶</button>
+        <button class="pixel-btn btn-wood" id="bfBtnBack">VOLVER ↩</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 08. MENÚ DE PAUSA -->
+  <div id="pauseOv" class="overlay hidden">
+    <div class="pixel-modal-box pause-modal">
+      <div class="modal-header-pixel">
+        <div class="pixel-title-wood">PAUSA</div>
+        <div class="pixel-sub-cyan">EXPEDICIÓN EN ESPERA</div>
+      </div>
+      <div class="pause-actions-stack">
+        <button class="pixel-btn btn-play-wood" id="btnResumeGame">CONTINUAR ▶</button>
+        <button class="pixel-btn btn-wood" id="btnRestartLevel">REINICIAR 🔄</button>
+        <button class="pixel-btn btn-wood" id="btnPauseTeam">CAMBIAR EQUIPO 👥</button>
+        <button class="pixel-btn btn-wood" id="btnPauseCtrl">AJUSTES / CONTROLES ⚙</button>
+        <button class="pixel-btn btn-danger-wood" id="btnPauseExit">SALIR AL MENÚ 🏠</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 09 & 10. NIVEL COMPLETADO & MVP DEL RETREAT -->
+  <div id="winOv" class="overlay hidden">
+    <div class="pixel-modal-box win-modal">
+      <div class="win-header">
+        <div class="win-stars-row">
+          <span class="win-star s1">★</span>
+          <span class="win-star s2">★</span>
+          <span class="win-star s3">★</span>
+        </div>
+        <div class="pixel-title-gold" id="rankTitle">¡NIVEL COMPLETADO!</div>
+        <div class="win-time-badge" id="winTimeTxt">⏱️ 03:42.18</div>
+      </div>
+
+      <div class="boot hidden" id="winTxt"></div>
+      <div id="lbWin" class="hidden"></div>
+
+      <!-- Stats summary -->
+      <div class="win-stats-grid">
+        <div class="win-stat-cell">
+          <span class="stat-lbl">RETOS SUPERADOS</span>
+          <span class="stat-val" id="winRetosTxt">3 / 3</span>
+        </div>
+        <div class="win-stat-cell">
+          <span class="stat-lbl">COMPAÑEROS USADOS</span>
+          <span class="stat-val" id="winCharsTxt">3 / 3</span>
+        </div>
+        <div class="win-stat-cell">
+          <span class="stat-lbl">CAMBIOS REALIZADOS</span>
+          <span class="stat-val" id="winSwitchesTxt">12</span>
+        </div>
+      </div>
+
+      <!-- MVP OF THE RETREAT -->
+      <div class="win-mvp-card">
+        <div class="mvp-trophy">🏆</div>
+        <div class="mvp-avatar-box">
+          <img id="winMvpImg" src="/sprites/ana/avatar.png" alt="MVP" class="mvp-img">
+        </div>
+        <div class="mvp-details">
+          <div class="mvp-label">MVP DEL NIVEL</div>
+          <div class="mvp-name" id="winMvpName">ANA</div>
+          <div class="mvp-stat" id="winMvpStat">Usada 17 veces en momentos clave</div>
+        </div>
+      </div>
+
+      <!-- XP Reward & Progression -->
+      <div class="win-xp-bar-box">
+        <div class="xp-title-row">
+          <span>EXPERIENCIA DE EQUIPO</span>
+          <span class="xp-val-green">+850 XP</span>
+        </div>
+        <div class="xp-track"><div class="xp-fill" style="width: 78%;"></div></div>
+        <div class="xp-level-row">
+          <span>NIVEL 12</span>
+          <span class="xp-arrow">➔</span>
+          <span style="color:#ffd25e;">NIVEL 13 (¡NUEVA HABILIDAD!)</span>
+        </div>
+      </div>
+
+      <div class="win-actions-row">
+        <button class="pixel-btn btn-play-wood" id="btnWinNextWorld">CONTINUAR ▶</button>
+        <button class="pixel-btn btn-wood" id="btnWinMap">🗺️ MAPA DE MUNDOS</button>
+        <button class="pixel-btn btn-wood" id="restartBtn">REPETIR NIVEL 🔄</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME OVER -->
+  <div id="goOv" class="overlay hidden">
+    <div class="pixel-modal-box go-modal">
+      <div class="modal-header-pixel">
+        <div class="pixel-title-wood" style="color:#ff4d5e;">MEETING ETERNA</div>
+        <div class="pixel-sub-cyan">"¿Tienes 5 minutos?" te ha alcanzado</div>
+      </div>
+      <div class="panel" id="goStats" style="text-align:center;margin:12px 0;"></div>
+      <div class="go-actions-stack">
+        <button class="pixel-btn btn-play-wood" id="retryBtn">REINTENTAR NIVEL 🔄</button>
+        <button class="pixel-btn btn-wood" id="btnGoMap">🗺️ VOLVER AL MAPA</button>
+        <button class="pixel-btn btn-wood" id="goBackMenuBtn">MENÚ PRINCIPAL 🏠</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOUCH CONTROLS (HORIZONTAL / LANDSCAPE) -->
+  <div id="touch">
+    <div class="tbtn" id="tL">◀</div><div class="tbtn" id="tR">▶</div>
+    <div class="tbtn" id="tT">👥</div><div class="tbtn" id="tS">⇄</div>
+    <div class="tbtn" id="tB">✦</div><div class="tbtn" id="tA">▲</div>
+  </div>
+
+  <!-- GAME BOY CONTROLLER DECK (VERTICAL / PORTRAIT) -->
+  <div id="gameboyDeck" class="gameboy-deck">
+    <!-- TOUCH BAR DE COMPAÑEROS (ENCIMA DE LA CRUCETA EN EL TECLADO) -->
+    <div class="gb-touchbar-container" id="gbTouchBarContainer">
+      <div class="gb-touchbar-header">
+        <span class="touchbar-label">👥 TOCA PARA CAMBIAR:</span>
+        <span class="touchbar-active-name" id="touchbarActiveName">ANA · ✦ TREPAR</span>
+      </div>
+      <div class="gb-touchbar-track" id="gbTouchBarTrack"></div>
+    </div>
+
+    <!-- MAIN CONTROLS ROW: D-PAD LEFT, ACTIONS RIGHT -->
+    <div class="gb-controls-area">
+      <!-- D-PAD (CRUCETA) -->
+      <div class="gb-dpad-container">
+        <div class="gb-dpad">
+          <button class="gb-dpad-btn gb-up" id="gbUp" aria-label="Arriba">▲</button>
+          <button class="gb-dpad-btn gb-left" id="gbLeft" aria-label="Izquierda">◀</button>
+          <div class="gb-dpad-center"></div>
+          <button class="gb-dpad-btn gb-right" id="gbRight" aria-label="Derecha">▶</button>
+          <button class="gb-dpad-btn gb-down" id="gbDown" aria-label="Abajo">▼</button>
+        </div>
+      </div>
+
+      <!-- ACTION BUTTONS: B & A -->
+      <div class="gb-actions-container">
+        <div class="gb-btn-group">
+          <div class="gb-action-col">
+            <button class="gb-action-btn gb-btn-b" id="gbB" aria-label="Habilidad">B</button>
+            <span class="gb-action-label" id="gbLabelB">TREPAR</span>
+          </div>
+          <div class="gb-action-col">
+            <button class="gb-action-btn gb-btn-a" id="gbA" aria-label="Salto">A</button>
+            <span class="gb-action-label" id="gbLabelA">SALTAR</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Row: MAPA & EQUIPO (Actions secundarias de menor protagonismo) -->
+    <div class="gb-bottom-area">
+      <div class="gb-system-btns">
+        <div class="gb-pill-wrapper">
+          <button class="gb-pill-btn" id="btnGbMap" aria-label="Mapa">MAPA</button>
+          <span class="gb-pill-label">🗺️ MAPA</span>
+        </div>
+        <div class="gb-pill-wrapper">
+          <button class="gb-pill-btn" id="gbSelect" aria-label="Equipo">EQUIPO</button>
+          <span class="gb-pill-label">👥 EQUIPO</span>
+        </div>
+      </div>
+
+      <div class="gb-speaker">
+        <div class="gb-slot"></div>
+        <div class="gb-slot"></div>
+        <div class="gb-slot"></div>
+        <div class="gb-slot"></div>
+        <div class="gb-slot"></div>
+        <div class="gb-slot"></div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
