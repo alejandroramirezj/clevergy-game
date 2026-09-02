@@ -12,100 +12,74 @@
     <canvas id="cv" width="960" height="540"></canvas>
   </div>
 
-  <!-- MAIN MENU -->
-  <div id="menuOv" class="overlay">
-    <div class="menu-container">
-      <!-- HEADER & GAME BRAND -->
-      <div class="menu-header">
-        <div class="game-logo-box">
-          <h1 class="game-logo">RETREAT</h1>
-          <span class="game-logo-glow" aria-hidden="true">RETREAT</span>
+  <!-- MAIN MENU (CAMPFIRE RETREAT RETRO PIXEL ART) -->
+  <div id="menuOv" class="overlay menu-campfire-overlay">
+    <div class="campfire-backdrop"></div>
+    <div class="campfire-warm-overlay"></div>
+
+    <div class="menu-campfire-container">
+      <!-- TOP HEADER: RETREAT LOGO & VERSION -->
+      <div class="menu-pixel-header">
+        <div class="pixel-logo-box">
+          <h1 class="pixel-logo-title">RETREAT</h1>
+          <div class="pixel-logo-sub">THE LEGEND OF THE TEAM</div>
         </div>
-        <div class="game-sub">THE LEGEND OF THE TEAM · 6 MUNDOS</div>
-        <div class="badge-competition">
-          <span class="badge-trophy">🏆</span> MODO COMPETICIÓN RETREAT <span class="badge-trophy">🏆</span>
-        </div>
+        <div class="menu-version-tag">v1.0.0</div>
       </div>
 
-      <!-- GAMER PROFILE BAR -->
-      <div class="gamer-profile-bar">
-        <div class="profile-tag">
-          <span class="profile-icon">🎮</span>
-          <span class="profile-label">TAG:</span>
-          <input class="name-input" id="nameInput" maxlength="12" placeholder="ANON" autocomplete="off" spellcheck="false">
-          <span class="profile-hint">✎</span>
-        </div>
-      </div>
-
-      <!-- HERO SHOWCASE CARD -->
-      <div class="menu-card hero-showcase-card">
-        <div class="hero-card-layout">
-          <!-- Left: Hero Stage & Pedestal with Carousel Arrows -->
-          <div class="hero-stage-box">
-            <button class="hero-nav-arrow left" id="btnHeroPrev" aria-label="Anterior compañero">◀</button>
-            <div class="hero-pedestal-wrap">
-              <div class="hero-spotlight-beam"></div>
-              <div class="char-avatar" id="spotlightAvatar">🪰</div>
-              <div class="hero-podium"></div>
-            </div>
-            <button class="hero-nav-arrow right" id="btnHeroNext" aria-label="Siguiente compañero">▶</button>
+      <!-- MAIN CONTENT: LEFT BUTTONS + CENTER CAMPFIRE GATHERING -->
+      <div class="campfire-main-content">
+        <!-- LEFT: ARCADE WOOD MENU BUTTONS (MATCHING REFERENCE IMAGE) -->
+        <div class="campfire-menu-stack">
+          <!-- Gamer Tag input pill -->
+          <div class="menu-tag-pill">
+            <span class="tag-icon">🎮</span>
+            <input class="name-input" id="nameInput" maxlength="12" placeholder="ANON" autocomplete="off" spellcheck="false" title="Tu Nombre / Tag">
+            <span class="tag-edit">✎</span>
           </div>
 
-          <!-- Right: Hero Stats & Details -->
-          <div class="char-info">
-            <div class="char-header">
-              <span class="char-name" id="spotlightName">ALEJANDRO R.</span>
-              <span class="char-form" id="spotlightForm">Mosca boxeadora</span>
-            </div>
-            <div class="char-ab-badge" id="spotlightAb">✦ HABILIDAD: FLY PUNCH</div>
-            <div class="char-tip" id="spotlightTip">X: puñetazo · mantén salto para planear</div>
-            <div class="stat-bars">
-              <div class="stat-row">
-                <span class="stat-label">VELOCIDAD</span>
-                <div class="bar-track"><div class="bar-fill" id="barSpd" style="width:75%"></div></div>
-              </div>
-              <div class="stat-row">
-                <span class="stat-label">SALTO</span>
-                <div class="bar-track"><div class="bar-fill" id="barJump" style="width:85%"></div></div>
-              </div>
-            </div>
-          </div>
+          <button class="pixel-btn btn-play-wood" id="btnPlay">
+            <span>JUGAR</span>
+            <span class="btn-arrow">▶</span>
+          </button>
+
+          <button class="pixel-btn btn-wood" id="btnChangeChar">
+            <span>EQUIPO</span>
+          </button>
+
+          <button class="pixel-btn btn-wood" id="btnOpenMapMenu">
+            <span>MUNDOS</span>
+          </button>
+
+          <button class="pixel-btn btn-wood" id="btnOpenLB">
+            <span>RANKING</span>
+          </button>
+
+          <button class="pixel-btn btn-wood" id="btnOpenCtrl">
+            <span>AJUSTES</span>
+            <span class="gear-icon">⚙</span>
+          </button>
         </div>
 
-        <!-- Full Roster Button -->
-        <button class="btn-roster" id="btnChangeChar">
-          <span>👥</span> VER PLANTILLA COMPLETA (18 COMPAÑEROS)
-        </button>
-      </div>
-
-      <!-- MAIN MENU ACTIONS -->
-      <div class="menu-actions">
-        <!-- Big Hero Play CTA -->
-        <button class="btn-play-cta" id="btnPlay">
-          <div class="cta-inner">
-            <span class="cta-icon">🗺️</span>
-            <div class="cta-text-group">
-              <span class="cta-main-title">ENTRAR AL MAPA DE AVENTURA</span>
-              <span class="cta-subtitle">6 MUNDOS · JEFES · RETREAT FINAL</span>
-            </div>
-            <span class="cta-arrow">➔</span>
+        <!-- CENTER/RIGHT: REAL CAMPFIRE GATHERING WITH CHARACTERS ON GROUND -->
+        <div class="campfire-stage" id="campfireStage">
+          <!-- Central Fireplace Glow & Embers (mapped over the background stones) -->
+          <div class="bonfire-glow-anchor">
+            <div class="bonfire-light-halo"></div>
+            <div class="bonfire-embers" id="bonfireEmbers"></div>
           </div>
-        </button>
 
-        <!-- Secondary Arcade Dock -->
-        <div class="menu-dock-row">
-          <button class="dock-btn" id="btnOpenLB">
-            <span class="dock-icon">🏆</span>
-            <span class="dock-txt">RANKING</span>
-          </button>
-          <button class="dock-btn" id="btnOpenCtrl">
-            <span class="dock-icon">🕹️</span>
-            <span class="dock-txt">CONTROLES</span>
-          </button>
-          <button class="dock-btn" id="btnOpenStory">
-            <span class="dock-icon">📜</span>
-            <span class="dock-txt">HISTORIA</span>
-          </button>
+          <!-- Characters seated and standing in a 3D circle around the campfire -->
+          <div class="campfire-characters-arc" id="campfireCharactersArc">
+            <!-- Populated dynamically with all 18 characters positioned on the ground -->
+          </div>
+
+          <!-- Active Character Card -->
+          <div class="campfire-active-card" id="campfireActiveCard">
+            <span class="active-badge">COMPAÑERO ACTIVO:</span>
+            <span class="active-char-name" id="spotlightName">ALEJANDRO R.</span>
+            <span class="active-char-ab" id="spotlightAb">✦ FLY PUNCH</span>
+          </div>
         </div>
       </div>
     </div>

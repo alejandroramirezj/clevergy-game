@@ -84,9 +84,103 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
         el.classList.toggle("sel", i === GameState.charIdx);
       });
     }
+
+    // Update Campfire Stage selection
+    const campfireTokens = document.querySelectorAll(".campfire-char-node");
+    campfireTokens.forEach((el, i) => {
+      const isSel = i === GameState.charIdx;
+      el.classList.toggle("active-hero", isSel);
+      const p1 = el.querySelector(".campfire-p1-tag");
+      if (p1) p1.classList.toggle("hidden", !isSel);
+    });
   }
 
-  // Populate team selector (18 characters)
+  // Exact coordinates for characters encircling the campfire on the illuminated ground (630x300 canvas)
+  const CAMPFIRE_SPOTS = [
+    { x: 120, y: 155, z: 6, scale: 1.0 },   // 0: alejandro (boxer fly left flank)
+    { x: 175, y: 125, z: 4, scale: 0.95 },  // 1: ale (oil bottle left-mid)
+    { x: 230, y: 102, z: 3, scale: 0.9 },   // 2: alvaroM (calculator back-left)
+    { x: 285, y: 90,  z: 2, scale: 0.88 },  // 3: alvaroP (mic back-center-left)
+    { x: 345, y: 90,  z: 2, scale: 0.88 },  // 4: ana (lion climber back-center-right)
+    { x: 400, y: 102, z: 3, scale: 0.9 },   // 5: beltran (thimble back-right)
+    { x: 455, y: 125, z: 4, scale: 0.95 },  // 6: bruno (totem right-mid)
+    { x: 505, y: 155, z: 6, scale: 1.0 },   // 7: gonzalo (broccoli right flank)
+    { x: 535, y: 195, z: 7, scale: 1.05 },  // 8: javi (communist flag right foreground)
+    { x: 475, y: 225, z: 8, scale: 1.05 },  // 9: jesus (cruzcampo right foreground)
+    { x: 415, y: 240, z: 9, scale: 1.08 },  // 10: pablo (orange front-right)
+    { x: 350, y: 245, z: 10, scale: 1.1 },  // 11: manu (muscle front-center-right)
+    { x: 285, y: 245, z: 10, scale: 1.1 },  // 12: maca (volleyball front-center-left)
+    { x: 220, y: 240, z: 9, scale: 1.08 },  // 13: juan (microwave front-left)
+    { x: 160, y: 225, z: 8, scale: 1.05 },  // 14: josu (paneton left foreground)
+    { x: 95,  y: 195, z: 7, scale: 1.05 },  // 15: joseluis (3d printer left foreground)
+    { x: 250, y: 55,  z: 1, scale: 0.82 },  // 16: paloma (dove, perched near timber behind)
+    { x: 380, y: 55,  z: 1, scale: 0.82 },  // 17: silvia (shoe, near cabin)
+  ];
+
+  // Populate Campfire Stage (Characters placed directly on the soil encircling the fire!)
+  const campfireArc = document.getElementById("campfireCharactersArc");
+  function renderCampfireCharacters() {
+    if (!campfireArc) return;
+    campfireArc.innerHTML = "";
+    CHARS.forEach((c, i) => {
+      const spot = CAMPFIRE_SPOTS[i] || { x: 300, y: 150, z: 5, scale: 1.0 };
+      const d = document.createElement("div");
+      const isSel = i === GameState.charIdx;
+      d.className = `campfire-char-node ${isSel ? "active-hero" : ""}`;
+      d.dataset.idx = i;
+      d.title = `${c.name} (${c.form})`;
+
+      // Position character on the campsite ground
+      d.style.left = `${spot.x}px`;
+      d.style.top = `${spot.y}px`;
+      d.style.zIndex = spot.z;
+      d.style.setProperty("--base-scale", spot.scale);
+
+      const av = getCharacterAvatar(c.id);
+      const spriteHtml = av
+        ? `<img src="${av}" class="campfire-sprite-img" alt="${c.name}">`
+        : `<span class="campfire-sprite-emoji">${c.emoji}</span>`;
+
+      d.innerHTML = `
+        <div class="campfire-p1-tag ${isSel ? "" : "hidden"}">▼ P1</div>
+        ${spriteHtml}
+        <div class="campfire-ground-shadow"></div>
+      `;
+
+      d.addEventListener("click", (e) => {
+        e.stopPropagation();
+        GameState.charIdx = i;
+        GameState.P.ball = false;
+        GameState.P.roll = 0;
+        GameState.P.slide = 0;
+        anim.lock = null;
+        anim.name = "idle";
+        anim.frame = 0;
+        anim.t = 0;
+        GameState.switchBanner = 1.6;
+        updateSpotlight();
+        try { sfx(700, 0.08, "square"); } catch (err) {}
+      });
+
+      campfireArc.appendChild(d);
+    });
+
+    // Populate rising fire embers
+    const embersContainer = document.getElementById("bonfireEmbers");
+    if (embersContainer && embersContainer.children.length === 0) {
+      for (let e = 0; e < 12; e++) {
+        const spark = document.createElement("div");
+        spark.className = "fire-spark";
+        spark.style.left = `${Math.random() * 80 - 40}px`;
+        spark.style.animationDelay = `${(Math.random() * 2.5).toFixed(2)}s`;
+        spark.style.animationDuration = `${(1.8 + Math.random() * 1.5).toFixed(2)}s`;
+        embersContainer.appendChild(spark);
+      }
+    }
+  }
+  renderCampfireCharacters();
+
+  // Populate team selector (18 characters in modal)
   CHARS.forEach((c, i) => {
     const d = document.createElement("div");
     d.className = "tcell";
@@ -131,6 +225,14 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
 
   if (teamClose) teamClose.addEventListener("click", () => toggleTeam(true));
   if (btnChangeChar) btnChangeChar.addEventListener("click", () => toggleTeam(false));
+
+  const btnOpenMapMenu = document.getElementById("btnOpenMapMenu");
+  if (btnOpenMapMenu) {
+    btnOpenMapMenu.addEventListener("click", () => {
+      menuOv.classList.add("hidden");
+      if (onOpenMap) onOpenMap();
+    });
+  }
 
   const btnHeroPrev = document.getElementById("btnHeroPrev");
   const btnHeroNext = document.getElementById("btnHeroNext");
@@ -242,11 +344,7 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     ctrlOv.classList.add("hidden");
     teamOv.classList.add("hidden");
 
-    if (onOpenMap) {
-      onOpenMap();
-    } else {
-      onStartGame();
-    }
+    onStartGame();
   }
 
   if (btnPlay) btnPlay.addEventListener("click", triggerStart);
