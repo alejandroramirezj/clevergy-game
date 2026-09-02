@@ -819,20 +819,20 @@ function drawHUD(cx) {
 
   const isSmall = W < 540;
 
-  // 1. TOP HUD (Clean hierarchy: ❤️ Hearts | MUNDO X · NAME | ⏱️ Time ⭐ Score)
-  const topY = isSmall ? 10 : 14;
-  const heartSpacing = isSmall ? 16 : 22;
+  // 1. TOP HUD (Adaptive collision-free layout for mobile and desktop)
+  const topY = isSmall ? 8 : 12;
+  const heartSpacing = isSmall ? 14 : 20;
 
-  // Hearts on left
+  // 1A. Hearts on left
   for (let i = 0; i < 5; i++) {
     cx.fillStyle = i < P.hp ? "#ff4d5e" : "#1a2444";
-    const hx = (isSmall ? 10 : 16) + i * heartSpacing;
+    const hx = (isSmall ? 8 : 14) + i * heartSpacing;
     if (isSmall) {
-      cx.fillRect(hx, topY, 6, 6);
-      cx.fillRect(hx + 7, topY, 6, 6);
-      cx.fillRect(hx, topY + 4, 13, 5);
-      cx.fillRect(hx + 2, topY + 9, 9, 3);
-      cx.fillRect(hx + 5, topY + 12, 3, 2);
+      cx.fillRect(hx, topY, 5, 5);
+      cx.fillRect(hx + 6, topY, 5, 5);
+      cx.fillRect(hx, topY + 3, 11, 5);
+      cx.fillRect(hx + 2, topY + 8, 7, 3);
+      cx.fillRect(hx + 4, topY + 11, 3, 2);
     } else {
       cx.fillRect(hx, topY, 8, 8);
       cx.fillRect(hx + 9, topY, 8, 8);
@@ -842,31 +842,75 @@ function drawHUD(cx) {
     }
   }
 
-  // World Name in the Center (Prominent visual weight)
-  const curW = WORLDS.find(w => w.id === (GameState.currentWorld || 1)) || WORLDS[0];
-  cx.textAlign = "center";
-  cx.font = isSmall ? "bold 11px monospace" : "bold 13px monospace";
-  cx.fillStyle = "#59d8ff";
-  cx.fillText(`MUNDO ${curW.id} · ${curW.name.toUpperCase()}`, W / 2, isSmall ? 19 : 22);
+  // 1B. Time & Score on Right
+  const rightPad = isSmall ? 8 : 14;
+  const rightY = isSmall ? 18 : 22;
+  cx.font = isSmall ? "bold 10px monospace" : "bold 12px monospace";
+  const statText = isSmall
+    ? `⏱${fmtT(gameTime)} ⭐${score}`
+    : `⏱️ ${fmtT(gameTime)}   ⭐ ${String(score).padStart(3, "0")}`;
+  const statWidth = cx.measureText(statText).width;
 
-  // Time & Score on Right
   cx.textAlign = "right";
-  cx.font = isSmall ? "bold 11px monospace" : "bold 13px monospace";
   cx.fillStyle = "#ffffff";
-  cx.fillText(`⏱️ ${fmtT(gameTime)}   ⭐ ${String(score).padStart(3, "0")}`, W - (isSmall ? 10 : 16), isSmall ? 19 : 22);
+  cx.fillText(statText, W - rightPad, rightY);
   cx.textAlign = "left";
 
-  // Combo multiplier (if active)
+  // Combo multiplier on row 2 right (never colliding with top bar)
   if (combo > 1) {
-    cx.font = isSmall ? "bold 11px monospace" : "bold 13px monospace";
+    cx.textAlign = "right";
+    cx.font = isSmall ? "bold 9px monospace" : "bold 11px monospace";
     cx.fillStyle = "#ffd25e";
-    cx.fillText("COMBO x" + Math.min(5, combo), W - (isSmall ? 10 : 16) - 130, isSmall ? 19 : 22);
+    cx.fillText("COMBO x" + Math.min(5, combo), W - rightPad, rightY + (isSmall ? 13 : 16));
+    cx.textAlign = "left";
+  }
+
+  // 1C. World Title in the Center with Dynamic Spatial Bounds
+  const heartsRightEdge = (isSmall ? 8 : 14) + 5 * heartSpacing + (isSmall ? 4 : 8);
+  const statsLeftEdge = W - rightPad - statWidth - (isSmall ? 8 : 16);
+  const availableCenter = statsLeftEdge - heartsRightEdge;
+  const centerX = Math.round((heartsRightEdge + statsLeftEdge) / 2);
+
+  const curW = WORLDS.find((w) => w.id === (GameState.currentWorld || 1)) || WORLDS[0];
+
+  if (availableCenter >= 180) {
+    // Large screen: Full world title
+    cx.textAlign = "center";
+    cx.font = "bold 12px monospace";
+    cx.fillStyle = "#59d8ff";
+    cx.fillText(`MUNDO ${curW.id} · ${curW.name.toUpperCase()}`, centerX, rightY);
+    cx.textAlign = "left";
+  } else if (availableCenter >= 100) {
+    // Medium screen: Short world title
+    cx.textAlign = "center";
+    cx.font = "bold 10px monospace";
+    cx.fillStyle = "#59d8ff";
+    cx.fillText(`M${curW.id}: ${curW.name.toUpperCase().slice(0, 10)}`, centerX, rightY);
+    cx.textAlign = "left";
+  } else if (availableCenter >= 36) {
+    // Compact mobile screen: Stylish pill badge (Zero overlap guaranteed!)
+    const badgeTxt = `M${curW.id}`;
+    const bw = 26;
+    const bx = Math.round(centerX - bw / 2);
+    const by = topY - 1;
+
+    cx.fillStyle = "rgba(10, 18, 44, 0.88)";
+    cx.fillRect(bx, by, bw, 15);
+    cx.strokeStyle = "#59d8ff66";
+    cx.lineWidth = 1;
+    cx.strokeRect(bx, by, bw, 15);
+
+    cx.textAlign = "center";
+    cx.font = "bold 9px monospace";
+    cx.fillStyle = "#59d8ff";
+    cx.fillText(badgeTxt, centerX, topY + 10);
+    cx.textAlign = "left";
   }
 
   // 2. ACTIVE CHARACTER PANEL (Top-Left: 🦁 ANA / ✦ TREPAR / ⚡ ENERGÍA ████████)
-  const plateX = isSmall ? 10 : 16;
-  const plateY = isSmall ? 28 : 34;
-  const plateW = isSmall ? 150 : 185;
+  const plateX = isSmall ? 8 : 14;
+  const plateY = isSmall ? 25 : 32;
+  const plateW = isSmall ? 144 : 185;
   const plateH = isSmall ? 36 : 42;
 
   cx.fillStyle = "rgba(10, 15, 34, 0.88)";
