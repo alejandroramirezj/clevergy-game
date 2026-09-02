@@ -33,8 +33,6 @@ export const FightState = {
   round: 1,
   p1Wins: 0,
   p2Wins: 0,
-  shake: 0,
-  hitStop: 0,
   timer: 60,
   projectiles: [],
   hitSparks: [],
@@ -459,11 +457,6 @@ function applyDamage(target, source, dmg, isCritical = false, shouldBroadcast = 
   if (FightState.mode === "online" && shouldBroadcast) {
     sendCombatDamage(target.side, dmg, isCritical, source.facing);
   }
-  // KAPLAY-inspired Screen Shake & Hit-Stop on combat impacts
-  FightState.shake = isCritical ? 14 : 7;
-  FightState.hitStop = isCritical ? 0.08 : 0.04;
-  target.scaleX = 1.25;
-  target.scaleY = 0.8;
   // Controlled, realistic recoil (short nudge, stops immediately via friction)
   target.vx = source.facing * (isCritical ? 3.2 : 2.0);
   target.vy = isCritical ? -3.0 : -1.8;
@@ -585,11 +578,8 @@ export function drawFight(cx) {
   cx.fillStyle = "#060914";
   cx.fillRect(0, 0, W, H);
 
-  // Center and scale stage with KAPLAY-inspired dynamic camera shake
-  const shake = FightState.shake || 0;
-  const sx = (Math.random() - 0.5) * shake;
-  const sy = (Math.random() - 0.5) * shake;
-  cx.translate(ox + sx, oy + sy);
+  // Center and scale stage
+  cx.translate(ox, oy);
   cx.scale(scale, scale);
 
   drawOfficeStage(cx, STAGE_W, STAGE_H);
@@ -739,12 +729,10 @@ function drawFighter(cx, f) {
   cx.ellipse(f.x, f.y + f.h, 22, 6, 0, 0, Math.PI * 2);
   cx.fill();
 
-  // Flip horizontally if facing left & apply Squash/Stretch
+  // Flip horizontally if facing left
   const flip = f.facing < 0;
   cx.translate(f.x, f.y + f.h);
-  const scX = f.scaleX || 1;
-  const scY = f.scaleY || 1;
-  cx.scale(flip ? -scX : scX, scY);
+  if (flip) cx.scale(-1, 1);
 
   let drawn = false;
 

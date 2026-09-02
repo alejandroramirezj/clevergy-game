@@ -28,7 +28,6 @@ export const GameState = {
   playerName: "ANON",
 
   shake: 0,
-  hitStop: 0,
   msgTxt: "",
   msgT: 0,
   msg2Txt: "",
@@ -167,8 +166,7 @@ export function hurt(n) {
 
   P.hp -= n;
   P.inv = 1.4;
-  GameState.shake = 12;
-  GameState.hitStop = 0.08;
+  GameState.shake = 8;
   GameState.combo = 0;
   sfx(140, 0.15, "sawtooth");
 

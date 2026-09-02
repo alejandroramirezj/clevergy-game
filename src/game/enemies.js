@@ -8,9 +8,7 @@ import { abilK } from "../engine/input.js";
 import { fetchGlobalLeaderboard, submitScore } from "./leaderboard.js";
 
 export function hitFx(x, y) {
-  GameState.hitStop = 0.05;
-  GameState.shake = Math.max(GameState.shake, 6);
-  for (let i = 0; i < 6; i++) {
+  for (let i = 0; i < 5; i++) {
     GameState.particles.push({
       x,
       y,
@@ -300,8 +298,6 @@ export function bossHit(dmg) {
   boss.hp -= dmg;
   boss.ifr = 0.25;
   boss.hitFlash = 0.15;
-  GameState.hitStop = 0.08;
-  GameState.shake = Math.max(GameState.shake, 10);
   hitFx(boss.x + 40, boss.y + 28);
   addScore(80, boss.x + 30, boss.y - 10);
   sfx(220, 0.1, "square", 0.06);
@@ -421,8 +417,7 @@ export function updateBoss(dt) {
 
   if (boss.hp <= 0) {
     boss.dead = true;
-    GameState.hitStop = 0.18;
-    GameState.shake = 22;
+    GameState.shake = 18;
     sfx(60, 0.8, "sawtooth", 0.1);
     kill();
     addScore(1000, boss.x + 20, boss.y, "INBOX ZERO ✔");

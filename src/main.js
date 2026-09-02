@@ -180,20 +180,9 @@ function filterInPlace(arr, predicate) {
 
 function update(dt) {
   if (GameState.teamOpen) return;
-
-  // KAPLAY-inspired Hit-Stop (Micro-freeze for impactful hits)
-  if (GameState.hitStop > 0) {
-    GameState.hitStop -= dt;
-    return;
-  }
-
   const P = GameState.P;
   GameState.time += dt;
   GameState.gameTime += dt;
-
-  // KAPLAY-inspired Squash & Stretch relaxation towards 1.0
-  P.scaleX = (P.scaleX || 1) + (1 - (P.scaleX || 1)) * Math.min(1, 14 * dt);
-  P.scaleY = (P.scaleY || 1) + (1 - (P.scaleY || 1)) * Math.min(1, 14 * dt);
 
   const C = CHARS[GameState.charIdx];
   updateAnim(dt, C.id, P);
@@ -300,19 +289,10 @@ function update(dt) {
     P.vy = Math.min(P.vy, 14);
   }
 
-  const wasOnGround = P.onGround;
-  const prevVy = P.vy;
   P.onGround = false;
   const wasFalling = P.vy > 0;
   if (moveY(P, P.vy, P.vy >= 0, GameState.printed) && wasFalling && P.vy === 0 && !climbing) {
     P.onGround = true;
-    // KAPLAY-inspired Landing Squash & Stretch
-    if (!wasOnGround && prevVy > 2.5) {
-      const squash = Math.min(1.35, 1 + prevVy * 0.035);
-      P.scaleX = squash;
-      P.scaleY = 1 / squash;
-      if (prevVy > 9) GameState.shake = Math.max(GameState.shake, 4);
-    }
     P.flyMeter = Math.min(1, P.flyMeter + dt * 3);
     P.stamina = Math.min(1, P.stamina + dt * 2);
 
@@ -358,9 +338,6 @@ function update(dt) {
   if (jp && !GameState.prevJump && !frozen && !shieldOn) {
     if (P.onGround) {
       P.vy = -C.jump;
-      // KAPLAY-inspired Jump Stretch
-      P.scaleX = 0.82;
-      P.scaleY = 1.25;
       sfx(500, 0.08);
     } else if (climbing) {
       P.vy = -C.jump * 0.95;
