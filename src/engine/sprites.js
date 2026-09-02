@@ -163,6 +163,22 @@ export function initSprites() {
     canvH: 280,
     targetH: 60
   });
+
+  // Load Álvaro (micro de podcast) custom high-res pose sprites
+  loadPoses("alvaroP", {
+    idle: "/sprites/alvaroP/idle.png",
+    walk: "/sprites/alvaroP/walk.png",
+    run: "/sprites/alvaroP/run.png",
+    jump: "/sprites/alvaroP/jump.png",
+    attack: "/sprites/alvaroP/attack.png",
+    death: "/sprites/alvaroP/death.png"
+  }, {
+    faceRight: true,
+    anchorX: 210,
+    canvW: 560,
+    canvH: 340,
+    targetH: 60
+  });
 }
 
 export const ANIM = {};
@@ -225,6 +241,7 @@ export function loadAnim(id, src, meta) {
 export function getCharacterAvatar(charId) {
   if (charId === "alejandro") return "/sprites/alejandro/avatar.png";
   if (charId === "ale") return "/sprites/ale/avatar.png";
+  if (charId === "alvaroP") return "/sprites/alvaroP/avatar.png";
   const s = SPR[charId];
   if (s && s.img) {
     try {
