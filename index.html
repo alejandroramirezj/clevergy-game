@@ -15,46 +15,97 @@
   <!-- MAIN MENU -->
   <div id="menuOv" class="overlay">
     <div class="menu-container">
+      <!-- HEADER & GAME BRAND -->
       <div class="menu-header">
-        <div class="game-logo">RETREAT</div>
-        <div class="game-sub">THE LEGEND OF THE TEAM · WORLD 1: THE OFFICE</div>
-        <div class="badge-competition">🏆 MODO COMPETICIÓN RETREAT 🏆</div>
+        <div class="game-logo-box">
+          <h1 class="game-logo">RETREAT</h1>
+          <span class="game-logo-glow" aria-hidden="true">RETREAT</span>
+        </div>
+        <div class="game-sub">THE LEGEND OF THE TEAM · 6 MUNDOS</div>
+        <div class="badge-competition">
+          <span class="badge-trophy">🏆</span> MODO COMPETICIÓN RETREAT <span class="badge-trophy">🏆</span>
+        </div>
       </div>
 
-      <!-- PLAYER & CHARACTER CARD -->
-      <div class="menu-card">
-        <div class="card-row player-input-row">
-          <label for="nameInput">TU NOMBRE O APODO:</label>
-          <input class="name" id="nameInput" maxlength="12" placeholder="ANON" autocomplete="off" spellcheck="false">
+      <!-- GAMER PROFILE BAR -->
+      <div class="gamer-profile-bar">
+        <div class="profile-tag">
+          <span class="profile-icon">🎮</span>
+          <span class="profile-label">TAG:</span>
+          <input class="name-input" id="nameInput" maxlength="12" placeholder="ANON" autocomplete="off" spellcheck="false">
+          <span class="profile-hint">✎</span>
         </div>
+      </div>
 
-        <div class="card-row char-spotlight" id="charSpotlight">
-          <div class="char-preview-box">
-            <div class="char-avatar" id="spotlightAvatar">🪰</div>
-            <button class="btn-sm" id="btnChangeChar">👥 ELEGIR COMPAÑERO (18)</button>
+      <!-- HERO SHOWCASE CARD -->
+      <div class="menu-card hero-showcase-card">
+        <div class="hero-card-layout">
+          <!-- Left: Hero Stage & Pedestal with Carousel Arrows -->
+          <div class="hero-stage-box">
+            <button class="hero-nav-arrow left" id="btnHeroPrev" aria-label="Anterior compañero">◀</button>
+            <div class="hero-pedestal-wrap">
+              <div class="hero-spotlight-beam"></div>
+              <div class="char-avatar" id="spotlightAvatar">🪰</div>
+              <div class="hero-podium"></div>
+            </div>
+            <button class="hero-nav-arrow right" id="btnHeroNext" aria-label="Siguiente compañero">▶</button>
           </div>
+
+          <!-- Right: Hero Stats & Details -->
           <div class="char-info">
             <div class="char-header">
               <span class="char-name" id="spotlightName">ALEJANDRO R.</span>
               <span class="char-form" id="spotlightForm">Mosca boxeadora</span>
             </div>
-            <div class="char-ab" id="spotlightAb">✦ HABILIDAD: FLY PUNCH</div>
+            <div class="char-ab-badge" id="spotlightAb">✦ HABILIDAD: FLY PUNCH</div>
             <div class="char-tip" id="spotlightTip">X: puñetazo · mantén salto para planear</div>
             <div class="stat-bars">
-              <div class="stat-row"><span>VELOCIDAD</span><div class="bar-track"><div class="bar-fill" id="barSpd" style="width:75%"></div></div></div>
-              <div class="stat-row"><span>SALTO</span><div class="bar-track"><div class="bar-fill" id="barJump" style="width:85%"></div></div></div>
+              <div class="stat-row">
+                <span class="stat-label">VELOCIDAD</span>
+                <div class="bar-track"><div class="bar-fill" id="barSpd" style="width:75%"></div></div>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">SALTO</span>
+                <div class="bar-track"><div class="bar-fill" id="barJump" style="width:85%"></div></div>
+              </div>
             </div>
           </div>
         </div>
+
+        <!-- Full Roster Button -->
+        <button class="btn-roster" id="btnChangeChar">
+          <span>👥</span> VER PLANTILLA COMPLETA (18 COMPAÑEROS)
+        </button>
       </div>
 
       <!-- MAIN MENU ACTIONS -->
       <div class="menu-actions">
-        <button class="btn btn-hero" id="btnPlay">🗺️ ENTRAR AL MAPA (5 MUNDOS)</button>
-        <div class="menu-sub-actions">
-          <button class="btn btn-menu" id="btnOpenLB">🏆 CLASIFICACIÓN D1</button>
-          <button class="btn btn-menu" id="btnOpenCtrl">🕹️ CONTROLES</button>
-          <button class="btn btn-menu alt" id="btnOpenStory">🖥️ HISTORIA</button>
+        <!-- Big Hero Play CTA -->
+        <button class="btn-play-cta" id="btnPlay">
+          <div class="cta-inner">
+            <span class="cta-icon">🗺️</span>
+            <div class="cta-text-group">
+              <span class="cta-main-title">ENTRAR AL MAPA DE AVENTURA</span>
+              <span class="cta-subtitle">6 MUNDOS · JEFES · RETREAT FINAL</span>
+            </div>
+            <span class="cta-arrow">➔</span>
+          </div>
+        </button>
+
+        <!-- Secondary Arcade Dock -->
+        <div class="menu-dock-row">
+          <button class="dock-btn" id="btnOpenLB">
+            <span class="dock-icon">🏆</span>
+            <span class="dock-txt">RANKING</span>
+          </button>
+          <button class="dock-btn" id="btnOpenCtrl">
+            <span class="dock-icon">🕹️</span>
+            <span class="dock-txt">CONTROLES</span>
+          </button>
+          <button class="dock-btn" id="btnOpenStory">
+            <span class="dock-icon">📜</span>
+            <span class="dock-txt">HISTORIA</span>
+          </button>
         </div>
       </div>
     </div>

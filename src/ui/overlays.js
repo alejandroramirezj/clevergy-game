@@ -1,6 +1,6 @@
 import { BOOT_LINES } from "../config/constants.js";
 import { CHARS } from "../config/characters.js";
-import { GameState, respawn, fmtT } from "../game/state.js";
+import { GameState, respawn, fmtT, switchChar } from "../game/state.js";
 import { sfx } from "../engine/audio.js";
 import { anim, getCharacterAvatar } from "../engine/sprites.js";
 import { fetchGlobalLeaderboard } from "../game/leaderboard.js";
@@ -131,6 +131,21 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
 
   if (teamClose) teamClose.addEventListener("click", () => toggleTeam(true));
   if (btnChangeChar) btnChangeChar.addEventListener("click", () => toggleTeam(false));
+
+  const btnHeroPrev = document.getElementById("btnHeroPrev");
+  const btnHeroNext = document.getElementById("btnHeroNext");
+  btnHeroPrev?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    switchChar(-1);
+    updateSpotlight();
+    try { sfx.coin(); } catch (err) {}
+  });
+  btnHeroNext?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    switchChar(1);
+    updateSpotlight();
+    try { sfx.coin(); } catch (err) {}
+  });
 
   // Leaderboard Modal logic (Cloudflare D1)
   async function renderLeaderboardModal() {
