@@ -582,14 +582,17 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     if (bfReqDesc) bfReqDesc.textContent = req.desc;
 
     levelBriefingModal.classList.remove("hidden");
+    document.body.classList.add("has-modal");
     try { sfx(700, 0.08, "triangle"); } catch (e) {}
   }
 
   bfBtnPlay?.addEventListener("click", () => {
+    document.body.classList.remove("has-modal");
     levelBriefingModal?.classList.add("hidden");
     if (onBriefingPlayCallback) onBriefingPlayCallback();
   });
   bfBtnBack?.addEventListener("click", () => {
+    document.body.classList.remove("has-modal");
     levelBriefingModal?.classList.add("hidden");
   });
 

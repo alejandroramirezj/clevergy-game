@@ -52,11 +52,17 @@ canvas {
   justify-content: center;
   background: rgba(7, 10, 24, 0.94);
   color: #cfe3ff;
-  z-index: 20;
+  z-index: 5000;
   text-align: center;
   padding: 16px;
   overflow-y: auto;
   backdrop-filter: blur(8px);
+}
+
+body:has(.overlay:not(.hidden)) .gameboy-deck,
+body.has-modal .gameboy-deck {
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .hidden {
