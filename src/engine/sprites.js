@@ -294,7 +294,7 @@ export function getCharacterAvatar(charId) {
   if (charId === "alvaroP") return "/sprites/alvaroP/avatar.png";
   if (charId === "ana") return "/sprites/ana/avatar.png";
   if (charId === "alvaroM") return "/sprites/alvaroM/avatar.png";
-  if (charId === "beltran") return "/sprites/beltran/avatar.png";
+  if (charId === "beltran") return "/sprites/beltran/idle.png";
   const s = SPR[charId];
   if (s && s.img) {
     try {

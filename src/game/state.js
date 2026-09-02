@@ -147,7 +147,7 @@ export function fmtT(s) {
 export function hurt(n) {
   const P = GameState.P;
   if (P.inv > 0 || P.dashT > 0 || P.roll > 0 || P.slide > 0) return;
-  if (CHARS[GameState.charIdx].id === "beltran" && (P.shieldOn || P.shieldE > 0.05 && (abilK() || downK()))) {
+  if (CHARS[GameState.charIdx].id === "beltran" && P.shieldOn && P.shieldE > 0) {
     P.shieldE = Math.max(0, P.shieldE - 0.15);
     triggerAnim("block", "beltran");
     sfx(1200, 0.08, "triangle");
