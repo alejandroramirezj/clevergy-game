@@ -195,6 +195,22 @@ export function initSprites() {
     canvH: 360,
     targetH: 60
   });
+
+  // Load Álvaro Merino (calculadora) custom high-res pose sprites
+  loadPoses("alvaroM", {
+    idle: "/sprites/alvaroM/idle.png",
+    walk: "/sprites/alvaroM/walk.png",
+    run: "/sprites/alvaroM/run.png",
+    jump: "/sprites/alvaroM/jump.png",
+    attack: "/sprites/alvaroM/attack.png",
+    death: "/sprites/alvaroM/death.png"
+  }, {
+    faceRight: true,
+    anchorX: 210,
+    canvW: 560,
+    canvH: 340,
+    targetH: 60
+  });
 }
 
 export const ANIM = {};
@@ -259,6 +275,7 @@ export function getCharacterAvatar(charId) {
   if (charId === "ale") return "/sprites/ale/avatar.png";
   if (charId === "alvaroP") return "/sprites/alvaroP/avatar.png";
   if (charId === "ana") return "/sprites/ana/avatar.png";
+  if (charId === "alvaroM") return "/sprites/alvaroM/avatar.png";
   const s = SPR[charId];
   if (s && s.img) {
     try {
