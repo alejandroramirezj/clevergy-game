@@ -57,8 +57,8 @@ function fitCanvas() {
     document.getElementById("touch")?.classList.add("hidden");
     document.getElementById("gameboyDeck")?.classList.remove("hidden");
 
-    // Game Boy screen takes ~48% of screen height
-    const screenH = Math.round(ih * 0.48);
+    // Game Boy screen takes ~58% of screen height (more screen space!)
+    const screenH = Math.round(ih * 0.58);
     const screenW = iw;
 
     const H = 340;

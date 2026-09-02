@@ -252,19 +252,6 @@
 
   <!-- GAME BOY CONTROLLER DECK (VERTICAL / PORTRAIT) -->
   <div id="gameboyDeck" class="gameboy-deck">
-    <!-- Brand & Battery Header -->
-    <div class="gb-brand-strip">
-      <div class="gb-brand">
-        <span class="gb-brand-main">Clevergy</span>
-        <span class="gb-brand-sub">GAME BOY</span>
-      </div>
-      <button class="gb-map-btn" id="btnGbMap">🗺️ MAPA</button>
-      <div class="gb-battery">
-        <span class="gb-led"></span>
-        <span class="gb-battery-txt">BATTERY</span>
-      </div>
-    </div>
-
     <!-- MAIN CONTROLS ROW: D-PAD LEFT, ACTIONS RIGHT -->
     <div class="gb-controls-area">
       <!-- D-PAD (CRUCETA) -->
@@ -293,9 +280,13 @@
       </div>
     </div>
 
-    <!-- Bottom Row: EQUIPO & CAMBIO + Speaker Grill (CENTERED) -->
+    <!-- Bottom Row: MAPA, EQUIPO & CAMBIO + Speaker Grill -->
     <div class="gb-bottom-area">
       <div class="gb-system-btns">
+        <div class="gb-pill-wrapper">
+          <button class="gb-pill-btn" id="btnGbMap" aria-label="Mapa">MAPA</button>
+          <span class="gb-pill-label">🗺️ MAPA</span>
+        </div>
         <div class="gb-pill-wrapper">
           <button class="gb-pill-btn" id="gbSelect" aria-label="Equipo">EQUIPO</button>
           <span class="gb-pill-label">👥 EQUIPO</span>

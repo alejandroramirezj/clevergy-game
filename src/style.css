@@ -758,7 +758,7 @@ body.gameboy-mode .gameboy-deck {
   width: 100vw;
   background: linear-gradient(180deg, #171d33 0%, #0d1020 100%);
   border-top: 3px solid #283359;
-  padding: 10px 20px 24px;
+  padding: 6px 16px 16px;
   justify-content: space-around;
   box-sizing: border-box;
   user-select: none;
@@ -766,74 +766,6 @@ body.gameboy-mode .gameboy-deck {
   touch-action: none;
   position: relative;
   overflow: hidden;
-}
-
-/* Bezel Strip */
-.gb-brand-strip {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 2px 8px 6px;
-  border-bottom: 1px solid rgba(42, 53, 102, 0.4);
-}
-
-.gb-map-btn {
-  background: #1c2340;
-  border: 1px solid var(--cyan);
-  color: var(--cyan);
-  font-size: 10px;
-  font-weight: 900;
-  padding: 3px 8px;
-  border-radius: 6px;
-  cursor: pointer;
-  touch-action: none;
-  box-shadow: 0 2px 0 #0b0d18;
-  transition: transform 0.05s, background 0.05s;
-}
-
-.gb-map-btn:active {
-  transform: translateY(1px);
-  background: var(--cyan);
-  color: #0b0e1a;
-}
-
-.gb-brand {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.gb-brand-main {
-  font-size: 15px;
-  font-weight: bold;
-  color: #fff;
-  letter-spacing: 0.12em;
-}
-
-.gb-brand-sub {
-  font-size: 12px;
-  font-weight: 900;
-  font-style: italic;
-  color: #59d8ff;
-  letter-spacing: 0.18em;
-  text-shadow: 0 0 10px rgba(89, 216, 255, 0.5);
-}
-
-.gb-battery {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 10px;
-  color: #7b88aa;
-  letter-spacing: 0.1em;
-}
-
-.gb-led {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #ff3344;
-  box-shadow: 0 0 8px #ff3344;
 }
 
 /* Controls Area */
@@ -1012,7 +944,7 @@ body.gameboy-mode .gameboy-deck {
 
 .gb-system-btns {
   display: flex;
-  gap: 36px;
+  gap: 18px;
   justify-content: center;
 }
 
