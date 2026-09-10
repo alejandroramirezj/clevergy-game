@@ -412,7 +412,7 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
         const frameIdx = Math.floor(lobbyPoseTime * 6) % imgList.length;
         const img = imgList[frameIdx];
         if (img && img.complete && img.naturalWidth > 0) {
-          const targetH = 220;
+          const targetH = 250;
           const ratio = targetH / img.naturalHeight;
           const targetW = img.naturalWidth * ratio;
           ctx.drawImage(img, -targetW / 2, -targetH, targetW, targetH);
@@ -425,7 +425,7 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     if (!drawn) {
       const s = SPR[c.id];
       if (s && s.img) {
-        const scale = 5.6;
+        const scale = 6.2;
         const sw = s.w * scale;
         const sh = s.h * scale;
         ctx.imageSmoothingEnabled = false;
