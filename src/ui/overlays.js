@@ -214,8 +214,18 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     setLobbyPose("idle");
   }
 
-  if (btnCharPrev) btnCharPrev.addEventListener("click", () => cycleHero(-1));
-  if (btnCharNext) btnCharNext.addEventListener("click", () => cycleHero(1));
+  if (btnCharPrev) {
+    btnCharPrev.addEventListener("click", (e) => {
+      e.stopPropagation();
+      cycleHero(-1);
+    });
+  }
+  if (btnCharNext) {
+    btnCharNext.addEventListener("click", (e) => {
+      e.stopPropagation();
+      cycleHero(1);
+    });
+  }
 
 
 
@@ -380,8 +390,11 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
       stumbleCharShadow.style.opacity = shadowOpacity.toFixed(2);
     }
 
+    // Ground level aligned precisely with the circular podium surface
+    const groundY = 352;
+
     ctx.save();
-    ctx.translate(W / 2 + offsetX, H / 2 + 15 + offsetY);
+    ctx.translate(W / 2 + offsetX, groundY + offsetY);
     ctx.rotate(rot);
     ctx.scale(scaleX, scaleY);
 
@@ -399,10 +412,10 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
         const frameIdx = Math.floor(lobbyPoseTime * 6) % imgList.length;
         const img = imgList[frameIdx];
         if (img && img.complete && img.naturalWidth > 0) {
-          const targetH = 240;
+          const targetH = 220;
           const ratio = targetH / img.naturalHeight;
           const targetW = img.naturalWidth * ratio;
-          ctx.drawImage(img, -targetW / 2, -targetH + 42, targetW, targetH);
+          ctx.drawImage(img, -targetW / 2, -targetH, targetW, targetH);
           drawn = true;
         }
       }
@@ -412,11 +425,11 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     if (!drawn) {
       const s = SPR[c.id];
       if (s && s.img) {
-        const scale = 6.2;
+        const scale = 5.6;
         const sw = s.w * scale;
         const sh = s.h * scale;
         ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(s.img, -sw / 2, -sh + 38, sw, sh);
+        ctx.drawImage(s.img, -sw / 2, -sh, sw, sh);
         drawn = true;
       }
     }
