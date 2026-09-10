@@ -8,11 +8,11 @@ import { abilK } from "../engine/input.js";
 
 const WORLD_SIGNS = {
   1: [
-    { x: 3, y: 10.5, t: "🏢 THE OFFICE" },
-    { x: 18, y: 14, t: "← mover · ↑ saltar" },
-    { x: 44, y: 7, t: "FIREWALL DE RED: ¡CUIDADO!" },
-    { x: 60, y: 14, t: "SUBE POR LOS ESCRITORIOS" },
-    { x: 104, y: 14, t: "JEFE: THE EMAIL CHAIN (INBOX ZERO)" }
+    { x: 3, y: 10.5, t: "📝 NOTION ROADMAP: THE OFFICE" },
+    { x: 18, y: 14, t: "← mover · ↑ saltar entre tareas del sprint" },
+    { x: 44, y: 7, t: "🚧 RELEASE GATE: CODE FREEZE" },
+    { x: 60, y: 14, t: "ESCALA POR EL ROADMAP DE PRODUCTO" },
+    { x: 104, y: 14, t: "👾 JEFE: THE EMAIL CHAIN (INBOX ZERO)" }
   ],
   2: [
     { x: 3, y: 14, t: "🌴 INTEGRATION JUNGLE — SELVA DE APIS" },
@@ -228,23 +228,87 @@ function drawBackground(cx) {
       cx.fillRect(sx, sy, sSize, sSize);
     }
   } else {
-    // 1. The Office: default office cubicles & skyscraper skyline
-    cx.fillStyle = "#0d1226";
+    // 1. The Office: Sleek Notion Dark Workspace with Sprint Timeline & Kanban Lanes
+    cx.fillStyle = "#191919";
     cx.fillRect(camX - 4, topY, W + 8, H + 8);
-    for (let i = Math.floor(camX / 260); i < (camX + W) / 260 + 1; i++) {
-      cx.fillStyle = "#141b3d";
-      cx.fillRect(i * 260 + 30, camY + 40, 140, 150);
-      cx.fillStyle = "#1d2a5c";
-      cx.fillRect(i * 260 + 38, camY + 48, 124, 134);
+
+    // Subtle Notion dotted grid paper pattern
+    const dotGap = 28;
+    const dotStartI = Math.floor((camX - 20) / dotGap);
+    const dotEndI = Math.ceil((camX + W + 20) / dotGap);
+    const dotStartJ = Math.floor(topY / dotGap);
+    const dotEndJ = Math.ceil((topY + H + 20) / dotGap);
+    cx.fillStyle = "rgba(255, 255, 255, 0.04)";
+    for (let di = dotStartI; di <= dotEndI; di++) {
+      for (let dj = dotStartJ; dj <= dotEndJ; dj++) {
+        cx.fillRect(di * dotGap, dj * dotGap, 1.5, 1.5);
+      }
     }
-    cx.fillStyle = "#0f1530";
-    const deskY = camY + H;
-    for (let i = Math.floor((camX * 0.5) / 200); i < (camX * 0.5 + W) / 200 + 2; i++) {
-      const bx = i * 200 - camX * 0.5 + camX;
-      cx.fillRect(bx, deskY - 120, 120, 10);
-      cx.fillRect(bx + 10, deskY - 110, 8, 60);
-      cx.fillRect(bx + 100, deskY - 110, 8, 60);
-      cx.fillRect(bx + 30, deskY - 152, 46, 32);
+
+    // Sprint Kanban Columns in the background
+    const sprintCols = [
+      { startX: 0, endX: 30 * TILE, label: "SPRINT 1 · PLANNING & SETUP" },
+      { startX: 30 * TILE, endX: 60 * TILE, label: "SPRINT 2 · CORE DEV & APIS" },
+      { startX: 60 * TILE, endX: 90 * TILE, label: "SPRINT 3 · CODE REVIEW & STAGING" },
+      { startX: 90 * TILE, endX: 130 * TILE, label: "SPRINT 4 · DEPLOY & INBOX ZERO" }
+    ];
+
+    for (const sc of sprintCols) {
+      if (sc.endX < camX - 100 || sc.startX > camX + W + 100) continue;
+      // Column divider line
+      cx.strokeStyle = "rgba(255, 255, 255, 0.05)";
+      cx.lineWidth = 1;
+      cx.setLineDash([4, 6]);
+      cx.beginPath();
+      cx.moveTo(sc.startX, topY);
+      cx.lineTo(sc.startX, topY + H);
+      cx.stroke();
+      cx.setLineDash([]);
+
+      // Floating Column Header Badge
+      const headerX = Math.max(sc.startX + 20, camX + 16);
+      if (headerX < sc.endX - 140) {
+        cx.fillStyle = "rgba(32, 34, 42, 0.85)";
+        cx.fillRect(headerX, topY + 68, 195, 20);
+        cx.strokeStyle = "rgba(255, 255, 255, 0.1)";
+        cx.strokeRect(headerX, topY + 68, 195, 20);
+        cx.fillStyle = "#8fa3d9";
+        cx.font = "bold 9px monospace";
+        cx.fillText(`📋 ${sc.label}`, headerX + 8, topY + 82);
+      }
+    }
+
+    // Notion Page Header & Breadcrumbs Bar floating along the top
+    cx.fillStyle = "rgba(25, 25, 25, 0.95)";
+    cx.fillRect(camX, topY, W, 48);
+    cx.fillStyle = "rgba(255, 255, 255, 0.08)";
+    cx.fillRect(camX, topY + 47, W, 1);
+
+    // Breadcrumbs
+    cx.fillStyle = "#7a829e";
+    cx.font = "9px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+    cx.fillText("Clevergy  /  Engineering  /  Sprint Retreat  /  Q1 Roadmap 🚀", camX + 16, topY + 16);
+
+    // Notion View Tabs Pill Bar
+    const tabs = ["📋 Board", "📅 Timeline (Roadmap)", "⚡ Sprint", "📊 Table"];
+    let tabX = camX + 16;
+    for (let ti = 0; ti < tabs.length; ti++) {
+      const isActive = ti === 1;
+      const tText = tabs[ti];
+      const tWidth = tText.length * 6.5 + 16;
+      if (isActive) {
+        cx.fillStyle = "rgba(89, 216, 255, 0.15)";
+        cx.fillRect(tabX, topY + 24, tWidth, 18);
+        cx.strokeStyle = "#59d8ff";
+        cx.lineWidth = 1;
+        cx.strokeRect(tabX, topY + 24, tWidth, 18);
+        cx.fillStyle = "#fff";
+      } else {
+        cx.fillStyle = "#636a82";
+      }
+      cx.font = "bold 8.5px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+      cx.fillText(tText, tabX + 8, topY + 36);
+      tabX += tWidth + 8;
     }
   }
 
@@ -255,6 +319,18 @@ function drawBackground(cx) {
     cx.fillRect(ex, camY + 60 + ((i * 97) % Math.max(120, H - 200)) + Math.sin(time + i) * 10, 22, 14);
   }
 }
+
+const NOTION_ROADMAP_TASKS = [
+  { tag: "DONE", bg: "#1b3323", border: "#2f5c40", text: "#42f584", title: "AUTH-V2", pct: 1.0 },
+  { tag: "IN PROGRESS", bg: "#16283d", border: "#27486e", text: "#59d8ff", title: "API-GATEWAY", pct: 0.65 },
+  { tag: "SPRINT", bg: "#281938", border: "#4f2f6e", text: "#d859ff", title: "DATA-CORE", pct: 0.45 },
+  { tag: "REVIEW", bg: "#382414", border: "#6b421e", text: "#ffaa40", title: "DASHBOARD", pct: 0.85 },
+  { tag: "DONE", bg: "#1b3323", border: "#2f5c40", text: "#42f584", title: "ENERGY-GRID", pct: 1.0 },
+  { tag: "IN PROGRESS", bg: "#16283d", border: "#27486e", text: "#59d8ff", title: "UI-POLISH", pct: 0.7 },
+  { tag: "SPRINT", bg: "#281938", border: "#4f2f6e", text: "#d859ff", title: "PIPELINE", pct: 0.5 },
+  { tag: "TESTING", bg: "#362f14", border: "#5e5220", text: "#ffd25e", title: "METRICS", pct: 0.9 },
+  { tag: "MILESTONE", bg: "#183236", border: "#295b63", text: "#38ef7d", title: "INBOX-ZERO", pct: 0.95 }
+];
 
 function drawTiles(cx) {
   const { W, camX, time, currentWorld } = GameState;
@@ -289,51 +365,174 @@ function drawTiles(cx) {
       const ch = grid[j][i];
       if (ch === ".") continue;
       const x = i * TILE, y = j * TILE;
+
       if (ch === "#") {
-        cx.fillStyle = colSolid;
-        cx.fillRect(x, y, TILE, TILE);
-        cx.fillStyle = colTop;
-        cx.fillRect(x, y, TILE, 5);
-        cx.fillStyle = colBot;
-        cx.fillRect(x, y + TILE - 4, TILE, 4);
-        cx.fillStyle = colTop;
-        cx.fillRect(x + 4, y + 10, 6, 6);
-        cx.fillRect(x + 20, y + 20, 8, 5);
+        if (wId === 1) {
+          // Notion Database Table / Shelf
+          const isTopFloor = j > 0 && grid[j - 1]?.[i] !== "#";
+          cx.fillStyle = isTopFloor ? "#23252d" : "#1a1b22";
+          cx.fillRect(x, y, TILE, TILE);
+          cx.fillStyle = isTopFloor ? "#363a48" : "#282a35";
+          cx.fillRect(x, y, TILE, 2);
+
+          // Database table column divider every 4 tiles
+          if (i % 4 === 0) {
+            cx.fillStyle = "rgba(255, 255, 255, 0.04)";
+            cx.fillRect(x, y, 1, TILE);
+          }
+
+          // If milestone firewall pillar (x=44, 45, 46)
+          if (i >= 44 && i <= 46) {
+            cx.fillStyle = "#2c2e3a";
+            cx.fillRect(x, y, TILE, TILE);
+            cx.fillStyle = "#ffaa40";
+            cx.fillRect(x, y, TILE, 2);
+            if (i === 44 && j === 8) {
+              cx.fillStyle = "#ffd25e";
+              cx.font = "bold 8px monospace";
+              cx.fillText("🚧 RELEASE GATEWAY", x - 12, y - 6);
+            }
+          }
+        } else {
+          cx.fillStyle = colSolid;
+          cx.fillRect(x, y, TILE, TILE);
+          cx.fillStyle = colTop;
+          cx.fillRect(x, y, TILE, 5);
+          cx.fillStyle = colBot;
+          cx.fillRect(x, y + TILE - 4, TILE, 4);
+          cx.fillStyle = colTop;
+          cx.fillRect(x + 4, y + 10, 6, 6);
+          cx.fillRect(x + 20, y + 20, 8, 5);
+        }
       } else if (ch === "=") {
-        cx.fillStyle = colPlat;
-        cx.fillRect(x, y, TILE, 8);
-        cx.fillStyle = colPlatTop;
-        cx.fillRect(x, y, TILE, 3);
-        cx.fillStyle = colBot;
-        cx.fillRect(x + 3, y + 8, 4, 4);
-        cx.fillRect(x + TILE - 7, y + 8, 4, 4);
+        if (wId === 1) {
+          // Notion Roadmap Task Card Platform!
+          const isLeft = i === 0 || grid[j][i - 1] !== "=";
+          const isRight = i === LW - 1 || grid[j][i + 1] !== "=";
+
+          let kStart = i;
+          while (kStart > 0 && grid[j][kStart - 1] === "=") kStart--;
+          let kEnd = i;
+          while (kEnd < LW - 1 && grid[j][kEnd + 1] === "=") kEnd++;
+          const tileInPlat = i - kStart;
+
+          const taskIdx = (kStart * 3 + j * 7) % NOTION_ROADMAP_TASKS.length;
+          const task = NOTION_ROADMAP_TASKS[taskIdx];
+
+          const cardH = 14;
+          const cardY = y; // Top aligned for physics precision
+
+          // Card Background
+          cx.fillStyle = "#232630";
+          cx.fillRect(x, cardY, TILE, cardH);
+
+          // Card Borders
+          cx.fillStyle = task.border;
+          cx.fillRect(x, cardY, TILE, 2); // Top border
+          cx.fillStyle = "#15171e";
+          cx.fillRect(x, cardY + cardH - 2, TILE, 2); // Bottom shadow
+
+          if (isLeft) {
+            cx.fillStyle = task.border;
+            cx.fillRect(x, cardY, 2, cardH);
+          }
+          if (isRight) {
+            cx.fillStyle = task.border;
+            cx.fillRect(x + TILE - 2, cardY, 2, cardH);
+            // Milestone connector dot
+            cx.fillStyle = task.text;
+            cx.fillRect(x + TILE - 5, cardY + 5, 4, 4);
+          }
+
+          // Progress sub-track at bottom of card
+          cx.fillStyle = "rgba(0, 0, 0, 0.45)";
+          cx.fillRect(x, cardY + cardH - 3, TILE, 2);
+          cx.fillStyle = task.text;
+          cx.fillRect(x, cardY + cardH - 3, Math.round(TILE * task.pct), 2);
+
+          // Render Status Pill & Task Title
+          if (isLeft) {
+            cx.fillStyle = task.bg;
+            cx.fillRect(x + 3, cardY + 3, 26, 8);
+            cx.strokeStyle = task.border;
+            cx.lineWidth = 0.5;
+            cx.strokeRect(x + 3, cardY + 3, 26, 8);
+            cx.fillStyle = task.text;
+            cx.font = "bold 6.5px -apple-system, BlinkMacSystemFont, sans-serif";
+            cx.fillText(task.tag.slice(0, 5), x + 5, cardY + 9);
+          } else if (tileInPlat === 1) {
+            cx.fillStyle = "#e2e7f5";
+            cx.font = "bold 8px monospace";
+            cx.fillText(task.title, x + 2, cardY + 9.5);
+          } else if (tileInPlat >= 2) {
+            cx.fillStyle = "#828ba3";
+            cx.font = "bold 7px monospace";
+            cx.fillText(tileInPlat === 2 ? "Q1 · P1" : "CLEVERGY", x + 3, cardY + 9);
+          }
+        } else {
+          cx.fillStyle = colPlat;
+          cx.fillRect(x, y, TILE, 8);
+          cx.fillStyle = colPlatTop;
+          cx.fillRect(x, y, TILE, 3);
+          cx.fillStyle = colBot;
+          cx.fillRect(x + 3, y + 8, 4, 4);
+          cx.fillRect(x + TILE - 7, y + 8, 4, 4);
+        }
       } else if (ch === "^") {
-        cx.fillStyle = "#6b4423";
-        cx.fillRect(x, y + 22, TILE, 14);
-        cx.fillStyle = "#8a5a2e";
-        cx.fillRect(x + 4, y + 18 + Math.sin(time * 5 + i) * 2, 8, 6);
-        cx.fillRect(x + 20, y + 16 + Math.cos(time * 4 + i) * 2, 8, 6);
-        cx.fillStyle = "#ffffff22";
-        cx.fillRect(x + 6, y + 10 - Math.abs(Math.sin(time * 3 + i)) * 6, 3, 6);
+        if (wId === 1) {
+          // Notion Blocker warning tags
+          cx.fillStyle = "#2e1215";
+          cx.fillRect(x, y + 20, TILE, 16);
+          cx.fillStyle = "#ff4d5e";
+          cx.fillRect(x + 2, y + 16 + Math.sin(time * 6 + i) * 2, 8, 8);
+          cx.fillRect(x + 18, y + 15 + Math.cos(time * 5 + i) * 2, 8, 8);
+          cx.fillStyle = "#ff7080";
+          cx.font = "bold 7px monospace";
+          cx.fillText("BLOCKER", x + 1, y + 32);
+        } else {
+          cx.fillStyle = "#6b4423";
+          cx.fillRect(x, y + 22, TILE, 14);
+          cx.fillStyle = "#8a5a2e";
+          cx.fillRect(x + 4, y + 18 + Math.sin(time * 5 + i) * 2, 8, 6);
+          cx.fillRect(x + 20, y + 16 + Math.cos(time * 4 + i) * 2, 8, 6);
+          cx.fillStyle = "#ffffff22";
+          cx.fillRect(x + 6, y + 10 - Math.abs(Math.sin(time * 3 + i)) * 6, 3, 6);
+        }
       }
     }
   }
 }
 
 function drawSigns(cx) {
-  const signs = WORLD_SIGNS[GameState.currentWorld || 1] || WORLD_SIGNS[1];
+  const wId = GameState.currentWorld || 1;
+  const signs = WORLD_SIGNS[wId] || WORLD_SIGNS[1];
   cx.font = "bold 11px monospace";
   for (const s of signs) {
     const x = s.x * TILE, y = s.y * TILE;
-    cx.fillStyle = "#090d1f";
-    cx.fillRect(x - 6, y - 16, s.t.length * 6.8 + 14, 22);
-    cx.strokeStyle = "#59d8ff";
-    cx.lineWidth = 1;
-    cx.strokeRect(x - 6, y - 16, s.t.length * 6.8 + 14, 22);
-    cx.fillStyle = "#ffffff";
-    cx.fillText(s.t, x, y);
-    cx.fillStyle = "#2a3566";
-    cx.fillRect(x + 10, y + 6, 4, TILE);
+    if (wId === 1) {
+      // Notion Callout Block Style
+      const boxW = s.t.length * 6.8 + 20;
+      const boxH = 22;
+      cx.fillStyle = "#222530";
+      cx.fillRect(x - 6, y - 16, boxW, boxH);
+      cx.strokeStyle = "#43495d";
+      cx.lineWidth = 1;
+      cx.strokeRect(x - 6, y - 16, boxW, boxH);
+      cx.fillStyle = "#f0f4fc";
+      cx.fillText(s.t, x, y);
+      cx.fillStyle = "#363c4e";
+      cx.fillRect(x + 10, y + 6, 3, TILE);
+    } else {
+      cx.fillStyle = "#090d1f";
+      cx.fillRect(x - 6, y - 16, s.t.length * 6.8 + 14, 22);
+      cx.strokeStyle = "#59d8ff";
+      cx.lineWidth = 1;
+      cx.strokeRect(x - 6, y - 16, s.t.length * 6.8 + 14, 22);
+      cx.fillStyle = "#ffffff";
+      cx.fillText(s.t, x, y);
+      cx.fillStyle = "#2a3566";
+      cx.fillRect(x + 10, y + 6, 4, TILE);
+    }
   }
 }
 

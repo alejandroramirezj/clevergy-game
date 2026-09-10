@@ -229,6 +229,22 @@ export function initSprites() {
     canvH: 360,
     targetH: 60
   });
+
+  // Load Javi custom high-res pose sprites
+  loadPoses("javi", {
+    idle: "/sprites/javi/idle.png",
+    walk: "/sprites/javi/walk.png",
+    run: "/sprites/javi/run.png",
+    jump: "/sprites/javi/jump.png",
+    attack: "/sprites/javi/attack.png",
+    death: "/sprites/javi/death.png"
+  }, {
+    faceRight: true,
+    anchorX: 180,
+    canvW: 420,
+    canvH: 360,
+    targetH: 60
+  });
 }
 
 export const ANIM = {};
@@ -295,6 +311,7 @@ export function getCharacterAvatar(charId) {
   if (charId === "ana") return "/sprites/ana/avatar.png";
   if (charId === "alvaroM") return "/sprites/alvaroM/avatar.png";
   if (charId === "beltran") return "/sprites/beltran/idle.png";
+  if (charId === "javi") return "/sprites/javi/avatar.png";
   const s = SPR[charId];
   if (s && s.img) {
     try {

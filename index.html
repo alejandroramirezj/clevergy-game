@@ -12,74 +12,190 @@
     <canvas id="cv" width="960" height="540"></canvas>
   </div>
 
-  <!-- MAIN MENU (CAMPFIRE RETREAT RETRO PIXEL ART) -->
-  <div id="menuOv" class="overlay menu-campfire-overlay">
-    <div class="campfire-backdrop"></div>
-    <div class="campfire-warm-overlay"></div>
+  <!-- MAIN MENU (PREMIUM RETRO ARCADE LOBBY · EXACT MATCH TO REFERENCE MOCKUPS) -->
+  <div id="menuOv" class="overlay menu-clevergy-overlay">
+    <!-- Atmospheric Layered Background (Moon, Castle, Top Beam, Particles, Floor Light) -->
+    <div class="clevergy-bg">
+      <div class="clevergy-moon"></div>
+      <div class="clevergy-castle-silhouette"></div>
+      <div class="clevergy-beam-light"></div>
+      <div class="clevergy-particles"></div>
+      <div class="clevergy-floor-light"></div>
+    </div>
 
-    <div class="menu-campfire-container">
-      <!-- TOP HEADER: RETREAT LOGO & VERSION -->
-      <div class="menu-pixel-header">
-        <div class="pixel-logo-box">
-          <h1 class="pixel-logo-title">RETREAT</h1>
-          <div class="pixel-logo-sub">THE LEGEND OF THE TEAM</div>
+    <div class="clevergy-menu-container">
+      <!-- TOP HEADER ROW -->
+      <header class="lobby-header-row">
+        <!-- Top Left: Hamburger + Brand Title -->
+        <div class="lobby-brand-group">
+          <button class="lobby-icon-btn btn-hamburger" id="btnHamburger" aria-label="Abrir Menú" title="Menú">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+          </button>
+          <div class="lobby-brand-text">
+            <h1 class="lobby-brand-title">RETREAT</h1>
+            <div class="lobby-brand-sub">THE LEGEND OF THE FLY</div>
+          </div>
         </div>
-        <div class="menu-version-tag">v1.0.0</div>
+
+        <!-- Profile Card -->
+        <div class="lobby-profile-card">
+          <div class="profile-avatar-circle">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          </div>
+          <div class="profile-info">
+            <div class="profile-name" id="profilePlayerName">ALEJANDRO R.</div>
+            <div class="profile-sub">NIVEL 12</div>
+            <div class="profile-xp-row">
+              <div class="profile-xp-track">
+                <div class="profile-xp-fill" style="width: 53%;"></div>
+              </div>
+              <span class="profile-xp-text">320 / 600 XP</span>
+            </div>
+          </div>
+          <!-- Preserved hidden nameInput for state compatibility -->
+          <input type="hidden" id="nameInput" value="ALEJANDRO R.">
+        </div>
+
+        <div class="lobby-version-tag">v1.0.0</div>
+      </header>
+
+      <!-- MAIN WORKSPACE: Center Hero on Pedestal + Flanking/Bottom Dossier -->
+      <div class="lobby-workspace">
+        <!-- Center Character Hero Stage -->
+        <div class="hero-stage-container">
+          <div class="hero-centerpiece-stage">
+            <!-- Left Arrow ‹ -->
+            <button class="hero-nav-circle btn-prev" id="btnCharPrev" aria-label="Personaje anterior" title="Anterior (←)">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            </button>
+
+            <!-- Circular Glowing Pedestal + Character Viewport -->
+            <div class="hero-pedestal-wrap" id="stumbleCharViewport" title="¡Toca para actuar o desliza para cambiar!">
+              <div class="hero-circular-podium">
+                <div class="podium-inner-ring"></div>
+                <div class="podium-glow"></div>
+              </div>
+              <canvas id="stumbleHeroCanvas" width="420" height="420"></canvas>
+              <div class="hero-contact-shadow" id="stumbleCharShadow"></div>
+            </div>
+
+            <!-- Right Arrow › -->
+            <button class="hero-nav-circle btn-next" id="btnCharNext" aria-label="Siguiente personaje" title="Siguiente (→)">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Dossier Info (Right side in landscape, centered below hero in portrait) -->
+        <div class="hero-dossier-card">
+          <div class="dossier-tag">FORMA</div>
+          <h2 class="dossier-title" id="spotlightName">MOSCA BOXEADORA</h2>
+          <div class="dossier-skill" id="spotlightAb">FLY PUNCH</div>
+          <div class="dossier-lore" id="spotlightTip">Pequeña en tamaño, grande en actitud.</div>
+
+          <div class="dossier-stats-row">
+            <div class="dossier-stat-item stat-atk">
+              <span class="stat-emoji">🥊</span>
+              <div class="stat-meta">
+                <span class="stat-lbl">ATK</span>
+                <span class="stat-num" id="statAtkVal">82</span>
+              </div>
+            </div>
+            <div class="dossier-stat-item stat-spd">
+              <span class="stat-emoji">⚡</span>
+              <div class="stat-meta">
+                <span class="stat-lbl">SPD</span>
+                <span class="stat-num" id="statSpdVal">94</span>
+              </div>
+            </div>
+            <div class="dossier-stat-item stat-hp">
+              <span class="stat-emoji">💚</span>
+              <div class="stat-meta">
+                <span class="stat-lbl">HP</span>
+                <span class="stat-num" id="statHpVal">71</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- MAIN CONTENT: LEFT BUTTONS + CENTER CAMPFIRE GATHERING -->
-      <div class="campfire-main-content">
-        <!-- LEFT: ARCADE WOOD MENU BUTTONS (MATCHING REFERENCE IMAGE) -->
-        <div class="campfire-menu-stack">
-          <!-- Gamer Tag input pill -->
-          <div class="menu-tag-pill">
-            <span class="tag-icon">🎮</span>
-            <input class="name-input" id="nameInput" maxlength="12" placeholder="ANON" autocomplete="off" spellcheck="false" title="Tu Nombre / Tag">
-            <span class="tag-edit">✎</span>
-          </div>
+      <!-- FOOTER ROW: Watermark Left, 4 Actions Center, JUGAR Right (or stacked in portrait) -->
+      <footer class="lobby-bottom-bar">
+        <!-- Brand Watermark tag on bottom left -->
+        <div class="lobby-footer-watermark">
+          <span class="wm-title">CLEVERGY</span>
+          <span class="wm-sub">PLAY A BRIGHTER TOMORROW</span>
+        </div>
 
-          <button class="pixel-btn btn-play-wood" id="btnPlay">
-            <span>JUGAR</span>
-            <span class="btn-arrow">▶</span>
+        <!-- 4 Actions Dock (Pose REMOVED as requested!) -->
+        <div class="lobby-actions-dock" id="stumblePoseDock">
+          <button class="action-dock-item" data-pose="idle">
+            <span class="action-icon">🧍</span>
+            <span class="action-label">Reposo</span>
+            <span class="active-indicator"></span>
           </button>
-
-
-
-          <button class="pixel-btn btn-wood" id="btnOpenMapMenu">
-            <span>MUNDOS</span>
+          <button class="action-dock-item" data-pose="run">
+            <span class="action-icon">🏃</span>
+            <span class="action-label">Correr</span>
+            <span class="active-indicator"></span>
           </button>
-
-          <button class="pixel-btn btn-wood" id="btnOpenLB">
-            <span>RANKING</span>
+          <button class="action-dock-item active" data-pose="attack">
+            <span class="action-icon">🥊</span>
+            <span class="action-label">Ataque</span>
+            <span class="active-indicator"></span>
           </button>
-
-          <button class="pixel-btn btn-wood" id="btnOpenCtrl">
-            <span>AJUSTES</span>
-            <span class="gear-icon">⚙</span>
+          <button class="action-dock-item" data-pose="jump">
+            <span class="action-icon">🏃‍♂️</span>
+            <span class="action-label">Salto</span>
+            <span class="active-indicator"></span>
           </button>
         </div>
 
-        <!-- CENTER/RIGHT: REAL CAMPFIRE GATHERING WITH CHARACTERS ON GROUND -->
-        <div class="campfire-stage" id="campfireStage">
-          <!-- Central Fireplace Glow & Embers (mapped over the background stones) -->
-          <div class="bonfire-glow-anchor">
-            <div class="bonfire-light-halo"></div>
-            <div class="bonfire-embers" id="bonfireEmbers"></div>
-          </div>
-
-          <!-- Characters seated and standing in a 3D circle around the campfire -->
-          <div class="campfire-characters-arc" id="campfireCharactersArc">
-            <!-- Populated dynamically with all 18 characters positioned on the ground -->
-          </div>
-
-          <!-- Active Character Card -->
-          <div class="campfire-active-card" id="campfireActiveCard">
-            <span class="active-badge">COMPAÑERO ACTIVO:</span>
-            <span class="active-char-name" id="spotlightName">ALEJANDRO R.</span>
-            <span class="active-char-ab" id="spotlightAb">✦ FLY PUNCH</span>
-          </div>
+        <!-- Main CTA JUGAR Button -->
+        <div class="lobby-play-cta-wrap">
+          <button class="lobby-cta-play" id="btnPlay" aria-label="Jugar partida">
+            <span class="cta-play-icon">▶</span>
+            <span class="cta-play-text">JUGAR</span>
+          </button>
         </div>
-      </div>
+      </footer>
+    </div>
+
+    <!-- FLYOUT / DRAWER MENU MODAL (TRIGGERED BY HAMBURGER ☰) -->
+    <div class="lobby-drawer-backdrop hidden" id="lobbyDrawer">
+      <aside class="lobby-drawer-panel">
+        <div class="drawer-header">
+          <div class="drawer-title">MENÚ PRINCIPAL</div>
+          <button class="drawer-close-btn" id="btnCloseDrawer" aria-label="Cerrar menú">✕</button>
+        </div>
+
+        <nav class="drawer-nav-list">
+          <button class="drawer-nav-btn" id="btnOpenCompendium">
+            <span class="nav-icon">📖</span>
+            <span class="nav-text">HISTORIA Y PERSONAJES</span>
+            <span class="nav-chevron">›</span>
+          </button>
+          <button class="drawer-nav-btn" id="btnOpenMapMenu">
+            <span class="nav-icon">🗺️</span>
+            <span class="nav-text">MUNDOS</span>
+            <span class="nav-chevron">›</span>
+          </button>
+          <button class="drawer-nav-btn" id="btnOpenLB">
+            <span class="nav-icon">🏆</span>
+            <span class="nav-text">RANKING GLOBAL</span>
+            <span class="nav-chevron">›</span>
+          </button>
+          <button class="drawer-nav-btn" id="btnOpenCtrl">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">AJUSTES Y CONTROLES</span>
+            <span class="nav-chevron">›</span>
+          </button>
+        </nav>
+
+        <div class="drawer-footer">
+          <div class="drawer-tag">RETREAT · CLEVERGY 2026</div>
+        </div>
+      </aside>
     </div>
   </div>
 
@@ -124,6 +240,85 @@
         Recoge las tazas de ☕ para sumar puntos y curarte. ¡Derrota a <b>The Email Chain</b> para recuperar el Retreat!
       </div>
       <button class="btn" id="btnCloseCtrl" style="margin-top:16px;">¡ENTENDIDO!</button>
+    </div>
+  </div>
+
+  <!-- COMPENDIUM MODAL (HISTORIA, PERSONAJES, ESCENARIOS, ENEMIGOS, OBJETOS) -->
+  <div id="compendiumOv" class="overlay hidden compendium-overlay">
+    <div class="compendium-modal-box">
+      <!-- Modal Header -->
+      <div class="compendium-header">
+        <div class="compendium-title-group">
+          <div class="compendium-badge">📖 COMPENDIO CLEVERGY</div>
+          <h2 class="compendium-title">HISTORIA Y ARCHIVOS</h2>
+          <div class="compendium-sub">Archivos de la expedición Retreat · Personajes, escenarios, enemigos y objetos</div>
+        </div>
+        <button id="btnCloseCompendium" class="btn-icon compendium-close-btn" title="Cerrar compendio (ESC)">✕</button>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="compendium-tabs" role="tablist">
+        <button class="comp-tab-btn active" data-tab="characters">
+          <span class="comp-tab-icon">👥</span>
+          <span class="comp-tab-text">Personajes</span>
+          <span class="comp-tab-count">18</span>
+        </button>
+        <button class="comp-tab-btn" data-tab="worlds">
+          <span class="comp-tab-icon">🗺️</span>
+          <span class="comp-tab-text">Escenarios</span>
+          <span class="comp-tab-count">6</span>
+        </button>
+        <button class="comp-tab-btn" data-tab="enemies">
+          <span class="comp-tab-icon">👾</span>
+          <span class="comp-tab-text">Enemigos</span>
+          <span class="comp-tab-count">10</span>
+        </button>
+        <button class="comp-tab-btn" data-tab="items">
+          <span class="comp-tab-icon">📦</span>
+          <span class="comp-tab-text">Objetos</span>
+          <span class="comp-tab-count">6</span>
+        </button>
+      </div>
+
+      <!-- Tab Content Panels Container -->
+      <div class="compendium-body">
+        <!-- Panel 1: Personajes -->
+        <div id="compTab-characters" class="comp-panel active">
+          <div class="comp-chars-layout">
+            <div class="comp-chars-list-wrapper">
+              <div class="comp-section-title">SELECCIONA UN COMPAÑERO:</div>
+              <div class="comp-chars-list" id="compCharsGrid"></div>
+            </div>
+            <div class="comp-char-dossier" id="compCharDossier">
+              <!-- Dynamically populated selected character info -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 2: Escenarios -->
+        <div id="compTab-worlds" class="comp-panel hidden">
+          <div class="comp-section-title">LOS 6 MUNDOS DE LA EXPEDICIÓN:</div>
+          <div class="comp-worlds-grid" id="compWorldsGrid"></div>
+        </div>
+
+        <!-- Panel 3: Enemigos -->
+        <div id="compTab-enemies" class="comp-panel hidden">
+          <div class="comp-section-title">AMENAZAS Y JEFES DEL SPRINT:</div>
+          <div class="comp-enemies-grid" id="compEnemiesGrid"></div>
+        </div>
+
+        <!-- Panel 4: Objetos -->
+        <div id="compTab-items" class="comp-panel hidden">
+          <div class="comp-section-title">OBJETOS, CONSUMIBLES Y HABILIDADES:</div>
+          <div class="comp-items-grid" id="compItemsGrid"></div>
+        </div>
+      </div>
+
+      <!-- Footer action dock -->
+      <div class="compendium-footer">
+        <div class="comp-footer-tip" id="compFooterTip">💡 Puedes tocar cualquier compañero para seleccionarlo y jugar con él.</div>
+        <button class="btn alt comp-btn-back" id="btnBackCompendium">VOLVER (ESC)</button>
+      </div>
     </div>
   </div>
 
@@ -392,11 +587,37 @@
     </div>
   </div>
 
-  <!-- TOUCH CONTROLS (HORIZONTAL / LANDSCAPE) -->
+  <!-- TOUCH CONTROLS (HORIZONTAL / LANDSCAPE BOTONES FLOTANTES CLÁSICOS) -->
   <div id="touch">
-    <div class="tbtn" id="tL">◀</div><div class="tbtn" id="tR">▶</div>
-    <div class="tbtn" id="tS">⇄</div>
-    <div class="tbtn" id="tB">✦</div><div class="tbtn" id="tA">▲</div>
+    <!-- Directional cluster bottom-left -->
+    <div class="touch-cluster-left">
+      <button class="tbtn tbtn-dir" id="tL" aria-label="Izquierda">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+      </button>
+      <button class="tbtn tbtn-dir" id="tR" aria-label="Derecha">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+      </button>
+    </div>
+
+    <!-- Quick Switch Utility top-left -->
+    <div class="touch-cluster-top">
+      <button class="tbtn tbtn-utility" id="tS" aria-label="Cambiar compañero" title="Cambiar de personaje (TAB)">
+        <span class="tbtn-icon">⇄</span>
+        <span class="tbtn-tag">CAMBIAR</span>
+      </button>
+    </div>
+
+    <!-- Actions cluster bottom-right: B (Poder) & A (Salto) -->
+    <div class="touch-cluster-right">
+      <button class="tbtn tbtn-action tbtn-b" id="tB" aria-label="Habilidad">
+        <span class="tbtn-main">✦</span>
+        <span class="tbtn-sub">PODER</span>
+      </button>
+      <button class="tbtn tbtn-action tbtn-a" id="tA" aria-label="Salto">
+        <span class="tbtn-main">▲</span>
+        <span class="tbtn-sub">SALTAR</span>
+      </button>
+    </div>
   </div>
 
   <!-- GAME BOY CONTROLLER DECK (VERTICAL / PORTRAIT) -->

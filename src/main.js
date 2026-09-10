@@ -83,8 +83,11 @@ function fitCanvas() {
   } else {
     document.body.classList.remove("gameboy-mode");
     document.getElementById("gameboyDeck")?.classList.add("hidden");
-    const coarse = window.matchMedia("(pointer:coarse)").matches;
-    if (coarse) {
+    const isHorizontalResponsive = window.matchMedia("(pointer:coarse)").matches || 
+      ('ontouchstart' in window) || 
+      (navigator.maxTouchPoints > 0) || 
+      (ih <= 680 && iw <= 1100);
+    if (isHorizontalResponsive) {
       document.getElementById("touch")?.classList.remove("hidden");
     } else {
       document.getElementById("touch")?.classList.add("hidden");
@@ -92,7 +95,7 @@ function fitCanvas() {
     const H = 540;
     let W = Math.round(H * (iw / ih));
     W = Math.max(700, Math.min(1600, W));
-    const SAFEB = coarse ? 96 : 0;
+    const SAFEB = isHorizontalResponsive ? 96 : 0;
 
     cv.width = Math.round(W * dpr);
     cv.height = Math.round(H * dpr);

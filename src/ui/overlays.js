@@ -1,8 +1,9 @@
 import { BOOT_LINES } from "../config/constants.js";
 import { CHARS } from "../config/characters.js";
+import { WORLDS } from "../config/worlds.js";
 import { GameState, respawn, fmtT, switchToChar } from "../game/state.js";
 import { sfx } from "../engine/audio.js";
-import { anim, getCharacterAvatar } from "../engine/sprites.js";
+import { ANIM, SPR, anim, getCharacterAvatar } from "../engine/sprites.js";
 import { fetchGlobalLeaderboard } from "../game/leaderboard.js";
 
 export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
@@ -121,28 +122,24 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
         spotlightAvatar.textContent = c.emoji;
       }
     }
-    if (spotlightName) spotlightName.textContent = c.name;
+    const profilePlayerName = document.getElementById("profilePlayerName");
+    if (profilePlayerName) profilePlayerName.textContent = c.name.toUpperCase();
+
+    // Side dossier: Form in uppercase, Skill in cyan, and numerical stats
+    if (spotlightName) spotlightName.textContent = c.form.toUpperCase();
     if (spotlightForm) spotlightForm.textContent = `FORMA: ${c.form.toUpperCase()}`;
-    if (spotlightAb) spotlightAb.textContent = `✦ HABILIDAD: ${c.ab.toUpperCase()}`;
+    if (spotlightAb) spotlightAb.textContent = c.ab.toUpperCase();
     if (spotlightTip) spotlightTip.textContent = c.tip;
+
+    const statAtkVal = document.getElementById("statAtkVal");
+    const statSpdVal = document.getElementById("statSpdVal");
+    const statHpVal = document.getElementById("statHpVal");
+    if (statAtkVal) statAtkVal.textContent = Math.round(c.spd * 16 + (c.jump > 9 ? 15 : 8));
+    if (statSpdVal) statSpdVal.textContent = Math.round((c.spd / 5.2) * 100);
+    if (statHpVal) statHpVal.textContent = Math.round(70 + (c.jump * 2.5));
 
     if (barSpd) barSpd.style.width = Math.min(100, Math.max(20, (c.spd / 5.4) * 100)) + "%";
     if (barJump) barJump.style.width = Math.min(100, Math.max(20, (c.jump / 12) * 100)) + "%";
-
-    const campfireArc = document.getElementById("campfireCharactersArc");
-    if (campfireArc) {
-      [...campfireArc.children].forEach((el, i) => {
-        const isSel = i === GameState.charIdx;
-        el.classList.toggle("active-hero", isSel);
-        const tag = el.querySelector(".campfire-p1-tag");
-        if (tag) tag.classList.toggle("hidden", !isSel);
-      });
-    }
-
-    const activeCardName = document.getElementById("campfireActiveName");
-    const activeCardAb = document.getElementById("campfireActiveAb");
-    if (activeCardName) activeCardName.textContent = c.name.toUpperCase();
-    if (activeCardAb) activeCardAb.textContent = `✦ ${c.ab.toUpperCase()}`;
 
     // Update Mobile Controller Deck Action Labels: A -> SALTAR, B -> [HABILIDAD]
     const gbLabelB = document.getElementById("gbLabelB");
@@ -175,81 +172,304 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     updateTouchBarActive(GameState.charIdx);
   }
 
-  // Exact coordinates for characters encircling the campfire on the illuminated ground (630x300 canvas)
-  const CAMPFIRE_SPOTS = [
-    { x: 195, y: 125, z: 4, scale: 0.95 },  // 0: alejandro (fly left-mid)
-    { x: 420, y: 130, z: 4, scale: 0.95 },  // 1: ale (oil right-mid)
-    { x: 260, y: 102, z: 3, scale: 0.9 },   // 2: alvaroM (calculator back-left)
-    { x: 375, y: 100, z: 3, scale: 0.9 },   // 3: alvaroP (mic back-right)
-    { x: 318, y: 88,  z: 2, scale: 0.88 },  // 4: ana (lioness back-center)
-    { x: 215, y: 80,  z: 2, scale: 0.86 },  // 5: beltran (bell back-left-high)
-    { x: 480, y: 155, z: 5, scale: 0.98 },  // 6: bruno (mask right flank)
-    { x: 140, y: 150, z: 5, scale: 0.98 },  // 7: gonzalo (totem left flank)
-    { x: 490, y: 210, z: 7, scale: 1.05 },  // 8: javi (broccoli right foreground)
-    { x: 450, y: 235, z: 8, scale: 1.08 },  // 9: jesus (hammer front-right)
-    { x: 415, y: 240, z: 9, scale: 1.08 },  // 10: pablo (orange front-right)
-    { x: 350, y: 245, z: 10, scale: 1.1 },  // 11: manu (muscle front-center-right)
-    { x: 285, y: 245, z: 10, scale: 1.1 },  // 12: maca (volleyball front-center-left)
-    { x: 220, y: 240, z: 9, scale: 1.08 },  // 13: juan (microwave front-left)
-    { x: 160, y: 225, z: 8, scale: 1.05 },  // 14: josu (paneton left foreground)
-    { x: 95,  y: 195, z: 7, scale: 1.05 },  // 15: joseluis (3d printer left foreground)
-    { x: 250, y: 55,  z: 1, scale: 0.82 },  // 16: paloma (dove, perched near timber behind)
-    { x: 380, y: 55,  z: 1, scale: 0.82 },  // 17: silvia (shoe, near cabin)
-  ];
+  // =========================================================================
+  // STUMBLE GUYS LOBBY HERO ANIMATOR & INTERACTIVE POSES
+  // =========================================================================
+  const stumbleHeroCanvas = document.getElementById("stumbleHeroCanvas");
+  const stumbleHeroCtx = stumbleHeroCanvas ? stumbleHeroCanvas.getContext("2d") : null;
+  const stumbleCharShadow = document.getElementById("stumbleCharShadow");
+  const stumblePoseDock = document.getElementById("stumblePoseDock");
+  const stumbleCharViewport = document.getElementById("stumbleCharViewport");
+  const btnCharPrev = document.getElementById("btnCharPrev");
+  const btnCharNext = document.getElementById("btnCharNext");
+  const btnOpenCustomize = document.getElementById("btnOpenCustomize");
+  const btnHeaderCompendium = document.getElementById("btnHeaderCompendium");
+  const btnOpenArenaQuick = document.getElementById("btnOpenArenaQuick");
+  const stumblePassCard = document.getElementById("stumblePassCard");
 
-  // Populate Campfire Stage (Characters placed directly on the soil encircling the fire!)
-  const campfireArc = document.getElementById("campfireCharactersArc");
-  function renderCampfireCharacters() {
-    if (!campfireArc) return;
-    campfireArc.innerHTML = "";
-    CHARS.forEach((c, i) => {
-      const spot = CAMPFIRE_SPOTS[i] || { x: 300, y: 150, z: 5, scale: 1.0 };
-      const d = document.createElement("div");
-      const isSel = i === GameState.charIdx;
-      d.className = `campfire-char-node ${isSel ? "active-hero" : ""}`;
-      d.dataset.idx = i;
-      d.title = `${c.name} (${c.form})`;
+  let lobbyPose = "idle"; // "idle" | "run" | "attack" | "jump" | "victory"
+  let lobbyPoseTime = 0;
+  let lobbyLockPose = null;
+  let lobbyLockT = 0;
+  let lobbyAutoTimer = 0;
 
-      // Position character on the campsite ground
-      d.style.left = `${spot.x}px`;
-      d.style.top = `${spot.y}px`;
-      d.style.zIndex = spot.z;
-      d.style.setProperty("--base-scale", spot.scale);
-
-      const av = getCharacterAvatar(c.id);
-      const spriteHtml = av
-        ? `<img src="${av}" class="campfire-sprite-img" alt="${c.name}">`
-        : `<span class="campfire-sprite-emoji">${c.emoji}</span>`;
-
-      d.innerHTML = `
-        <div class="campfire-p1-tag ${isSel ? "" : "hidden"}">▼ P1</div>
-        ${spriteHtml}
-        <div class="campfire-ground-shadow"></div>
-      `;
-
-      d.addEventListener("click", (e) => {
-        e.stopPropagation();
-        switchToChar(i);
-        updateSpotlight();
-      });
-
-      campfireArc.appendChild(d);
-    });
-
-    // Populate rising fire embers
-    const embersContainer = document.getElementById("bonfireEmbers");
-    if (embersContainer && embersContainer.children.length === 0) {
-      for (let e = 0; e < 12; e++) {
-        const spark = document.createElement("div");
-        spark.className = "fire-spark";
-        spark.style.left = `${Math.random() * 80 - 40}px`;
-        spark.style.animationDelay = `${(Math.random() * 2.5).toFixed(2)}s`;
-        spark.style.animationDuration = `${(1.8 + Math.random() * 1.5).toFixed(2)}s`;
-        embersContainer.appendChild(spark);
-      }
+  function setLobbyPose(pose, lockDuration = 0) {
+    lobbyPose = pose;
+    lobbyPoseTime = 0;
+    if (lockDuration > 0) {
+      lobbyLockPose = pose;
+      lobbyLockT = lockDuration;
+    }
+    if (stumblePoseDock) {
+      const pills = stumblePoseDock.querySelectorAll(".action-dock-item, .pose-chip, .stumble-pose-pill");
+      pills.forEach((p) => p.classList.toggle("active", p.dataset.pose === pose));
     }
   }
-  renderCampfireCharacters();
+
+  // Navigation: cycle character
+  function cycleHero(dir) {
+    const nextIdx = (GameState.charIdx + dir + CHARS.length) % CHARS.length;
+    switchToChar(nextIdx);
+    updateSpotlight();
+    sfx(650, 0.05);
+
+    // Give visual jump bounce on character switch
+    setLobbyPose("jump", 0.9);
+  }
+
+  if (btnCharPrev) btnCharPrev.addEventListener("click", () => cycleHero(-1));
+  if (btnCharNext) btnCharNext.addEventListener("click", () => cycleHero(1));
+
+  // Hamburger drawer menu controller
+  const btnHamburger = document.getElementById("btnHamburger");
+  const lobbyDrawer = document.getElementById("lobbyDrawer");
+  const btnCloseDrawer = document.getElementById("btnCloseDrawer");
+
+  if (btnHamburger && lobbyDrawer) {
+    btnHamburger.addEventListener("click", () => {
+      lobbyDrawer.classList.remove("hidden");
+      sfx(600, 0.05);
+    });
+  }
+  if (btnCloseDrawer && lobbyDrawer) {
+    btnCloseDrawer.addEventListener("click", () => {
+      lobbyDrawer.classList.add("hidden");
+      sfx(400, 0.05);
+    });
+    lobbyDrawer.addEventListener("click", (e) => {
+      if (e.target === lobbyDrawer) {
+        lobbyDrawer.classList.add("hidden");
+      }
+    });
+  }
+
+  // Automatically hide drawer when opening any submodal
+  ["btnOpenCompendium", "btnOpenMapMenu", "btnOpenLB", "btnOpenCtrl"].forEach((id) => {
+    document.getElementById(id)?.addEventListener("click", () => {
+      lobbyDrawer?.classList.add("hidden");
+    });
+  });
+
+  // Pose buttons
+  if (stumblePoseDock) {
+    const pills = stumblePoseDock.querySelectorAll(".action-dock-item, .pose-chip, .stumble-pose-pill");
+    pills.forEach((p) => {
+      p.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const pName = p.dataset.pose;
+        setLobbyPose(pName, pName === "attack" || pName === "jump" ? 1.4 : 0);
+        if (pName === "attack") sfx(220, 0.1, "triangle", 0.08);
+        else if (pName === "jump") sfx(520, 0.08, "square", 0.06);
+        else sfx(600, 0.04);
+      });
+    });
+  }
+
+  // Swipe left/right gesture or tap reaction on character viewport
+  if (stumbleCharViewport) {
+    let pointerStartX = 0;
+    let pointerStartY = 0;
+    let pointerActive = false;
+
+    stumbleCharViewport.addEventListener("pointerdown", (e) => {
+      pointerStartX = e.clientX;
+      pointerStartY = e.clientY;
+      pointerActive = true;
+    });
+
+    stumbleCharViewport.addEventListener("pointerup", (e) => {
+      if (!pointerActive) return;
+      pointerActive = false;
+      const dx = e.clientX - pointerStartX;
+      const dy = e.clientY - pointerStartY;
+      if (Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy)) {
+        // Horizontal swipe -> cycle character
+        if (dx < 0) cycleHero(1);
+        else cycleHero(-1);
+      } else if (Math.abs(dx) < 12 && Math.abs(dy) < 12) {
+        // Tap -> trigger action pose!
+        const poses = ["attack", "jump", "run"];
+        const nextP = poses[Math.floor(Math.random() * poses.length)];
+        setLobbyPose(nextP, 1.4);
+        sfx(300, 0.09);
+      }
+    });
+
+    stumbleCharViewport.addEventListener("pointercancel", () => {
+      pointerActive = false;
+    });
+  }
+
+  // Stumble Pass click
+  if (stumblePassCard) {
+    stumblePassCard.addEventListener("click", () => {
+      sfx(750, 0.1);
+      alert("⭐ ¡CLEVERGY PASS!\nNivel 8 alcanzado (45/60 estrellas).\nSupera mundos y encuentra tazas de café para desbloquear compañeros.");
+    });
+  }
+
+  // Customize / Equipo button -> opens Compendium directly on Personajes
+  if (btnOpenCustomize) {
+    btnOpenCustomize.addEventListener("click", () => {
+      openCompendium();
+      const charTabBtn = compendiumOv?.querySelector('.comp-tab-btn[data-tab="characters"]');
+      if (charTabBtn) charTabBtn.click();
+    });
+  }
+
+  // Header News / Compendium
+  if (btnHeaderCompendium) {
+    btnHeaderCompendium.addEventListener("click", openCompendium);
+  }
+
+  // 1v1 Arena shortcut
+  if (btnOpenArenaQuick) {
+    btnOpenArenaQuick.addEventListener("click", () => {
+      const fightLobbyModal = document.getElementById("fightLobbyModal");
+      if (fightLobbyModal) {
+        fightLobbyModal.classList.remove("hidden");
+        sfx(600, 0.08);
+      }
+    });
+  }
+
+  // Keyboard navigation for lobby (Left/Right arrows change character)
+  window.addEventListener("keydown", (e) => {
+    if (!menuOv.classList.contains("hidden") && (!compendiumOv || compendiumOv.classList.contains("hidden")) && (!lbOv || lbOv.classList.contains("hidden")) && (!ctrlOv || ctrlOv.classList.contains("hidden"))) {
+      if (e.code === "ArrowLeft") cycleHero(-1);
+      if (e.code === "ArrowRight") cycleHero(1);
+    }
+  });
+
+  // Stumble Lobby Character Render Loop
+  let lastLobbyFrame = performance.now();
+  function renderLobbyHero(now) {
+    requestAnimationFrame(renderLobbyHero);
+    if (!menuOv || menuOv.classList.contains("hidden")) return;
+    if (!stumbleHeroCtx || !stumbleHeroCanvas) return;
+
+    const dt = Math.min(0.1, (now - lastLobbyFrame) / 1000);
+    lastLobbyFrame = now;
+    lobbyPoseTime += dt;
+
+    // Handle locked poses
+    if (lobbyLockPose) {
+      lobbyLockT -= dt;
+      if (lobbyLockT <= 0) {
+        lobbyLockPose = null;
+        setLobbyPose("idle");
+      }
+    } else {
+      // Auto-pose showcase every 5.5 seconds
+      lobbyAutoTimer += dt;
+      if (lobbyAutoTimer > 5.5) {
+        lobbyAutoTimer = 0;
+        const autoPoses = ["attack", "run", "jump"];
+        const pick = autoPoses[Math.floor(Math.random() * autoPoses.length)];
+        setLobbyPose(pick, 1.4);
+      }
+    }
+
+    const c = CHARS[GameState.charIdx] || CHARS[0];
+    const rec = ANIM[c.id];
+    const ctx = stumbleHeroCtx;
+    const W = stumbleHeroCanvas.width;
+    const H = stumbleHeroCanvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    // Calculate dynamic motion based on current pose
+    let offsetY = 0;
+    let offsetX = 0;
+    let scaleX = 1;
+    let scaleY = 1;
+    let rot = 0;
+    let shadowScale = 1;
+    let shadowOpacity = 0.85;
+
+    if (lobbyPose === "idle") {
+      offsetY = Math.sin(lobbyPoseTime * 3.5) * 6;
+      scaleY = 1 + Math.sin(lobbyPoseTime * 3.5) * 0.03;
+      scaleX = 1 - Math.sin(lobbyPoseTime * 3.5) * 0.02;
+      shadowScale = 1 - Math.sin(lobbyPoseTime * 3.5) * 0.08;
+    } else if (lobbyPose === "run") {
+      const step = Math.sin(lobbyPoseTime * 14);
+      offsetY = -Math.abs(step) * 14;
+      rot = step * 0.09;
+      scaleX = 1 + Math.abs(step) * 0.04;
+      shadowScale = 1 - Math.abs(step) * 0.25;
+      shadowOpacity = 0.55;
+    } else if (lobbyPose === "attack") {
+      const atkPhase = Math.sin(Math.min(Math.PI, lobbyPoseTime * 6));
+      offsetX = atkPhase * 16;
+      offsetY = -atkPhase * 8;
+      scaleX = 1 + atkPhase * 0.12;
+      scaleY = 1 - atkPhase * 0.06;
+      shadowScale = 1.1;
+    } else if (lobbyPose === "jump") {
+      const jProg = Math.sin(Math.min(Math.PI, lobbyPoseTime * 3.5));
+      offsetY = -jProg * 50;
+      scaleY = 1 + (1 - jProg) * 0.15;
+      shadowScale = 1 - jProg * 0.45;
+      shadowOpacity = Math.max(0.2, 0.85 - jProg * 0.6);
+    } else if (lobbyPose === "victory") {
+      const bnc = Math.abs(Math.sin(lobbyPoseTime * 8));
+      offsetY = -bnc * 20;
+      rot = Math.sin(lobbyPoseTime * 6) * 0.1;
+      scaleY = 1 + bnc * 0.08;
+      shadowScale = 1 - bnc * 0.2;
+    }
+
+    // Update floor shadow beneath character
+    if (stumbleCharShadow) {
+      stumbleCharShadow.style.transform = `scale(${shadowScale.toFixed(2)})`;
+      stumbleCharShadow.style.opacity = shadowOpacity.toFixed(2);
+    }
+
+    ctx.save();
+    ctx.translate(W / 2 + offsetX, H / 2 + 15 + offsetY);
+    ctx.rotate(rot);
+    ctx.scale(scaleX, scaleY);
+
+    // Draw high-res pose image if available
+    let drawn = false;
+    if (rec && rec.ready && rec.images) {
+      let imgList = null;
+      if (lobbyPose === "attack") imgList = rec.images.attack || rec.images.run || rec.images.idle;
+      else if (lobbyPose === "run") imgList = rec.images.run || rec.images.walk || rec.images.idle;
+      else if (lobbyPose === "jump") imgList = rec.images.jump || rec.images.run || rec.images.idle;
+      else if (lobbyPose === "victory") imgList = rec.images.attack || rec.images.run || rec.images.idle;
+      else imgList = rec.images.idle || rec.images.walk;
+
+      if (imgList && imgList.length > 0) {
+        const frameIdx = Math.floor(lobbyPoseTime * 6) % imgList.length;
+        const img = imgList[frameIdx];
+        if (img && img.complete && img.naturalWidth > 0) {
+          const targetH = 240;
+          const ratio = targetH / img.naturalHeight;
+          const targetW = img.naturalWidth * ratio;
+          ctx.drawImage(img, -targetW / 2, -targetH + 42, targetW, targetH);
+          drawn = true;
+        }
+      }
+    }
+
+    // If no pose PNG available, draw scaled pixel art sprite
+    if (!drawn) {
+      const s = SPR[c.id];
+      if (s && s.img) {
+        const scale = 6.2;
+        const sw = s.w * scale;
+        const sh = s.h * scale;
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(s.img, -sw / 2, -sh + 38, sw, sh);
+        drawn = true;
+      }
+    }
+
+    ctx.restore();
+  }
+  requestAnimationFrame(renderLobbyHero);
+  updateSpotlight();
 
   // Populate complete team selector
   if (teamGrid) {
@@ -449,6 +669,367 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     sfx(400, 0.06);
   });
 
+  // =========================================================================
+  // COMPENDIUM MODAL (HISTORIA, PERSONAJES, ESCENARIOS, ENEMIGOS, OBJETOS)
+  // =========================================================================
+  const compendiumOv = document.getElementById("compendiumOv");
+  const btnOpenCompendium = document.getElementById("btnOpenCompendium");
+  const btnCloseCompendium = document.getElementById("btnCloseCompendium");
+  const btnBackCompendium = document.getElementById("btnBackCompendium");
+  const compCharsGrid = document.getElementById("compCharsGrid");
+  const compCharDossier = document.getElementById("compCharDossier");
+  const compWorldsGrid = document.getElementById("compWorldsGrid");
+  const compEnemiesGrid = document.getElementById("compEnemiesGrid");
+  const compItemsGrid = document.getElementById("compItemsGrid");
+
+  let compSelectedCharIdx = GameState.charIdx || 0;
+
+  const ENEMIES_DATA = [
+    {
+      name: "Email Spam",
+      danger: "Amenaza Básica · The Office",
+      desc: "Correos urgentes y cadenas descontroladas que rebotan por los pasillos de Clevergy.",
+      tip: "Salta sobre ellos o golpéalos de frente con tu ataque especial.",
+      icon: "✉️",
+      isBoss: false
+    },
+    {
+      name: "Meeting '5 Minutos'",
+      danger: "Interrupción Peligrosa · The Office",
+      desc: "Aparece de improvisto diciendo '¿Tienes 5 minutos?' y te absorbe tiempo y energía.",
+      tip: "Mantén la distancia y elimínala a tiempo antes de que empiece a hablar.",
+      icon: "💬",
+      isBoss: false
+    },
+    {
+      name: "Webhook Spider",
+      danger: "Trampa de Red · Integration Jungle",
+      desc: "Araña cibernética que teje hilos de red y salta entre terminales de servidores.",
+      tip: "Espera a que aterrice o esquívala rodando antes de asestar el golpe.",
+      icon: "🕷️",
+      isBoss: false
+    },
+    {
+      name: "Scope Creep Knight",
+      danger: "Acorazado Pesado · Product Kingdom",
+      desc: "Caballero que añade requisitos imprevistos. Bloquea ataques frontales con su escudo.",
+      tip: "Salta por detrás de su espalda o utiliza habilidades de área.",
+      icon: "🛡️",
+      isBoss: false
+    },
+    {
+      name: "Meeting Ghost",
+      danger: "Llamada Silenciada · Meeting Dimension",
+      desc: "Pantalla de videollamada flotante en mute que desconcierta con su vuelo errático.",
+      tip: "Aprovecha los momentos en los que desciende para rematarlo desde arriba.",
+      icon: "🎙️",
+      isBoss: false
+    },
+    {
+      name: "Clock Demon",
+      danger: "Cuenta Atrás · The Retreat",
+      desc: "Reloj demoníaco cuyas manecillas giran a toda velocidad marcando el fin de plazo.",
+      tip: "Calcula con precisión tus saltos para esquivar su giro cortante.",
+      icon: "⏰",
+      isBoss: false
+    },
+    // Jefes
+    {
+      name: "THE EMAIL CHAIN",
+      danger: "JEFE MUNDO 1 · OFICINAS CLEVERGY",
+      desc: "Cadena monstruosa de 200 mensajes en bucle que satura la bandeja de entrada.",
+      tip: "Esquiva los correos bomba y salta sobre el servidor central para lograr Inbox Zero.",
+      icon: "👾",
+      isBoss: true
+    },
+    {
+      name: "API GATEWAY BEAST",
+      danger: "JEFE MUNDO 2 · SELVA DE APIS",
+      desc: "Monstruo de endpoints saturados que dispara errores 500 y colapsa microservicios.",
+      tip: "Súbete a las plataformas de fibra óptica para esquivar sus llamaradas de red.",
+      icon: "🦎",
+      isBoss: true
+    },
+    {
+      name: "THE ROADMAP GOLEM",
+      danger: "JEFE MUNDO 3 · PRODUCT KINGDOM",
+      desc: "Gigante de piedra formado por bloques de prioridades inamovibles y épicas congeladas.",
+      tip: "Derriba sus pilares inferiores para hacerle perder el equilibrio.",
+      icon: "🗿",
+      isBoss: true
+    },
+    {
+      name: "ALL-HANDS MONSTER",
+      danger: "JEFE MUNDO 4 · MEETING DIMENSION",
+      desc: "El caos sonoro definitivo: 50 micrófonos con eco y pantallas compartidas a la vez.",
+      tip: "Destruye los altavoces periféricos para deshabilitar su escudo acústico.",
+      icon: "📺",
+      isBoss: true
+    },
+    {
+      name: "THE DEADLINE (0 DAYS)",
+      danger: "JEFE FINAL DEFINITIVO · THE RETREAT",
+      desc: "La cuenta atrás final que amenaza con cancelar el Retreat. ¡Salva a Clevergy!",
+      tip: "Combina los poderes de todos tus compañeros para superar el sprint final.",
+      icon: "🔥",
+      isBoss: true
+    }
+  ];
+
+  const ITEMS_DATA = [
+    {
+      name: "Taza de Café Clevergy",
+      type: "Consumible Esencial",
+      desc: "Café de especialidad recién preparado. El motor indispensable del equipo.",
+      effect: "Restaura +1 Corazón de Vida y recarga la velocidad de movimiento.",
+      icon: "☕"
+    },
+    {
+      name: "Fragmentos de Código",
+      type: "Coleccionable de Misión",
+      desc: "Módulos de código fuente recuperados tras vencer a cada jefe del sprint.",
+      effect: "Reparan el sistema y abren el camino hacia el Campamento del Retreat.",
+      icon: "💎"
+    },
+    {
+      name: "Bomba Error 404",
+      type: "Proyectil Táctico",
+      desc: "Operación de cálculo crítico que explota al impactar contra bugs y servidores.",
+      effect: "Elimina grupos de correos y bugs en un radio considerable.",
+      icon: "💣"
+    },
+    {
+      name: "Plataforma Impresa 3D",
+      type: "Herramienta de Campo",
+      desc: "Estructura física generada en tiempo real por José Luis.",
+      effect: "Crea hasta 3 apoyos flotantes en el aire para salvar saltos imposibles.",
+      icon: "🖨️"
+    },
+    {
+      name: "Ejército de Mini-Brócolis",
+      type: "Invocación Táctica",
+      desc: "Gonzalo se multiplica en pequeños aliados veloces y nutritivos.",
+      effect: "Avanzan en oleada limpiando el suelo de obstáculos y enemigos.",
+      icon: "🥦"
+    },
+    {
+      name: "Multiplicador de Combo",
+      type: "Mecánica de Puntuación",
+      desc: "Encadenar saltos sobre enemigos consecutivos sin tocar el suelo.",
+      effect: "Multiplica los puntos de x1 a x5 y llena la pantalla de fuegos artificiales.",
+      icon: "⭐"
+    }
+  ];
+
+  function renderCompendiumChars() {
+    if (!compCharsGrid) return;
+    compCharsGrid.innerHTML = "";
+
+    CHARS.forEach((c, idx) => {
+      const chip = document.createElement("div");
+      const isCur = idx === compSelectedCharIdx;
+      chip.className = `comp-char-chip ${isCur ? "active" : ""}`;
+      chip.dataset.idx = idx;
+
+      const av = getCharacterAvatar(c.id);
+      const iconHtml = av
+        ? `<img src="${av}" alt="${c.name}">`
+        : `<span>${c.emoji}</span>`;
+
+      chip.innerHTML = `
+        <div class="comp-chip-avatar">${iconHtml}</div>
+        <span class="comp-chip-name">${c.name.split(" ")[0]}</span>
+      `;
+
+      chip.addEventListener("click", () => {
+        compSelectedCharIdx = idx;
+        const allChips = compCharsGrid.querySelectorAll(".comp-char-chip");
+        allChips.forEach((ch, i) => ch.classList.toggle("active", i === idx));
+        renderCompendiumDossier();
+        sfx(550, 0.04);
+      });
+
+      compCharsGrid.appendChild(chip);
+    });
+  }
+
+  function renderCompendiumDossier() {
+    if (!compCharDossier) return;
+    const c = CHARS[compSelectedCharIdx] || CHARS[0];
+    const isPlayingThis = compSelectedCharIdx === GameState.charIdx;
+
+    const av = getCharacterAvatar(c.id);
+    const iconHtml = av
+      ? `<img src="${av}" class="dossier-avatar-img" alt="${c.name}">`
+      : `<span class="dossier-avatar-emoji">${c.emoji}</span>`;
+
+    const spdPct = Math.round(Math.min(100, Math.max(15, ((c.spd - 2) / 3.6) * 100)));
+    const jumpPct = Math.round(Math.min(100, Math.max(15, ((c.jump - 8) / 3) * 100)));
+    const cdPct = Math.round(Math.min(100, Math.max(15, ((2.5 - c.cd) / 2.3) * 100)));
+
+    compCharDossier.innerHTML = `
+      <div class="dossier-hero-row">
+        <div class="dossier-avatar-box">${iconHtml}</div>
+        <div class="dossier-meta">
+          <h3 class="dossier-name">${c.emoji} ${c.name}</h3>
+          <div class="dossier-form">Forma: ${c.form}</div>
+          <div class="dossier-ab-pill">✦ ${c.ab}</div>
+        </div>
+      </div>
+
+      <div class="dossier-stats-grid">
+        <div class="dossier-stat-row">
+          <span class="stat-label">VELOCIDAD</span>
+          <div class="stat-track"><div class="stat-fill" style="width:${spdPct}%;background:#59d8ff;"></div></div>
+          <span class="stat-val-text">${c.spd.toFixed(1)}</span>
+        </div>
+        <div class="dossier-stat-row">
+          <span class="stat-label">SALTO</span>
+          <div class="stat-track"><div class="stat-fill" style="width:${jumpPct}%;background:#ffd25e;"></div></div>
+          <span class="stat-val-text">${c.jump.toFixed(1)}</span>
+        </div>
+        <div class="dossier-stat-row">
+          <span class="stat-label">CADENCIA</span>
+          <div class="stat-track"><div class="stat-fill" style="width:${cdPct}%;background:#42f584;"></div></div>
+          <span class="stat-val-text">${c.cd}s</span>
+        </div>
+      </div>
+
+      <div class="dossier-tip-box">
+        💡 <b>Cómo usar:</b> ${c.tip}
+      </div>
+
+      <button id="btnSelectCompChar" class="btn-select-char-dossier ${isPlayingThis ? "is-selected" : ""}">
+        ${isPlayingThis ? "✓ COMPAÑERO ACTUALMENTE ACTIVO" : "▶ SELECCIONAR COMO COMPAÑERO"}
+      </button>
+    `;
+
+    const btnSelect = compCharDossier.querySelector("#btnSelectCompChar");
+    if (btnSelect && !isPlayingThis) {
+      btnSelect.addEventListener("click", () => {
+        switchToChar(compSelectedCharIdx);
+        updateSpotlight();
+        renderCompendiumDossier();
+        sfx(800, 0.1);
+      });
+    }
+  }
+
+  function renderCompendiumWorlds() {
+    if (!compWorldsGrid) return;
+    compWorldsGrid.innerHTML = "";
+
+    WORLDS.forEach((w) => {
+      const card = document.createElement("div");
+      card.className = "comp-world-card";
+      card.style.borderColor = `${w.accentColor}55`;
+
+      card.innerHTML = `
+        <div class="comp-world-card-top">
+          <div class="comp-world-emoji" style="border: 1px solid ${w.accentColor}66;">${w.iconEmoji}</div>
+          <div class="comp-world-titles">
+            <div class="comp-world-name">${w.title}</div>
+            <div class="comp-world-sub">${w.subtitle}</div>
+          </div>
+        </div>
+        <p class="comp-world-desc">${w.desc}</p>
+        <div class="comp-world-tags">
+          <div class="comp-world-badge boss">👾 JEFE: ${w.bossName}</div>
+          <div class="comp-world-badge fragment">💎 ${w.fragmentName}</div>
+        </div>
+      `;
+
+      compWorldsGrid.appendChild(card);
+    });
+  }
+
+  function renderCompendiumEnemies() {
+    if (!compEnemiesGrid) return;
+    compEnemiesGrid.innerHTML = "";
+
+    ENEMIES_DATA.forEach((e) => {
+      const card = document.createElement("div");
+      card.className = `comp-enemy-card ${e.isBoss ? "is-boss" : ""}`;
+
+      card.innerHTML = `
+        <div class="comp-enemy-top">
+          <div class="comp-enemy-icon">${e.icon}</div>
+          <div class="comp-enemy-info">
+            <div class="comp-enemy-name">${e.name}</div>
+            <div class="comp-enemy-danger">${e.danger}</div>
+          </div>
+        </div>
+        <p class="comp-enemy-desc">${e.desc}</p>
+        <div class="comp-enemy-tip">💡 <b>Estrategia:</b> ${e.tip}</div>
+      `;
+
+      compEnemiesGrid.appendChild(card);
+    });
+  }
+
+  function renderCompendiumItems() {
+    if (!compItemsGrid) return;
+    compItemsGrid.innerHTML = "";
+
+    ITEMS_DATA.forEach((item) => {
+      const card = document.createElement("div");
+      card.className = "comp-item-card";
+
+      card.innerHTML = `
+        <div class="comp-item-top">
+          <div class="comp-item-icon">${item.icon}</div>
+          <div class="comp-item-info">
+            <div class="comp-item-name">${item.name}</div>
+            <div class="comp-item-type">${item.type}</div>
+          </div>
+        </div>
+        <p class="comp-item-desc">${item.desc}</p>
+        <div class="comp-item-effect">⚡ ${item.effect}</div>
+      `;
+
+      compItemsGrid.appendChild(card);
+    });
+  }
+
+  function openCompendium() {
+    if (!compendiumOv) return;
+    compSelectedCharIdx = GameState.charIdx;
+    renderCompendiumChars();
+    renderCompendiumDossier();
+    renderCompendiumWorlds();
+    renderCompendiumEnemies();
+    renderCompendiumItems();
+
+    compendiumOv.classList.remove("hidden");
+    sfx(600, 0.08);
+  }
+
+  function closeCompendium() {
+    if (!compendiumOv) return;
+    compendiumOv.classList.add("hidden");
+    sfx(400, 0.06);
+  }
+
+  // Tabs switching
+  if (compendiumOv) {
+    const tabBtns = compendiumOv.querySelectorAll(".comp-tab-btn");
+    tabBtns.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const targetTab = btn.dataset.tab;
+        tabBtns.forEach((b) => b.classList.toggle("active", b === btn));
+        const panels = compendiumOv.querySelectorAll(".comp-panel");
+        panels.forEach((p) => {
+          p.classList.toggle("hidden", p.id !== `compTab-${targetTab}`);
+        });
+        sfx(600, 0.04);
+      });
+    });
+  }
+
+  if (btnOpenCompendium) btnOpenCompendium.addEventListener("click", openCompendium);
+  if (btnCloseCompendium) btnCloseCompendium.addEventListener("click", closeCompendium);
+  if (btnBackCompendium) btnBackCompendium.addEventListener("click", closeCompendium);
+
   // Start game from Menu: Opens the 5-World Adventure Map!
   function triggerStart() {
     const rawName = (nameInput.value.trim() || "ANON").toUpperCase().slice(0, 12);
@@ -462,6 +1043,7 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     lbOv.classList.add("hidden");
     ctrlOv.classList.add("hidden");
     teamOv?.classList.add("hidden");
+    compendiumOv?.classList.add("hidden");
 
     onStartGame();
   }
@@ -498,12 +1080,16 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
   // Keyboard shortcut listener for menu (Enter starts game, Esc closes modals)
   window.addEventListener("keydown", (e) => {
     if (e.code === "Escape") {
+      if (compendiumOv && !compendiumOv.classList.contains("hidden")) {
+        closeCompendium();
+        return;
+      }
       if (!lbOv.classList.contains("hidden")) closeLeaderboard();
       if (!ctrlOv.classList.contains("hidden")) ctrlOv.classList.add("hidden");
       if (teamOv && !teamOv.classList.contains("hidden")) toggleTeam(true);
       if (!bootOv.classList.contains("hidden")) bootOv.classList.add("hidden");
     }
-    if (e.code === "Enter" && !menuOv.classList.contains("hidden") && lbOv.classList.contains("hidden") && ctrlOv.classList.contains("hidden") && (!teamOv || teamOv.classList.contains("hidden"))) {
+    if (e.code === "Enter" && !menuOv.classList.contains("hidden") && lbOv.classList.contains("hidden") && ctrlOv.classList.contains("hidden") && (!compendiumOv || compendiumOv.classList.contains("hidden")) && (!teamOv || teamOv.classList.contains("hidden"))) {
       triggerStart();
     }
   });
