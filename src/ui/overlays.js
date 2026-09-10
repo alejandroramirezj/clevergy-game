@@ -220,35 +220,7 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
   if (btnCharPrev) btnCharPrev.addEventListener("click", () => cycleHero(-1));
   if (btnCharNext) btnCharNext.addEventListener("click", () => cycleHero(1));
 
-  // Hamburger drawer menu controller
-  const btnHamburger = document.getElementById("btnHamburger");
-  const lobbyDrawer = document.getElementById("lobbyDrawer");
-  const btnCloseDrawer = document.getElementById("btnCloseDrawer");
 
-  if (btnHamburger && lobbyDrawer) {
-    btnHamburger.addEventListener("click", () => {
-      lobbyDrawer.classList.remove("hidden");
-      sfx(600, 0.05);
-    });
-  }
-  if (btnCloseDrawer && lobbyDrawer) {
-    btnCloseDrawer.addEventListener("click", () => {
-      lobbyDrawer.classList.add("hidden");
-      sfx(400, 0.05);
-    });
-    lobbyDrawer.addEventListener("click", (e) => {
-      if (e.target === lobbyDrawer) {
-        lobbyDrawer.classList.add("hidden");
-      }
-    });
-  }
-
-  // Automatically hide drawer when opening any submodal
-  ["btnOpenCompendium", "btnOpenMapMenu", "btnOpenLB", "btnOpenCtrl"].forEach((id) => {
-    document.getElementById(id)?.addEventListener("click", () => {
-      lobbyDrawer?.classList.add("hidden");
-    });
-  });
 
   // Pose buttons
   if (stumblePoseDock) {

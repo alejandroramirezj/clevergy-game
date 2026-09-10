@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>RETREAT: THE LEGEND OF THE TEAM · Clevergy</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <script type="module" crossorigin src="/assets/index-C_3ZmzCo.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-tY-tCnf-.css">
+  <script type="module" crossorigin src="/assets/index-Df9OzJkI.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-Cvja9sKP.css">
 </head>
 <body>
   <div id="wrap">
@@ -25,12 +25,9 @@
     </div>
 
     <div class="clevergy-menu-container">
-      <!-- TOP HEADER BAR (ANCHORED, CLEAN 3-COLUMN ARCADE NAV) -->
+      <!-- TOP HEADER BAR (ANCHORED, CLEAN ARCADE CREST) -->
       <header class="lobby-header-row">
-        <!-- Left: Hamburger Button -->
-        <button class="lobby-icon-btn btn-hamburger" id="btnHamburger" aria-label="Abrir Menú" title="Menú">
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-        </button>
+        <div class="lobby-header-spacer"></div>
 
         <!-- Center: Brand Crest -->
         <div class="lobby-brand-crest">
@@ -47,8 +44,32 @@
         <input type="hidden" id="nameInput" value="ALEJANDRO R.">
       </header>
 
-      <!-- MAIN WORKSPACE: Center Hero on Pedestal + Flanking/Bottom Dossier -->
+      <!-- MAIN WORKSPACE: Left Nav + Center Hero + Right Dossier -->
       <div class="lobby-workspace">
+        <!-- Direct Screen Navigation Menu (Visible outside, no hamburger) -->
+        <nav class="lobby-side-nav" id="lobbySideNav">
+          <button class="side-nav-btn" id="btnOpenCompendium" aria-label="Historia y Personajes">
+            <span class="nav-icon">📖</span>
+            <span class="nav-text">HISTORIA Y PERSONAJES</span>
+            <span class="nav-chevron">›</span>
+          </button>
+          <button class="side-nav-btn" id="btnOpenMapMenu" aria-label="Mundos">
+            <span class="nav-icon">🗺️</span>
+            <span class="nav-text">MUNDOS</span>
+            <span class="nav-chevron">›</span>
+          </button>
+          <button class="side-nav-btn" id="btnOpenLB" aria-label="Ranking Global">
+            <span class="nav-icon">🏆</span>
+            <span class="nav-text">RANKING GLOBAL</span>
+            <span class="nav-chevron">›</span>
+          </button>
+          <button class="side-nav-btn" id="btnOpenCtrl" aria-label="Ajustes y Controles">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">AJUSTES Y CONTROLES</span>
+            <span class="nav-chevron">›</span>
+          </button>
+        </nav>
+
         <!-- Center Character Hero Stage (Frameless, Clean, Swipe-to-Change) -->
         <div class="hero-stage-container">
           <div class="hero-centerpiece-stage">
@@ -139,42 +160,7 @@
       </footer>
     </div>
 
-    <!-- FLYOUT / DRAWER MENU MODAL (TRIGGERED BY HAMBURGER ☰) -->
-    <div class="lobby-drawer-backdrop hidden" id="lobbyDrawer">
-      <aside class="lobby-drawer-panel">
-        <div class="drawer-header">
-          <div class="drawer-title">MENÚ PRINCIPAL</div>
-          <button class="drawer-close-btn" id="btnCloseDrawer" aria-label="Cerrar menú">✕</button>
-        </div>
 
-        <nav class="drawer-nav-list">
-          <button class="drawer-nav-btn" id="btnOpenCompendium">
-            <span class="nav-icon">📖</span>
-            <span class="nav-text">HISTORIA Y PERSONAJES</span>
-            <span class="nav-chevron">›</span>
-          </button>
-          <button class="drawer-nav-btn" id="btnOpenMapMenu">
-            <span class="nav-icon">🗺️</span>
-            <span class="nav-text">MUNDOS</span>
-            <span class="nav-chevron">›</span>
-          </button>
-          <button class="drawer-nav-btn" id="btnOpenLB">
-            <span class="nav-icon">🏆</span>
-            <span class="nav-text">RANKING GLOBAL</span>
-            <span class="nav-chevron">›</span>
-          </button>
-          <button class="drawer-nav-btn" id="btnOpenCtrl">
-            <span class="nav-icon">⚙️</span>
-            <span class="nav-text">AJUSTES Y CONTROLES</span>
-            <span class="nav-chevron">›</span>
-          </button>
-        </nav>
-
-        <div class="drawer-footer">
-          <div class="drawer-tag">RETREAT · CLEVERGY 2026</div>
-        </div>
-      </aside>
-    </div>
   </div>
 
   <!-- TERMINAL BOOT STORY (OPTIONAL RE-WATCH) -->
