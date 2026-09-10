@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>RETREAT: THE LEGEND OF THE TEAM · Clevergy</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <script type="module" crossorigin src="/assets/index-E5tgSRc-.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-rWNxafaX.css">
+  <script type="module" crossorigin src="/assets/index-C_3ZmzCo.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-tY-tCnf-.css">
 </head>
 <body>
   <div id="wrap">
@@ -25,53 +25,35 @@
     </div>
 
     <div class="clevergy-menu-container">
-      <!-- TOP HEADER ROW -->
+      <!-- TOP HEADER BAR (ANCHORED, CLEAN 3-COLUMN ARCADE NAV) -->
       <header class="lobby-header-row">
-        <!-- Top Left: Hamburger + Brand Title -->
-        <div class="lobby-brand-group">
-          <button class="lobby-icon-btn btn-hamburger" id="btnHamburger" aria-label="Abrir Menú" title="Menú">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
-          </button>
-          <div class="lobby-brand-text">
-            <h1 class="lobby-brand-title">RETREAT</h1>
-            <div class="lobby-brand-sub">THE LEGEND OF THE FLY</div>
-          </div>
+        <!-- Left: Hamburger Button -->
+        <button class="lobby-icon-btn btn-hamburger" id="btnHamburger" aria-label="Abrir Menú" title="Menú">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+
+        <!-- Center: Brand Crest -->
+        <div class="lobby-brand-crest">
+          <h1 class="lobby-brand-title">RETREAT</h1>
+          <div class="lobby-brand-sub">THE LEGEND OF THE FLY</div>
         </div>
 
-        <!-- Profile Card -->
-        <div class="lobby-profile-card">
-          <div class="profile-avatar-circle">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-          </div>
-          <div class="profile-info">
-            <div class="profile-name" id="profilePlayerName">ALEJANDRO R.</div>
-            <div class="profile-sub">NIVEL 12</div>
-            <div class="profile-xp-row">
-              <div class="profile-xp-track">
-                <div class="profile-xp-fill" style="width: 53%;"></div>
-              </div>
-              <span class="profile-xp-text">320 / 600 XP</span>
-            </div>
-          </div>
-          <!-- Preserved hidden nameInput for state compatibility -->
-          <input type="hidden" id="nameInput" value="ALEJANDRO R.">
+        <!-- Right: Version Pill -->
+        <div class="lobby-header-right">
+          <span class="lobby-version-tag">v1.0.0</span>
         </div>
 
-        <div class="lobby-version-tag">v1.0.0</div>
+        <!-- Preserved hidden nameInput for state compatibility -->
+        <input type="hidden" id="nameInput" value="ALEJANDRO R.">
       </header>
 
       <!-- MAIN WORKSPACE: Center Hero on Pedestal + Flanking/Bottom Dossier -->
       <div class="lobby-workspace">
-        <!-- Center Character Hero Stage -->
+        <!-- Center Character Hero Stage (Frameless, Clean, Swipe-to-Change) -->
         <div class="hero-stage-container">
           <div class="hero-centerpiece-stage">
-            <!-- Left Arrow ‹ -->
-            <button class="hero-nav-circle btn-prev" id="btnCharPrev" aria-label="Personaje anterior" title="Anterior (←)">
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-            </button>
-
             <!-- Circular Glowing Pedestal + Character Viewport -->
-            <div class="hero-pedestal-wrap" id="stumbleCharViewport" title="¡Toca para actuar o desliza para cambiar!">
+            <div class="hero-pedestal-wrap" id="stumbleCharViewport" title="¡Desliza para cambiar o toca para actuar!">
               <div class="hero-circular-podium">
                 <div class="podium-inner-ring"></div>
                 <div class="podium-glow"></div>
@@ -79,11 +61,6 @@
               <canvas id="stumbleHeroCanvas" width="420" height="420"></canvas>
               <div class="hero-contact-shadow" id="stumbleCharShadow"></div>
             </div>
-
-            <!-- Right Arrow › -->
-            <button class="hero-nav-circle btn-next" id="btnCharNext" aria-label="Siguiente personaje" title="Siguiente (→)">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-            </button>
           </div>
         </div>
 

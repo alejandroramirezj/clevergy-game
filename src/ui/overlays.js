@@ -265,24 +265,25 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     });
   }
 
-  // Swipe left/right gesture or tap reaction on character viewport
-  if (stumbleCharViewport) {
+  // Swipe left/right gesture or tap reaction anywhere on hero stage
+  const stageSwipeTarget = document.querySelector(".hero-stage-container") || stumbleCharViewport;
+  if (stageSwipeTarget) {
     let pointerStartX = 0;
     let pointerStartY = 0;
     let pointerActive = false;
 
-    stumbleCharViewport.addEventListener("pointerdown", (e) => {
+    stageSwipeTarget.addEventListener("pointerdown", (e) => {
       pointerStartX = e.clientX;
       pointerStartY = e.clientY;
       pointerActive = true;
     });
 
-    stumbleCharViewport.addEventListener("pointerup", (e) => {
+    stageSwipeTarget.addEventListener("pointerup", (e) => {
       if (!pointerActive) return;
       pointerActive = false;
       const dx = e.clientX - pointerStartX;
       const dy = e.clientY - pointerStartY;
-      if (Math.abs(dx) > 30 && Math.abs(dx) > Math.abs(dy)) {
+      if (Math.abs(dx) > 26 && Math.abs(dx) > Math.abs(dy)) {
         // Horizontal swipe -> cycle character
         if (dx < 0) cycleHero(1);
         else cycleHero(-1);
@@ -295,7 +296,7 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
       }
     });
 
-    stumbleCharViewport.addEventListener("pointercancel", () => {
+    stageSwipeTarget.addEventListener("pointercancel", () => {
       pointerActive = false;
     });
   }

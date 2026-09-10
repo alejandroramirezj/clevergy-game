@@ -251,28 +251,42 @@ body.has-modal .gameboy-deck {
   overflow: hidden;
 }
 
-/* Top Bar Common Styles */
+/* Anchored 3-Slot Arcade Top Bar */
+.lobby-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: clamp(52px, 8vh, 62px);
+  padding: max(8px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 8px max(16px, env(safe-area-inset-left));
+  background: linear-gradient(180deg, rgba(3, 8, 26, 0.82) 0%, rgba(3, 8, 26, 0.45) 70%, transparent 100%);
+  border-bottom: 1px solid rgba(89, 216, 255, 0.14);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 30;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
 .btn-hamburger {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: rgba(8, 20, 50, 0.55);
-  border: 2px solid rgba(0, 212, 255, 0.4);
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  background: rgba(8, 20, 50, 0.65);
+  border: 1.5px solid rgba(0, 212, 255, 0.4);
   color: #59d8ff;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   transition: all 0.15s ease;
   padding: 0;
   flex-shrink: 0;
 }
 
 .btn-hamburger:hover {
-  background: rgba(0, 212, 255, 0.22);
+  background: rgba(0, 212, 255, 0.25);
   border-color: #00d4ff;
   color: #ffffff;
   box-shadow: 0 0 16px rgba(0, 212, 255, 0.6);
@@ -283,109 +297,58 @@ body.has-modal .gameboy-deck {
   transform: scale(0.95);
 }
 
+/* Brand Crest (Unified, firmly anchored center title) */
+.lobby-brand-crest {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  user-select: none;
+  flex: 1;
+}
+
 .lobby-brand-title {
   margin: 0;
-  font-size: clamp(22px, 3.4vw, 32px);
+  font-size: clamp(20px, 3.4vw, 29px);
   font-weight: 900;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   line-height: 1;
-  background: linear-gradient(180deg, #ffe580 0%, #ff9e1f 48%, #c94c00 100%);
+  background: linear-gradient(180deg, #ffe885 0%, #ff9e1f 48%, #c94c00 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 2px 0 #3a1400) drop-shadow(0 4px 10px rgba(0, 0, 0, 0.8));
+  filter: drop-shadow(0 2px 0 #3a1400) drop-shadow(0 4px 10px rgba(0, 0, 0, 0.85));
   font-family: inherit;
 }
 
 .lobby-brand-sub {
-  font-size: 8.5px;
+  font-size: clamp(7.5px, 1.1vw, 9px);
   font-weight: 900;
-  letter-spacing: 0.24em;
+  letter-spacing: 0.26em;
   color: #59d8ff;
   text-shadow: 0 0 8px rgba(89, 216, 255, 0.7);
   margin-top: 3px;
   text-transform: uppercase;
 }
 
-.lobby-profile-card {
+.lobby-header-right {
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: rgba(6, 14, 38, 0.65);
-  border: 1.5px solid rgba(89, 216, 255, 0.28);
-  border-radius: 14px;
-  padding: 6px 14px 6px 8px;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
-}
-
-.profile-avatar-circle {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: rgba(14, 30, 70, 0.8);
-  border: 1.5px solid rgba(89, 216, 255, 0.45);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #dbeaff;
+  justify-content: flex-end;
+  min-width: 40px;
   flex-shrink: 0;
 }
 
-.profile-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.profile-name {
-  font-size: 12.5px;
-  font-weight: 900;
-  color: #ffffff;
-  letter-spacing: 0.05em;
-  line-height: 1.1;
-}
-
-.profile-sub {
-  font-size: 9px;
-  font-weight: 800;
-  color: #59d8ff;
-  letter-spacing: 0.06em;
-}
-
-.profile-xp-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.profile-xp-track {
-  width: 90px;
-  height: 4px;
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.profile-xp-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #00b4d8, #00f2fe);
-  border-radius: 2px;
-}
-
-.profile-xp-text {
-  font-size: 9px;
-  font-weight: 800;
-  color: rgba(255, 255, 255, 0.5);
-  font-family: monospace;
-}
-
 .lobby-version-tag {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 800;
-  color: rgba(255, 255, 255, 0.45);
+  color: rgba(255, 255, 255, 0.65);
   font-family: monospace;
   letter-spacing: 0.08em;
+  padding: 3px 8px;
+  background: rgba(10, 22, 54, 0.55);
+  border: 1px solid rgba(89, 216, 255, 0.2);
+  border-radius: 12px;
 }
 
 /* Centerpiece Character Stage */
@@ -393,45 +356,8 @@ body.has-modal .gameboy-deck {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: clamp(10px, 2.5vw, 32px);
   position: relative;
   z-index: 10;
-}
-
-.hero-nav-circle {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: rgba(8, 20, 52, 0.5);
-  border: 2px solid rgba(0, 212, 255, 0.55);
-  color: #59d8ff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  box-shadow: 0 0 14px rgba(0, 212, 255, 0.35);
-  transition: all 0.15s ease;
-  flex-shrink: 0;
-  padding: 0;
-}
-
-.hero-nav-circle svg {
-  display: block;
-  stroke: currentColor;
-}
-
-.hero-nav-circle:hover {
-  background: rgba(0, 212, 255, 0.25);
-  border-color: #00d4ff;
-  color: #ffffff;
-  transform: scale(1.1);
-  box-shadow: 0 0 20px rgba(0, 212, 255, 0.7);
-}
-
-.hero-nav-circle:active {
-  transform: scale(0.92);
 }
 
 .hero-pedestal-wrap {
@@ -439,19 +365,24 @@ body.has-modal .gameboy-deck {
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
+  cursor: grab;
   touch-action: pan-y;
+  user-select: none;
+}
+
+.hero-pedestal-wrap:active {
+  cursor: grabbing;
 }
 
 .hero-circular-podium {
   position: absolute;
   bottom: 8%;
   width: 78%;
-  height: clamp(36px, 5vh, 48px);
+  height: clamp(34px, 4.8vh, 46px);
   border-radius: 50%;
   border: 2px solid #00d4ff;
   background: radial-gradient(ellipse at 50% 50%, rgba(0, 212, 255, 0.45) 0%, rgba(0, 130, 255, 0.12) 65%, transparent 80%);
-  box-shadow: 0 0 26px rgba(0, 212, 255, 0.65), inset 0 0 16px rgba(0, 212, 255, 0.4);
+  box-shadow: 0 0 28px rgba(0, 212, 255, 0.65), inset 0 0 16px rgba(0, 212, 255, 0.4);
   pointer-events: none;
   z-index: 1;
 }
@@ -508,7 +439,7 @@ body.has-modal .gameboy-deck {
 
 /* Dossier Card Typography & Stat Elements */
 .dossier-tag {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 900;
   letter-spacing: 0.22em;
   color: #00d4ff;
@@ -533,7 +464,7 @@ body.has-modal .gameboy-deck {
   color: #00d4ff;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   text-shadow: 0 0 10px rgba(0, 212, 255, 0.6);
 }
 
@@ -541,24 +472,29 @@ body.has-modal .gameboy-deck {
   font-size: clamp(11.5px, 1.3vw, 13px);
   color: rgba(225, 238, 255, 0.75);
   line-height: 1.45;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
   font-weight: 500;
 }
 
 .dossier-stats-row {
   display: flex;
   align-items: center;
-  gap: clamp(12px, 2vw, 20px);
+  gap: 10px;
 }
 
 .dossier-stat-item {
   display: flex;
   align-items: center;
   gap: 6px;
+  background: rgba(8, 20, 52, 0.6);
+  border: 1px solid rgba(89, 216, 255, 0.2);
+  border-radius: 9px;
+  padding: 4px 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .dossier-stat-item .stat-emoji {
-  font-size: 17px;
+  font-size: 15px;
   line-height: 1;
 }
 
@@ -569,14 +505,14 @@ body.has-modal .gameboy-deck {
 }
 
 .dossier-stat-item .stat-lbl {
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 800;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.55);
   letter-spacing: 0.08em;
 }
 
 .dossier-stat-item .stat-num {
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 900;
   color: #ffffff;
   letter-spacing: 0.04em;
@@ -593,7 +529,7 @@ body.has-modal .gameboy-deck {
 }
 
 .lobby-footer-watermark .wm-title {
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 900;
   letter-spacing: 0.18em;
   color: #ffffff;
@@ -619,9 +555,9 @@ body.has-modal .gameboy-deck {
   flex-direction: column;
   align-items: center;
   background: transparent;
-  border: 2px solid transparent;
+  border: 1.5px solid transparent;
   border-radius: 12px;
-  padding: 6px 12px;
+  padding: 5px 12px;
   cursor: pointer;
   color: rgba(255, 255, 255, 0.5);
   font-family: inherit;
@@ -632,7 +568,7 @@ body.has-modal .gameboy-deck {
 }
 
 .action-dock-item .action-icon {
-  font-size: 18px;
+  font-size: 17px;
   margin-bottom: 2px;
   transition: transform 0.16s ease;
 }
@@ -643,7 +579,7 @@ body.has-modal .gameboy-deck {
 
 .action-dock-item .active-indicator {
   display: none;
-  width: 22px;
+  width: 20px;
   height: 3px;
   border-radius: 2px;
   background: #ff9d00;
@@ -846,29 +782,7 @@ body.has-modal .gameboy-deck {
    ========================================================================= */
 @media (orientation: landscape) and (min-width: 600px), (min-aspect-ratio: 1/1) and (min-width: 600px) {
   .clevergy-menu-container {
-    padding: max(10px, env(safe-area-inset-top)) max(26px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(26px, env(safe-area-inset-left));
-  }
-
-  .lobby-header-row {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    width: 100%;
-    z-index: 25;
-    position: relative;
-  }
-
-  .lobby-brand-group {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  /* Profile Card sits below brand in top-left */
-  .lobby-header-row .lobby-profile-card {
-    position: absolute;
-    left: 0;
-    top: clamp(56px, 10vh, 72px);
+    padding: 0 0 max(12px, env(safe-area-inset-bottom)) 0;
   }
 
   .lobby-workspace {
@@ -879,6 +793,8 @@ body.has-modal .gameboy-deck {
     width: 100%;
     position: relative;
     min-height: 0;
+    padding: 0 max(28px, env(safe-area-inset-right)) 0 max(28px, env(safe-area-inset-left));
+    box-sizing: border-box;
   }
 
   /* Hero stage in center */
@@ -916,6 +832,8 @@ body.has-modal .gameboy-deck {
     align-items: center;
     justify-content: space-between;
     width: 100%;
+    padding: 0 max(28px, env(safe-area-inset-right)) 0 max(28px, env(safe-area-inset-left));
+    box-sizing: border-box;
     z-index: 25;
   }
 
@@ -937,53 +855,12 @@ body.has-modal .gameboy-deck {
 }
 
 /* =========================================================================
-   PORTRAIT LAYOUT (IMAGE 1 · VERTICALLY STACKED & FOCUSED)
+   PORTRAIT LAYOUT (MOBILE VERTICAL · CLEAN, BALANCED, ANCHORED)
    ========================================================================= */
 @media (orientation: portrait), (max-width: 680px) and (max-aspect-ratio: 13/10) {
   .clevergy-menu-container {
-    padding: max(12px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
-  }
-
-  /* Top line: Hamburger on left, Brand centered, Version on right */
-  .lobby-header-row {
-    position: relative;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    z-index: 25;
-  }
-
-  .lobby-brand-group {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-  }
-
-  .lobby-brand-group .btn-hamburger {
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-  }
-
-  .lobby-brand-text {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-
-  .lobby-version-tag {
-    position: absolute;
-    right: 0;
-    top: 6px;
-  }
-
-  .lobby-profile-card {
-    align-self: flex-start;
+    padding: 0 0 max(10px, env(safe-area-inset-bottom)) 0;
+    justify-content: space-between;
   }
 
   /* Workspace: hero on top, dossier centered directly below podium */
@@ -991,68 +868,146 @@ body.has-modal .gameboy-deck {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: space-evenly;
     flex: 1;
     width: 100%;
     min-height: 0;
-    gap: 6px;
+    padding: 4px 16px;
+    box-sizing: border-box;
+    gap: 4px;
   }
 
   .hero-stage-container {
     position: static;
     transform: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
   }
 
   .hero-pedestal-wrap {
-    width: clamp(220px, 60vw, 320px);
-    height: clamp(220px, 32vh, 320px);
+    width: clamp(200px, 54vw, 280px);
+    height: clamp(200px, 29vh, 280px);
+  }
+
+  .hero-circular-podium {
+    width: 78%;
+    height: clamp(32px, 4.4vh, 40px);
   }
 
   .hero-dossier-card {
     margin: 0 auto;
     width: 100%;
-    max-width: 340px;
+    max-width: 310px;
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 2px;
+  }
+
+  .dossier-tag {
+    font-size: 10px;
+    margin-bottom: 1px;
+  }
+
+  .dossier-title {
+    font-size: clamp(19px, 5vw, 24px);
+    margin: 0 0 1px 0;
+  }
+
+  .dossier-skill {
+    font-size: clamp(11.5px, 2.8vw, 13.5px);
+    margin-bottom: 3px;
+  }
+
+  .dossier-lore {
+    font-size: 11px;
+    line-height: 1.35;
+    margin-bottom: 8px;
+    max-width: 270px;
   }
 
   .dossier-stats-row {
     justify-content: center;
-    gap: 18px;
+    gap: 8px;
+    width: 100%;
   }
 
-  /* Bottom bar: actions centered, JUGAR centered, watermark in bottom left */
+  .dossier-stat-item {
+    padding: 3px 8px;
+    gap: 4px;
+  }
+
+  .dossier-stat-item .stat-emoji {
+    font-size: 14px;
+  }
+
+  .dossier-stat-item .stat-lbl {
+    font-size: 9px;
+  }
+
+  .dossier-stat-item .stat-num {
+    font-size: 13px;
+  }
+
+  /* Bottom bar: actions centered, JUGAR centered, subtle watermark below */
   .lobby-bottom-bar {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     width: 100%;
+    padding: 0 16px;
+    box-sizing: border-box;
     position: relative;
-    padding-bottom: 24px;
+    z-index: 25;
   }
 
   .lobby-actions-dock {
     justify-content: center;
+    gap: 6px;
     width: 100%;
+  }
+
+  .action-dock-item {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+
+  .action-dock-item .action-icon {
+    font-size: 16px;
   }
 
   .lobby-play-cta-wrap {
     width: 100%;
-    max-width: 360px;
+    max-width: 320px;
   }
 
   .lobby-cta-play {
     width: 100%;
+    height: 48px;
+    font-size: 18px;
   }
 
   .lobby-footer-watermark {
-    position: absolute;
-    left: 0;
-    bottom: 0;
-    text-align: left;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    position: static;
+    opacity: 0.35;
+    margin-top: 2px;
+  }
+
+  .lobby-footer-watermark .wm-title {
+    font-size: 9.5px;
+  }
+
+  .lobby-footer-watermark .wm-sub {
+    font-size: 7.5px;
   }
 }
 
