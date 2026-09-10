@@ -724,6 +724,14 @@ body.has-modal .gameboy-deck {
   opacity: 0.7;
 }
 
+.btn-txt-long {
+  display: inline;
+}
+
+.lobby-sub-ver {
+  display: none;
+}
+
 /* =========================================================================
    LANDSCAPE LAYOUT (DIRECT VISIBLE MENU ON THE LEFT OF THE CHARACTER)
    ========================================================================= */
@@ -844,7 +852,7 @@ body.has-modal .gameboy-deck {
     order: 1;
     width: 100%;
     padding-top: max(48px, calc(env(safe-area-inset-top) + 12px));
-    padding-bottom: 6px;
+    padding-bottom: 4px;
     padding-left: 0;
     padding-right: 0;
     height: auto;
@@ -855,16 +863,42 @@ body.has-modal .gameboy-deck {
     flex-shrink: 0;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
+  }
+
+  /* Ocultar la píldora flotante para no tapar la luna del fondo */
+  .lobby-header-right {
+    display: none !important;
+  }
+
+  .lobby-header-spacer {
+    display: none !important;
+  }
+
+  .lobby-brand-crest {
+    width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
   }
 
   .lobby-brand-title {
-    font-size: clamp(25px, 6.8vw, 32px);
+    font-size: clamp(26px, 7vw, 34px);
   }
 
   .lobby-brand-sub {
-    font-size: 9.5px;
-    letter-spacing: 0.28em;
+    font-size: 10px;
+    letter-spacing: 0.26em;
+  }
+
+  .lobby-sub-ver {
+    display: inline;
+    opacity: 0.65;
+    font-size: 8.5px;
+    font-weight: 700;
+    margin-left: 4px;
   }
 
   /* 2. El muñeco SUBIDO y MUCHO MÁS GRANDE (protagonista del juego) */
@@ -879,18 +913,18 @@ body.has-modal .gameboy-deck {
     flex: 1;
     min-height: 0;
     margin: 0;
-    padding: 2px 0 0 0;
+    padding: 0;
   }
 
   .hero-pedestal-wrap {
-    width: clamp(250px, 70vw, 330px);
-    height: clamp(250px, 33vh, 330px);
+    width: clamp(280px, 80vw, 360px);
+    height: clamp(280px, 36vh, 360px);
     position: relative;
   }
 
   .hero-circular-podium {
     width: 82%;
-    height: clamp(32px, 4.2vh, 42px);
+    height: clamp(34px, 4.4vh, 44px);
     bottom: 7%;
   }
 
@@ -900,28 +934,28 @@ body.has-modal .gameboy-deck {
     height: 24px;
   }
 
-  /* Flechas sutiles a ambos lados del personaje grande */
+  /* Flechas sutiles y elegantes a ambos lados del personaje grande */
   .hero-nav-arrow {
-    width: 36px;
-    height: 36px;
-    font-size: 22px;
+    width: 38px;
+    height: 38px;
+    font-size: 24px;
     top: 48%;
   }
 
   .hero-nav-arrow.arrow-prev {
-    left: calc(50% - 130px);
+    left: calc(50% - 135px);
   }
 
   .hero-nav-arrow.arrow-next {
-    right: calc(50% - 130px);
+    right: calc(50% - 135px);
   }
 
   /* 3. Ficha de nombre y estadísticas justo debajo del podio */
   .hero-dossier-card {
     order: 3;
-    margin: 2px auto 8px auto;
+    margin: 2px auto 6px auto;
     width: 100%;
-    max-width: 340px;
+    max-width: 350px;
     text-align: center;
     display: flex;
     flex-direction: column;
@@ -980,12 +1014,12 @@ body.has-modal .gameboy-deck {
     font-size: 13px;
   }
 
-  /* 4. Botón de JUGAR (destacado y ergonómico) */
+  /* 4. Botón de JUGAR (destacado, ancho y ergonómico) */
   .lobby-play-cta-wrap {
     order: 4;
     width: 100%;
-    max-width: 340px;
-    margin: 0 auto 10px auto;
+    max-width: 350px;
+    margin: 0 auto 8px auto;
     display: flex;
     justify-content: center;
     flex-shrink: 0;
@@ -995,17 +1029,21 @@ body.has-modal .gameboy-deck {
   .lobby-cta-play {
     width: 100%;
     height: 52px;
-    font-size: 19px;
+    font-size: 20px;
     font-weight: 900;
     border-radius: 14px;
   }
 
-  /* 5. Barra de Navegación Unificada inferior (Dock de 4 accesos directos estilo juego arcade) */
+  /* 5. Menús amplios y legibles en cuadrícula 2x2 que coinciden con el ancho del botón Jugar */
+  .btn-txt-long {
+    display: none !important;
+  }
+
   .lobby-side-nav {
     order: 5;
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
     width: 100%;
     max-width: 350px;
     margin: 0 auto 6px auto;
@@ -1015,18 +1053,18 @@ body.has-modal .gameboy-deck {
 
   .side-nav-btn {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    justify-content: center;
-    gap: 3px;
-    height: 52px;
-    padding: 4px 2px;
-    border-radius: 11px;
+    justify-content: flex-start;
+    gap: 10px;
+    height: 48px;
+    padding: 0 16px;
+    border-radius: 12px;
     border: 1.2px solid rgba(89, 216, 255, 0.28);
-    background: linear-gradient(180deg, rgba(14, 30, 72, 0.8) 0%, rgba(6, 16, 44, 0.92) 100%);
+    background: linear-gradient(180deg, rgba(14, 30, 72, 0.82) 0%, rgba(6, 16, 44, 0.94) 100%);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
     color: #dbeaff;
-    text-align: center;
+    text-align: left;
     transition: transform 0.12s ease, background 0.12s ease;
   }
 
@@ -1038,19 +1076,17 @@ body.has-modal .gameboy-deck {
   }
 
   .side-nav-btn .nav-icon {
-    font-size: 18px;
+    font-size: 19px;
     margin: 0;
     line-height: 1;
+    flex-shrink: 0;
   }
 
   .side-nav-btn .nav-text {
-    font-size: 8.5px;
+    font-size: 11.5px;
     font-weight: 800;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.05em;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 96%;
     line-height: 1.1;
   }
 
@@ -1068,7 +1104,7 @@ body.has-modal .gameboy-deck {
     gap: 6px;
     position: static;
     opacity: 0.32;
-    margin: 0 auto 4px auto;
+    margin: 4px auto 4px auto;
     flex-shrink: 0;
   }
 
