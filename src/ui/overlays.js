@@ -191,7 +191,6 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
   let lobbyPoseTime = 0;
   let lobbyLockPose = null;
   let lobbyLockT = 0;
-  let lobbyAutoTimer = 0;
 
   function setLobbyPose(pose, lockDuration = 0) {
     lobbyPose = pose;
@@ -212,9 +211,7 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     switchToChar(nextIdx);
     updateSpotlight();
     sfx(650, 0.05);
-
-    // Give visual jump bounce on character switch
-    setLobbyPose("jump", 0.9);
+    setLobbyPose("idle");
   }
 
   if (btnCharPrev) btnCharPrev.addEventListener("click", () => cycleHero(-1));
@@ -259,12 +256,6 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
         // Horizontal swipe -> cycle character
         if (dx < 0) cycleHero(1);
         else cycleHero(-1);
-      } else if (Math.abs(dx) < 12 && Math.abs(dy) < 12) {
-        // Tap -> trigger action pose!
-        const poses = ["attack", "jump", "run"];
-        const nextP = poses[Math.floor(Math.random() * poses.length)];
-        setLobbyPose(nextP, 1.4);
-        sfx(300, 0.09);
       }
     });
 
@@ -332,15 +323,6 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
         lobbyLockPose = null;
         setLobbyPose("idle");
       }
-    } else {
-      // Auto-pose showcase every 5.5 seconds
-      lobbyAutoTimer += dt;
-      if (lobbyAutoTimer > 5.5) {
-        lobbyAutoTimer = 0;
-        const autoPoses = ["attack", "run", "jump"];
-        const pick = autoPoses[Math.floor(Math.random() * autoPoses.length)];
-        setLobbyPose(pick, 1.4);
-      }
     }
 
     const c = CHARS[GameState.charIdx] || CHARS[0];
@@ -360,10 +342,10 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     let shadowOpacity = 0.85;
 
     if (lobbyPose === "idle") {
-      offsetY = Math.sin(lobbyPoseTime * 3.5) * 6;
-      scaleY = 1 + Math.sin(lobbyPoseTime * 3.5) * 0.03;
-      scaleX = 1 - Math.sin(lobbyPoseTime * 3.5) * 0.02;
-      shadowScale = 1 - Math.sin(lobbyPoseTime * 3.5) * 0.08;
+      offsetY = 0;
+      scaleY = 1;
+      scaleX = 1;
+      shadowScale = 1;
     } else if (lobbyPose === "run") {
       const step = Math.sin(lobbyPoseTime * 14);
       offsetY = -Math.abs(step) * 14;
