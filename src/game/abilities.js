@@ -249,7 +249,10 @@ export function doAbility(C) {
     P.ball = !P.ball;
     P.cool = C.cd;
     sfx(P.ball ? 740 : 400, 0.08);
-    if (P.ball) P.vy = -6;
+    if (P.ball) {
+      P.vy = -6;
+      triggerAnim("attack", "maca");
+    }
   } else if (id === "manu") {
     if (P.onGround) {
       P.cool = C.cd;

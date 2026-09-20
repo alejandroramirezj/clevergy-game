@@ -458,9 +458,10 @@ function update(dt) {
 
   const worldBottom = LH * TILE;
   if (GameState.H < 500) {
-    // In portrait/handheld mode, dynamically follow player vertically!
-    const targetY = P.y + P.h / 2 - GameState.H * 0.55;
-    GameState.camY += (targetY - GameState.camY) * 0.12;
+    // In portrait/handheld mode: anchor player in lower portion (~76% of screen height)
+    // to eliminate excessive subterranean dirt and give wide upward view of platforms!
+    const targetY = P.y + P.h - GameState.H * 0.76;
+    GameState.camY += (targetY - GameState.camY) * 0.14;
     GameState.camY = Math.max(0, Math.min(GameState.camY, worldBottom - GameState.H));
   } else {
     GameState.camY = worldBottom - (GameState.H - GameState.SAFEB);

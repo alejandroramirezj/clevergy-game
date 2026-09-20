@@ -950,7 +950,7 @@ function drawPlayer(cx) {
 
   if (P.inv > 0 && Math.sin(time * 30) > 0) return;
   const bob = P.onGround && Math.abs(P.vx) > 0.5 ? Math.abs(Math.sin(time * 12)) * 2 : 0;
-  const animated = !P.ball && P.roll <= 0 && ANIM[C.id] && ANIM[C.id].ready;
+  const animated = (!P.ball || C.id === "maca") && P.roll <= 0 && ANIM[C.id] && ANIM[C.id].ready;
 
   if (animated) {
     drawAnimatedPlayer(cx, P, C.id, bob);

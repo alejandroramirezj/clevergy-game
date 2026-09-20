@@ -245,6 +245,22 @@ export function initSprites() {
     canvH: 360,
     targetH: 60
   });
+
+  // Load Maca (pelota de voleibol) custom high-res pose sprites
+  loadPoses("maca", {
+    idle: "/sprites/maca/idle.png",
+    walk: "/sprites/maca/walk.png",
+    run: "/sprites/maca/run.png",
+    jump: "/sprites/maca/jump.png",
+    attack: "/sprites/maca/attack.png",
+    death: "/sprites/maca/idle.png"
+  }, {
+    faceRight: true,
+    anchorX: 190,
+    canvW: 380,
+    canvH: 280,
+    targetH: 60
+  });
 }
 
 export const ANIM = {};
@@ -312,6 +328,7 @@ export function getCharacterAvatar(charId) {
   if (charId === "alvaroM") return "/sprites/alvaroM/avatar.png";
   if (charId === "beltran") return "/sprites/beltran/idle.png";
   if (charId === "javi") return "/sprites/javi/avatar.png";
+  if (charId === "maca") return "/sprites/maca/idle.png";
   const s = SPR[charId];
   if (s && s.img) {
     try {

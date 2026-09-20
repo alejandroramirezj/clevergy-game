@@ -441,6 +441,14 @@ function performSpecialAbility(attacker, defender) {
       });
     }
     sfx(330, 0.18, "sawtooth", 0.06);
+  } else if (id === "maca") {
+    // SPIKE: Powerful forward volleyball spike strike
+    attacker.vx = attacker.facing * 7.0;
+    sfx(900, 0.12, "triangle", 0.08);
+    const dx = defender.x - attacker.x;
+    if (Math.abs(dx) < 95 && Math.sign(dx) === attacker.facing) {
+      applyDamage(defender, attacker, 24, true);
+    }
   } else {
     // Generic strike
     attacker.vx = attacker.facing * 3;
@@ -745,7 +753,8 @@ function drawFighter(cx, f) {
       const fr = Math.min(f.anim.frame, imgList.length - 1);
       const img = imgList[fr];
       if (img && img.complete && img.naturalWidth > 0) {
-        const scale = 58 / animRec.canvH;
+        const targetH = animRec.targetH || 58;
+        const scale = targetH / animRec.canvH;
         const dw = animRec.canvW * scale;
         const dh = animRec.canvH * scale;
         const anchorX = (animRec.anchorX || 140) * scale;
