@@ -34,6 +34,20 @@ Elige a cualquiera de los **18 miembros del equipo** (cada uno con habilidades, 
 
 ---
 
+## ✏️ Mundo 7 · Doodle District (3D)
+
+Shooter en primera o tercera persona dibujado a boli sobre un cuaderno (Three.js). Sobrevive a 5 oleadas de emails, invitaciones de calendario y «¿tienes 5 minutos?» y derrota a **INBOX INFINITO**.
+
+- **Look de boli:** render en dos pasadas (`src/doodle/doodleRender.js`): la escena escribe luz/tinta/normal en un render target y un shader de pantalla completa dibuja contornos, rayado anclado al mundo y papel de libreta.
+- **Tercera persona:** tu personaje aparece como pegatina recortada usando sus mismos sprites (`doodleSticker.js`). Cambia con **V**, el botón 👁 o **Y** en el mando.
+- **Controles:** teclado + ratón, mando físico (sticks, RT dispara, A salta, B dash) y en móvil el mismo mando que el resto de mundos: deck Game Boy en vertical (▲▼ andar, ◀▶ girar, **B** disparar con autoapuntado, **A** saltar) y botones táctiles en horizontal. Arrastra sobre la pantalla para apuntar.
+- **Multijugador en sala (hasta 6):** «Crear sala» genera un código de 5 letras y los demás pulsan «Unirse». Es P2P por WebRTC con PeerJS (`doodleNet.js`). Cada jugador sale de un punto distinto del mapa. Quien crea la sala elige el modo:
+  - **⚔️ Todos contra todos:** los disparos dañan a los demás jugadores; gana el primero en llegar a 10 bajas. Reapareces a los 3 s en el punto más alejado del resto, con 2 s de invulnerabilidad. Los rivales no se ven a través de las paredes y aparecen cafés por el mapa.
+  - **🤝 Cooperativo:** todos contra las oleadas; el anfitrión simula enemigos y puntos. Si caes, vuelves en la siguiente oleada; la partida acaba si caéis todos.
+- Se carga bajo demanda (chunk aparte), así que no engorda el bundle del plataformas.
+
+---
+
 ## 🕹️ Controles
 
 ### Teclado

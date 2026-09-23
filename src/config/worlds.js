@@ -1,4 +1,4 @@
-// 5 Mundos oficiales de "RETREAT: THE LEGEND OF THE TEAM"
+// Mundos oficiales de "RETREAT: THE LEGEND OF THE TEAM"
 
 export const WORLDS = [
   {
@@ -96,6 +96,22 @@ export const WORLDS = [
     iconEmoji: "🥊",
     mapCoords: { x: 50, y: 78 },
     mapCoordsPortrait: { x: 65, y: 9 }
+  },
+  {
+    id: 7,
+    name: "Doodle District",
+    title: "7. Doodle District",
+    subtitle: "El Cuaderno del Sprint (3D)",
+    desc: "La oficina se ha convertido en un cuaderno dibujado a boli. Shooter en primera persona: sobrevive a 5 oleadas de emails, reuniones y «¿tienes 5 minutos?» y borra a INBOX INFINITO.",
+    bossName: "INBOX INFINITO",
+    fragmentName: "Trofeo: Inbox Zero ✏️",
+    bgClass: "world-doodle",
+    bgGradient: ["#f6f3e6", "#dfe6f7"],
+    platformColor: "#1f38b8",
+    accentColor: "#6f8cff",
+    iconEmoji: "✏️",
+    mapCoords: { x: 27, y: 79 },
+    mapCoordsPortrait: { x: 28, y: 8 }
   }
 ];
 

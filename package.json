@@ -14,6 +14,8 @@
   },
   "dependencies": {
     "matter-js": "^0.20.0",
-    "peerjs": "^1.5.5"
+    "peerjs": "^1.5.5",
+    "pixi.js": "^8.21.0",
+    "three": "^0.170.0"
   }
 }

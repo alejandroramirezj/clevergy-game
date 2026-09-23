@@ -8,6 +8,7 @@ import { sfx } from "../engine/audio.js";
 import { GameState } from "./state.js";
 import { isLeft, isRight, isJump, isAttack, isSpecial, setInputMode } from "../engine/input.js";
 import { Net, sendFighterState, sendCombatDamage, sendSpawnProjectile } from "./fightNet.js";
+import { renderFightPixi, triggerFightShake, hideFightPixi } from "../engine/pixiFight.js";
 
 // Stage Platforms (The Office Layout)
 const FLOOR_Y = 430;
@@ -477,6 +478,7 @@ function applyDamage(target, source, dmg, isCritical = false, shouldBroadcast = 
   const sparkX = (target.x + source.x) / 2;
   const sparkY = target.y + target.h / 2;
   spawnHitSpark(sparkX, sparkY, isCritical);
+  triggerFightShake(isCritical ? 10 : 5, 0.22);
 
   // Single clean damage floater
   FightState.floaters.push({
@@ -572,6 +574,21 @@ function checkRoundOver() {
 
 // ── Renderer: The Office Stage & Fighters ───────────────────────────────────────
 export function drawFight(cx) {
+  const pixiCanvas = document.getElementById("pixiCv");
+  const mainCanvas = document.getElementById("cv");
+
+  if (pixiCanvas) {
+    const rendered = renderFightPixi({
+      pixiCanvas,
+      mainCanvas,
+      FightState,
+      GameState,
+      platforms: PLATFORMS,
+      dt: 0.016
+    });
+    if (rendered) return;
+  }
+
   const W = GameState.W || 960;
   const H = GameState.H || 540;
 

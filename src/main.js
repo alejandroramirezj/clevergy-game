@@ -1,7 +1,7 @@
 import { TILE, GRAV, LW, LH, CHECKPOINTS, ARENA_L, ARENA_R } from "./config/constants.js";
 import { CHARS } from "./config/characters.js";
 import { initLevelGrid, moveX, moveY, touchingWall, rectsHit, tileAt } from "./engine/physics.js";
-import { sfx, startMusic, toggleMusic } from "./engine/audio.js";
+import { sfx, startMusic, stopMusic, toggleMusic } from "./engine/audio.js";
 import { initSprites, updateAnim, anim } from "./engine/sprites.js";
 import { initInput, left, right, upK, downK, jumpK, abilK } from "./engine/input.js";
 import { GameState, initCoffees, hurt, respawn, msg, msg2, switchChar, switchToChar, addScore } from "./game/state.js";
@@ -10,7 +10,7 @@ import { draw } from "./game/renderer.js";
 import { initOverlays } from "./ui/overlays.js";
 import { initWorldMap } from "./ui/worldMap.js";
 import { loadWorld } from "./game/levelLoader.js";
-import { WORLDS } from "./config/worlds.js";
+import { WORLDS, saveWorldProgress } from "./config/worlds.js";
 import { updateProjectiles, updateMinions, updateEnemies, updateBoss, winGame } from "./game/enemies.js";
 import { startFight, updateFight, drawFight, FightState } from "./game/fighting.js";
 import { showFightLobby, hideFightLobby, drawFightLobby, updateFightLobby } from "./ui/fightLobby.js";
@@ -20,6 +20,8 @@ const cv = document.getElementById("cv");
 const cx = cv.getContext("2d");
 
 function fitCanvas() {
+  // Mundo 7 (Doodle District) usa el mismo layout que el resto de mundos (deck Game Boy
+  // en vertical, botones táctiles en horizontal) y monta su canvas WebGL encima de #cv.
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const iw = window.innerWidth, ih = window.innerHeight;
   const isPortrait = ih > iw;
@@ -113,6 +115,17 @@ function fitCanvas() {
     GameState.DPR = dpr;
     GameState.SAFEB = SAFEB;
   }
+
+  const pixiCv = document.getElementById("pixiCv");
+  if (pixiCv) {
+    pixiCv.width = cv.width;
+    pixiCv.height = cv.height;
+    pixiCv.style.position = cv.style.position;
+    pixiCv.style.left = cv.style.left;
+    pixiCv.style.top = cv.style.top;
+    pixiCv.style.width = cv.style.width;
+    pixiCv.style.height = cv.style.height;
+  }
 }
 
 window.addEventListener("resize", fitCanvas);
@@ -133,7 +146,9 @@ function startGame(worldId = 1) {
   GameState.worldMapOpen = false;
   GameState.currentWorld = worldId;
 
-  if (worldId === 6) {
+  if (worldId === 7) {
+    startDoodle();
+  } else if (worldId === 6) {
     GameState.gameMode = "fighting";
     fitCanvas();
     showFightLobby(
@@ -168,6 +183,36 @@ function startGame(worldId = 1) {
     sfx(880, 0.1);
     sfx(1174, 0.15);
     msg2(CHARS[GameState.charIdx].tip, 4);
+  }
+}
+
+// Mundo 7: shooter 3D con Three.js. Se carga bajo demanda para no engordar el bundle principal.
+let doodle = null;
+async function startDoodle() {
+  GameState.gameMode = "doodle";
+  stopMusic();
+  fitCanvas();
+  try {
+    const { startDoodleWorld } = await import("./doodle/doodleWorld.js");
+    doodle = startDoodleWorld({
+      char: CHARS[GameState.charIdx] || CHARS[0],
+      // cualquier cambio de compañero (TAB, CAMBIAR, barra del deck) se refleja en el personaje
+      getChar: () => CHARS[GameState.charIdx],
+      onVictory: (score, rank) => saveWorldProgress(7, score, rank),
+      onExit: () => {
+        doodle = null;
+        GameState.gameMode = "platformer";
+        GameState.status = "ready";
+        fitCanvas();
+        worldMap.showWorldMap();
+      }
+    });
+  } catch (err) {
+    console.error("No se pudo cargar Doodle District", err);
+    GameState.gameMode = "platformer";
+    GameState.status = "ready";
+    fitCanvas();
+    worldMap.showWorldMap();
   }
 }
 
@@ -513,14 +558,18 @@ initInput({
     updateSpotlight();
     worldMap.renderMap();
   },
-  onPause: () => togglePause(),
+  onPause: () => { if (GameState.gameMode !== "doodle") togglePause(); },
   onToggleTeam: () => toggleTeam(),
   onToggleMusic: () => {
+    if (GameState.gameMode === "doodle") return;
     const on = toggleMusic();
     msg(on ? "MÚSICA: ON" : "MÚSICA: OFF", 1.2);
   },
-  onTryStart: () => tryStart(),
-  onOpenMap: () => worldMap.showWorldMap()
+  onTryStart: () => { if (GameState.gameMode !== "doodle") tryStart(); },
+  onOpenMap: () => {
+    if (GameState.gameMode === "doodle" && doodle) return doodle.exit();
+    worldMap.showWorldMap();
+  }
 });
 
 // Fixed Timestep Accumulator for deterministic 60 FPS physics (60Hz / 120Hz / 144Hz parity)
@@ -532,7 +581,9 @@ function loop(now) {
   const frameTime = Math.min((now - last) / 1000, 0.1);
   last = now;
 
-  if (GameState.gameMode === "fighting") {
+  if (GameState.gameMode === "doodle") {
+    // el mundo 7 corre su propio bucle
+  } else if (GameState.gameMode === "fighting") {
     updateFightLobby(frameTime);
     drawFightLobby(cx);
   } else if (GameState.gameMode === "fighting_active") {
