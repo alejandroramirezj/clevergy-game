@@ -8,7 +8,8 @@
 import * as THREE from "three";
 import { createDoodleRenderer, INK, mat } from "./doodleRender.js";
 import { DoodleAudio } from "./doodleAudio.js";
-import { buildLevel, ARENA, SPAWNS, GEO } from "./doodleLevel.js";
+import { GEO } from "./doodleLevel.js";
+import { buildLevel, ARENA, SPAWNS, START, PLAYER_SPAWNS, BOSS_AREA, COFFEE_SPOTS, floorOf } from "./cinkLevel.js";
 import { makeEmail, makeMeeting, makeClock, makeBoss, makeGun, makeCoffee } from "./doodleActors.js";
 import { createSticker } from "./doodleSticker.js";
 import { createTouchPad, ICON } from "./touchPad.js";
@@ -33,7 +34,7 @@ const WAVES = [
   { title: "OLEADA 3", sub: "«¿Tienes 5 minutos?»", list: { email: 8, meeting: 3, clock: 2 } },
   { title: "OLEADA 4", sub: "Semana de planning", list: { email: 10, meeting: 4, clock: 4 } },
   { title: "OLEADA 5", sub: "Cierre de trimestre", list: { email: 12, meeting: 5, clock: 6 } },
-  { title: "JEFE FINAL", sub: "INBOX INFINITO · 9.999 sin leer", list: { boss: 1, email: 4 } }
+  { title: "JEFE FINAL", sub: "INBOX INFINITO ha aterrizado en la terraza", list: { boss: 1, email: 4 } }
 ];
 
 const ENEMY_DEF = {
@@ -45,7 +46,6 @@ const ENEMY_DEF = {
 
 const TYPES = ["email", "meeting", "clock", "boss"];
 // puntos de salida de jugadores repartidos por toda la planta (en sala nadie empieza junto a otro)
-const PLAYER_SPAWNS = [[0, 22], [0, -20], [-29, -10], [29, 10], [-28, 28], [28, -28], [-15, 4], [15, -6], [-6, -14]];
 const PVP_GOAL = 10; // bajas para ganar en "todos contra todos"
 
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -78,9 +78,9 @@ const TEMPLATE = `
   <div class="dd-card">
     <div class="dd-kicker">MUNDO 3</div>
     <h1>Doodle District</h1>
-    <p class="dd-lead">El sprint se ha quedado atrapado en el cuaderno de notas de la oficina.
-      Emails urgentes, reuniones sin agenda y «¿tienes 5 minutos?» salen de las páginas.
-      Coge tu boli Bic y borra la bandeja de entrada.</p>
+    <p class="dd-lead">CINK Coworking (Infanta Mercedes) se ha llenado de emails urgentes, reuniones sin agenda
+      y «¿tienes 5 minutos?». Entra por la esquina, saluda a Victoria en recepción y limpia las tres plantas
+      hasta la oficina de Clevergy con tu boli Bic.</p>
     <div class="dd-controls dd-desktop-only">
       <span><b>WASD</b> moverse</span><span><b>Ratón</b> apuntar · <b>Clic</b> disparar</span>
       <span><b>Espacio</b> saltar</span><span><b>Shift</b> dash</span><span><b>R</b> recargar</span>
@@ -161,7 +161,7 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
   camera.rotation.order = "YXZ";
   scene.add(camera);
 
-  const { colliders } = buildLevel(scene);
+  const { colliders, updateDoors, victoria } = buildLevel(scene);
 
   const gun = makeGun();
   camera.add(gun.group);
@@ -395,9 +395,9 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
   }
   // posiciona al jugador en un punto de salida mirando hacia el centro
   function spawnAt(i) {
-    const [x, z] = PLAYER_SPAWNS[i % PLAYER_SPAWNS.length];
-    P.pos.set(x + rnd(-0.5, 0.5), 0, z + rnd(-0.5, 0.5));
-    pushOut(P.pos, P_RADIUS, 0.4, P_HEIGHT);
+    const [x, z, y = 0] = PLAYER_SPAWNS[i % PLAYER_SPAWNS.length];
+    P.pos.set(x + rnd(-0.5, 0.5), y, z + rnd(-0.5, 0.5));
+    pushOut(P.pos, P_RADIUS, y + 0.4, y + P_HEIGHT);
     P.yaw = Math.atan2(P.pos.x, P.pos.z);
     P.pitch = 0;
   }
@@ -634,7 +634,7 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
   net.on("kill", (m) => { const e = enemies.find((q) => q.id === m.id); if (e) killEnemy(e, null); });
   net.on("shot", (m) => addShot(V(m.p), V(m.v), m.d));
   net.on("dmg", (m) => hurtPlayer(m.d, new THREE.Vector3(m.x, 0, m.z)));
-  net.on("cof", (m) => spawnCoffee(m.x, m.z, m.id));
+  net.on("cof", (m) => spawnCoffee(m.x, m.z, m.id, m.y || 0));
   net.on("rmcof", (m) => removeCoffee(m.id));
   net.on("msg", (m) => { showMsg(m.a, m.b, m.d); if (m.w) audio.wave(); });
   net.on("revive", () => reviveSelf());
@@ -741,7 +741,7 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
   function pushOut(pos, r, yLo, yHi) {
     let hit = false;
     for (const c of colliders) {
-      if (c.y1 <= yLo || c.y0 >= yHi) continue;
+      if (c.open || c.y1 <= yLo || c.y0 >= yHi) continue;
       const nx = clamp(pos.x, c.x0, c.x1), nz = clamp(pos.z, c.z0, c.z1);
       const dx = pos.x - nx, dz = pos.z - nz;
       const d2 = dx * dx + dz * dz;
@@ -763,6 +763,15 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
     pos.z = clamp(pos.z, -lim, lim);
     return hit;
   }
+  function ceilingAt(x, z, r, head) {
+    let c0 = Infinity;
+    for (const c of colliders) {
+      if (c.open || c.y0 < head || c.y0 >= c0) continue;
+      const nx = clamp(x, c.x0, c.x1), nz = clamp(z, c.z0, c.z1);
+      if ((x - nx) ** 2 + (z - nz) ** 2 < r * r * 0.5) c0 = c.y0;
+    }
+    return c0;
+  }
   function groundAt(x, z, r, feet) {
     let g = 0;
     for (const c of colliders) {
@@ -777,6 +786,7 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
     let best = maxT;
     if (d.y < -1e-6) { const t = -o.y / d.y; if (t > 0 && t < best) best = t; }
     for (const c of colliders) {
+      if (c.open) continue;
       let t0 = 0, t1 = best;
       const lo = [c.x0, c.y0, c.z0], hi = [c.x1, c.y1, c.z1];
       const oo = [o.x, o.y, o.z], dd = [d.x, d.y, d.z];
@@ -799,7 +809,7 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
   function insideSolid(p) {
     if (p.y <= 0) return true;
     for (const c of colliders) {
-      if (p.x > c.x0 && p.x < c.x1 && p.z > c.z0 && p.z < c.z1 && p.y > c.y0 && p.y < c.y1) return true;
+      if (!c.open && p.x > c.x0 && p.x < c.x1 && p.z > c.z0 && p.z < c.z1 && p.y > c.y0 && p.y < c.y1) return true;
     }
     return Math.abs(p.x) > ARENA || Math.abs(p.z) > ARENA;
   }
@@ -870,16 +880,22 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
     const def = ENEMY_DEF[type];
     const model = type === "email" ? makeEmail() : type === "meeting" ? makeMeeting() : type === "clock" ? makeClock() : makeBoss();
     let sx, sz;
-    if (at) { sx = at[0]; sz = at[1]; }
+    if (at) { sx = at[0]; sz = at[1]; if (at[2] !== undefined && opts.y === undefined) opts.y = at[2]; }
     else {
-      const far = SPAWNS.filter(([x, z]) => Math.hypot(x - P.pos.x, z - P.pos.z) > 16);
-      const pick = (far.length ? far : SPAWNS)[Math.floor(Math.random() * (far.length || SPAWNS.length))];
+      // aparecen en la planta en la que estás (lejos de ti)
+      const fl = floorOf(P.pos.y);
+      const same = SPAWNS.filter((sp) => floorOf(sp[2]) === fl);
+      const far = same.filter(([x, z]) => Math.hypot(x - P.pos.x, z - P.pos.z) > 12);
+      const pool = far.length ? far : same.length ? same : SPAWNS;
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      at = null;
+      opts.y = opts.y ?? pick[2];
       sx = pick[0] + rnd(-1.5, 1.5);
       sz = pick[1] + rnd(-1.5, 1.5);
     }
     const e = {
       type, def, model, hp: def.hp * (type === "boss" ? 1 : 1 + G.wave * 0.05), maxHp: 0,
-      pos: new THREE.Vector3(sx, type === "email" ? rnd(1.6, 2.6) : 0, sz),
+      pos: new THREE.Vector3(sx, (opts.puppet ? 0 : opts.y || 0) + (type === "email" && !opts.puppet ? rnd(1.6, 2.6) : 0), sz),
       vel: new THREE.Vector3(), t: rnd(0, 10), cd: rnd(1, 2.5), flash: 0,
       mode: "move", modeT: 0, detour: 0, detourT: 0, lastPos: new THREE.Vector3(), stuckT: 0
     };
@@ -893,7 +909,7 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
     } else {
       e.pos.x = clamp(e.pos.x, -ARENA + 2, ARENA - 2);
       e.pos.z = clamp(e.pos.z, -ARENA + 2, ARENA - 2);
-      if (type !== "email") pushOut(e.pos, def.r, 0.4, 2);
+      if (type !== "email") pushOut(e.pos, def.r, e.pos.y + 0.4, e.pos.y + 2);
     }
     model.group.position.copy(e.pos);
     model.group.scale.setScalar(0.01);
@@ -949,7 +965,7 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
     G.kills++;
     addScore(e.def.score);
     if (mp.on) net.broadcast({ t: "kill", id: e.id });
-    if (!big && Math.random() < 0.16) spawnCoffee(e.pos.x, e.pos.z);
+    if (!big && Math.random() < 0.16) spawnCoffee(e.pos.x, e.pos.z, null, groundAt(e.pos.x, e.pos.z, 0.3, e.pos.y));
     if (big) {
       G.boss = null;
       G.flash = 1;
@@ -959,13 +975,13 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
     }
   }
 
-  function spawnCoffee(x, z, id) {
+  function spawnCoffee(x, z, id, y = 0) {
     const cid = id || ++mp.cid;
-    if (mp.on && mp.isHost && !id) net.broadcast({ t: "cof", id: cid, x: +x.toFixed(2), z: +z.toFixed(2) });
+    if (mp.on && mp.isHost && !id) net.broadcast({ t: "cof", id: cid, x: +x.toFixed(2), z: +z.toFixed(2), y });
     const c = makeCoffee();
-    c.group.position.set(x, 0, z);
+    c.group.position.set(x, y, z);
     scene.add(c.group);
-    pickups.push({ id: cid, model: c, pos: new THREE.Vector3(x, 0, z), t: rnd(0, 6), life: 25 });
+    pickups.push({ id: cid, model: c, pos: new THREE.Vector3(x, y, z), t: rnd(0, 6), life: 25 });
   }
   function removeCoffee(id) {
     for (const c of pickups) if (c.id === id && c.life > 0) { c.life = 0; scene.remove(c.model.group); }
@@ -1128,7 +1144,23 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
   }
 
   const _eEye = new THREE.Vector3(), _eCtr = new THREE.Vector3(), _eTo = new THREE.Vector3(), _eLook = new THREE.Vector3();
+  // si el objetivo cambia de planta, al rato los enemigos "suben" tras él (aparecen en su planta)
+  function followFloors(e, dt) {
+    if (e.type === "boss" || !e.tgt) return;
+    const tf = floorOf(e.tgt.pos.y), ef = floorOf(e.pos.y - (e.type === "email" ? 1.5 : 0));
+    if (tf === ef) { e.offT = 0; return; }
+    e.offT = (e.offT || 0) + dt;
+    if (e.offT < 6) return;
+    e.offT = 0;
+    const opts = SPAWNS.filter((sp) => floorOf(sp[2]) === tf).sort((a, b) => Math.hypot(a[0] - e.tgt.pos.x, a[1] - e.tgt.pos.z) - Math.hypot(b[0] - e.tgt.pos.x, b[1] - e.tgt.pos.z));
+    const sp = opts[Math.min(opts.length - 1, 1)] || opts[0];
+    if (!sp) return;
+    spawnInk(e.pos.clone().setY(e.pos.y + 0.8), null, e.def.ink, 8, 3);
+    e.pos.set(sp[0], sp[2] + (e.type === "email" ? 2 : 0), sp[1]);
+    spawnInk(e.pos.clone().setY(e.pos.y + 0.8), null, e.def.ink, 8, 3);
+  }
   function updateEnemy(e, dt) {
+    followFloors(e, dt);
     const m = e.model;
     e.t += dt;
     if (e.flash > 0) { e.flash -= dt; if (e.flash <= 0) unflashEnemy(e); }
@@ -1162,7 +1194,8 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
       }
       e.vel.lerp(dir.multiplyScalar(speed).add(side.multiplyScalar(speed)), Math.min(1, dt * 2.5));
       e.pos.addScaledVector(e.vel, dt);
-      e.pos.y = clamp(e.pos.y, 0.9, 4.5);
+      const floorY = groundAt(e.pos.x, e.pos.z, 0.3, e.pos.y - 0.5);
+      e.pos.y = clamp(e.pos.y, floorY + 0.9, floorY + 3.1);
       pushOut(e.pos, e.def.r, e.pos.y - 0.3, e.pos.y + 0.3);
       e.cd -= dt;
       if (dist < 1.3 && e.cd <= 0) {
@@ -1225,7 +1258,8 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
       e.vel.z += (wish.z * speed - e.vel.z) * Math.min(1, dt * 8);
       e.lastPos.copy(e.pos);
       e.pos.addScaledVector(e.vel, dt);
-      const bumped = pushOut(e.pos, e.def.r, 0.35, 2.2);
+      const bumped = pushOut(e.pos, e.def.r, e.pos.y + 0.35, e.pos.y + 2.2);
+      e.pos.y = groundAt(e.pos.x, e.pos.z, e.def.r * 0.8, e.pos.y);
       if (bumped && e.mode === "charge") { e.mode = "move"; e.cd = 1.5; P.shake = Math.max(P.shake, 0.2); }
       const moved = e.lastPos.distanceTo(e.pos);
       if (speed > 0 && moved < speed * dt * 0.3) {
@@ -1247,6 +1281,8 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
       e.vel.lerp(wish.multiplyScalar(rage ? 3.4 : 2.4), Math.min(1, dt * 2));
       e.pos.addScaledVector(e.vel, dt);
       pushOut(e.pos, e.def.r, 0.1, 6);
+      e.pos.x = clamp(e.pos.x, BOSS_AREA.x0, BOSS_AREA.x1);
+      e.pos.z = clamp(e.pos.z, BOSS_AREA.z0, BOSS_AREA.z1);
       e.pos.y = Math.sin(e.t * 1.3) * 0.25 + 0.3;
       e.cd -= dt;
       if (e.cd <= 0) {
@@ -1334,7 +1370,13 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
     _dir.z += rnd(-spread, spread);
     _dir.normalize();
     const wallT = rayWorld(o, _dir, 120);
-    let best = null, bestT = wallT;
+    let best = null, bestT = wallT, vicHit = false;
+    {
+      // Victoria no es un enemigo: si le das, se queja (y no pasa nada más)
+      _v3.set(victoria.group.position.x, 1.4, victoria.group.position.z).sub(o);
+      const tc = _v3.dot(_dir), d2 = _v3.lengthSq() - tc * tc;
+      if (tc > 0 && d2 < 0.5 * 0.5) { const t = tc - Math.sqrt(0.25 - d2); if (t < bestT) { bestT = t; vicHit = true; } }
+    }
     for (const e of enemies) {
       if (e.dead) continue;
       enemyCenter(e, _v2);
@@ -1385,6 +1427,10 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
       damageEnemy(best, DMG, hitP, _dir);
       audio.hit();
       hitmark();
+    } else if (vicHit) {
+      spawnInk(hitP, null, INK.BLUE, 5, 2.5);
+      audio.wallHit();
+      showMsg("", "Victoria: ¡Eh! ¡Que yo sólo te doy la tarjeta de acceso! 😅", 2);
     } else if (bestT < 120) {
       spawnInk(hitP, null, INK.BLUE, 3, 2.5);
       if (hitP.y < 0.05) spawnDecal(hitP.x, hitP.z, INK.BLUE, 0.25);
@@ -1468,7 +1514,7 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
     G.spawnT = 0.5;
     announce(w.title, w.sub, 3, true);
     reviveAll();
-    if (G.wave > 0) spawnCoffee(rnd(-4, 4), ARENA - 4);
+    if (G.wave > 0) { const [cx, cy, cz] = COFFEE_SPOTS[G.wave % COFFEE_SPOTS.length]; spawnCoffee(cx, cz, null, cy); }
   }
 
   function updateWaves(dt) {
@@ -1486,7 +1532,8 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
       G.spawnT -= dt;
       const alive = enemies.filter((e) => !e.dead).length;
       if (G.spawnT <= 0 && alive < 14) {
-        spawnEnemy(G.queue.shift());
+        const type = G.queue.shift();
+        spawnEnemy(type, type === "boss" ? [1, -20, 0] : null);
         G.spawnT = G.wave < 2 ? rnd(1.1, 1.8) : rnd(0.5, 1.0);
       }
     } else if (G.wave < WAVES.length - 1 && enemies.every((e) => e.dead)) {
@@ -1571,7 +1618,13 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
     }
     input.jump = false;
     P.vel.y -= GRAVITY * dt;
+    const headPrev = P.pos.y + P_HEIGHT;
     P.pos.addScaledVector(P.vel, dt);
+    // techos: al saltar bajo una losa te das con la cabeza
+    if (P.vel.y > 0) {
+      const ceil = ceilingAt(P.pos.x, P.pos.z, P_RADIUS, headPrev - 0.05);
+      if (P.pos.y + P_HEIGHT > ceil) { P.pos.y = ceil - P_HEIGHT; P.vel.y = 0; }
+    }
     pushOut(P.pos, P_RADIUS, P.pos.y + STEP_UP, P.pos.y + P_HEIGHT);
     const g = groundAt(P.pos.x, P.pos.z, P_RADIUS, P.pos.y);
     const wasGround = P.onGround;
@@ -1637,7 +1690,7 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
     for (const c of pickups) {
       c.t += dt;
       c.life -= dt;
-      c.model.group.position.y = 0.25 + Math.sin(c.t * 3) * 0.12;
+      c.model.group.position.y = c.pos.y + 0.25 + Math.sin(c.t * 3) * 0.12;
       c.model.group.rotation.y += dt * 1.8;
       if (!P.down && c.life > 0 && Math.hypot(c.pos.x - P.pos.x, c.pos.z - P.pos.z) < 1.2 && Math.abs(P.pos.y - c.pos.y) < 1.5 && P.hp < 100) {
         P.hp = Math.min(100, P.hp + 25);
@@ -1802,7 +1855,7 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
     Object.assign(P, { down: false, lastHurt: 0, turnV: 0, fireT: 0, moveX: 0, yaw: 0, pitch: 0, onGround: true, coyote: 0, hp: 100, mag: MAG, reload: 0, fireCd: 0, dashCd: 0, dashT: 0, shake: 0, kick: 0, iframes: 0 });
     P.vel.set(0, 0, 0);
     if (mp.on) spawnAt(mp.spawnIdx >= 0 ? mp.spawnIdx : farthestSpawn());
-    else P.pos.set(0, 0, 22);
+    else { P.pos.set(START.x, START.y, START.z); P.yaw = START.yaw; }
     Object.assign(G, { winT: 0, wave: -1, queue: [], spawnT: 0, interT: pvp() ? 0 : 1.2, time: 0, score: 0, kills: 0, shots: 0, hits: 0, hurt: 0, flash: 0, boss: null });
     mp.respawnT = 0;
     mp.lastAttacker = null;
@@ -1810,7 +1863,7 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
     $(".dd-feed").innerHTML = "";
     $(".dd-boss").classList.add("hidden");
     if (pvp()) showMsg("TODOS CONTRA TODOS", `Tacha a tus compañeros · gana el primero a ${PVP_GOAL} bajas`, 3);
-    else showMsg("DOODLE DISTRICT", "Prepara el boli...", 1.2);
+    else showMsg("CINK COWORKING", "Infanta Mercedes · entra por la puerta de la esquina", 2.4);
   }
 
   // ── bucle ──
@@ -1829,10 +1882,12 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
   window.addEventListener("resize", resize);
   resize();
 
-  P.pos.set(0, 0, 22);
+  P.pos.set(START.x, START.y, START.z);
+  P.yaw = START.yaw;
   if (import.meta.env && import.meta.env.DEV) window.__doodle = { P, G, mp, net, input, scene, camera, shadow, sticker, get enemies() { return enemies; }, get state() { return state; }, get noLock() { return noLock; } };
   let raf = 0, prev = performance.now(), acc = 0, wall = 0;
   let lastRaf = performance.now();
+  let lastHello = -99;
   function frame(now) {
     raf = requestAnimationFrame(frame);
     lastRaf = performance.now();
@@ -1863,6 +1918,18 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
       const lift = clamp(1 - (P.pos.y - gy) / 3, 0.35, 1);
       shadow.position.set(P.pos.x, gy + 0.02, P.pos.z);
       shadow.scale.set(0.9 * lift, 0.55 * lift, 1);
+    }
+    // puertas automáticas: se abren si hay alguien cerca (tú, compañeros o enemigos)
+    const near = [P.pos];
+    for (const e of enemies) if (!e.dead) near.push(e.pos);
+    mp.remotes.forEach((r) => near.push(r.pos));
+    updateDoors(dt, near);
+    // Victoria saluda desde recepción
+    const vd = Math.hypot(P.pos.x - victoria.group.position.x, P.pos.z - victoria.group.position.z);
+    victoria.update(dt, vd < 14 && P.pos.y < 2 ? P.pos : null, vd < 6 && P.pos.y < 2);
+    if (state === "play" && vd < 4.5 && P.pos.y < 2 && wall - lastHello > 25) {
+      lastHello = wall;
+      showMsg("", "Victoria: ¡Hola! Bienvenido a CINK 👋 El comedor, a la izquierda; la terraza y las salas, al fondo; Clevergy, subiendo a la derecha.", 4.5);
     }
     netTick(dt);
     updateRemotes(state === "start" ? 0 : dt);

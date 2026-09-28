@@ -81,6 +81,12 @@ Los dos mundos 3D usan el mismo componente, pensado para móvil en horizontal: j
 
 ## ✏️ Mundo 3 · Doodle District (3D)
 
+**Escenario: CINK Coworking (Infanta Mercedes, Madrid)** — `src/doodle/cinkLevel.js`. Empiezas en la calle, en la esquina de Pedro Villar con Limonero, y entras por las puertas automáticas de la esquina redonda.
+- **Planta baja:** recepción con Victoria (te saluda; si le disparas, se queja), mesa alta con taburetes, comedor con mesas de madera, 4 microondas y vending, terraza con césped, y salas 1–4.
+- **Primera planta:** hot desk y, subiendo la escalera a la derecha, la oficina de Clevergy en la esquina redonda (3 mesas, estantería con café, pizarra).
+- **Segunda planta:** oficinas 201–203. Azotea con la torre cilíndrica.
+- Logo y carteles hechos con trazos de tinta (`inkText.js`). Los enemigos aparecen en tu planta y te siguen si cambias de piso; el jefe aterriza en la terraza.
+
 Shooter en primera o tercera persona dibujado a boli sobre un cuaderno (Three.js). Sobrevive a 5 oleadas de emails, invitaciones de calendario y «¿tienes 5 minutos?» y derrota a **INBOX INFINITO**.
 
 - **Look de boli:** render en dos pasadas (`src/doodle/doodleRender.js`): la escena escribe luz/tinta/normal en un render target y un shader de pantalla completa dibuja contornos, rayado anclado al mundo y papel de libreta.
