@@ -1,5 +1,5 @@
 // =============================================================================
-// doodleWorld.js — MUNDO 7 · DOODLE DISTRICT
+// doodleWorld.js — MUNDO 3 · DOODLE DISTRICT
 // Shooter en primera persona dibujado a boli. Sobrevive a 5 oleadas de emails,
 // reuniones y "¿tienes 5 minutos?" y tumba al jefe INBOX INFINITO.
 // Se autogestiona: crea su propio canvas/HUD, su bucle y lo destruye todo al salir.
@@ -11,6 +11,7 @@ import { DoodleAudio } from "./doodleAudio.js";
 import { buildLevel, ARENA, SPAWNS, GEO } from "./doodleLevel.js";
 import { makeEmail, makeMeeting, makeClock, makeBoss, makeGun, makeCoffee } from "./doodleActors.js";
 import { createSticker } from "./doodleSticker.js";
+import { createTouchPad, ICON } from "./touchPad.js";
 import { touch as mando } from "../engine/input.js";
 import { createNet, randomCode, cleanCode, MAX_PLAYERS } from "./doodleNet.js";
 import "./doodle.css";
@@ -67,20 +68,15 @@ const TEMPLATE = `
   <div class="dd-ammo"><b>30</b><span>/${MAG}</span><small>BOLI BIC</small></div>
   <div class="dd-dash"><i></i><small>DASH</small></div>
   <div class="dd-hudbtns">
+    <button class="dd-hb dd-swapbtn" aria-label="Cambiar de compañero">${ICON.swap}<small>EQUIPO</small></button>
     <button class="dd-hb dd-cambtn" aria-label="Cambiar cámara">👁<small>3ª</small></button>
     <button class="dd-hb dd-dashbtn" aria-label="Dash">»<small>DASH</small></button>
     <button class="dd-hb dd-pausebtn" aria-label="Pausa">❚❚</button>
   </div>
 </div>
-<div class="dd-dpad hidden">
-  <button class="tbtn tbtn-dir dd-dp dd-dp-up" aria-label="Avanzar">▲</button>
-  <button class="tbtn tbtn-dir dd-dp dd-dp-left" aria-label="Girar izquierda">◀</button>
-  <button class="tbtn tbtn-dir dd-dp dd-dp-right" aria-label="Girar derecha">▶</button>
-  <button class="tbtn tbtn-dir dd-dp dd-dp-down" aria-label="Retroceder">▼</button>
-</div>
 <div class="dd-ov dd-start">
   <div class="dd-card">
-    <div class="dd-kicker">MUNDO 7</div>
+    <div class="dd-kicker">MUNDO 3</div>
     <h1>Doodle District</h1>
     <p class="dd-lead">El sprint se ha quedado atrapado en el cuaderno de notas de la oficina.
       Emails urgentes, reuniones sin agenda y «¿tienes 5 minutos?» salen de las páginas.
@@ -92,9 +88,9 @@ const TEMPLATE = `
       <span>🎮 <b>Mando</b>: sticks, RT dispara, A salta, B dash, Y cámara</span>
     </div>
     <div class="dd-controls dd-touch-only">
-      <span><b>Cruceta ▲▼</b> andar · <b>◀▶</b> girar</span><span><b>B</b> disparar (autoapuntado)</span>
-      <span><b>A</b> saltar</span><span><b>Arrastra en la pantalla</b> para apuntar</span>
-      <span><b>▲▲</b> doble toque o <b>»</b>: dash</span><span><b>👁</b> 1ª/3ª persona</span>
+      <span><b>Joystick</b> (pulgar izquierdo) moverse</span><span><b>Arrastra a la derecha</b> para apuntar</span>
+      <span><b>✎</b> disparar (arrástralo para apuntar a la vez)</span><span><b>Salta · Dash · Recarga</b></span>
+      <span>En vertical: cruceta ▲▼ andar, ◀▶ girar, <b>B</b> disparar, <b>A</b> saltar</span><span><b>👁</b> 1ª/3ª persona</span>
     </div>
     <div class="dd-mp">
       <div class="dd-mp-head">👥 <b>Jugar en sala</b> <small>hasta ${MAX_PLAYERS} jugadores · cooperativo</small></div>
@@ -147,7 +143,7 @@ const TEMPLATE = `
  * Arranca el mundo 7.
  * @param {{char?: {id:string, name:string, emoji:string, spd:number, jump:number}, getChar?: () => object, onExit?: Function, onVictory?: (score:number, rank:string)=>void}} opts
  */
-export function startDoodleWorld({ char, getChar, onExit, onVictory } = {}) {
+export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictory } = {}) {
   const root = document.createElement("div");
   root.id = "doodleRoot";
   root.innerHTML = TEMPLATE;
@@ -301,67 +297,29 @@ export function startDoodleWorld({ char, getChar, onExit, onVictory } = {}) {
   document.addEventListener("pointerlockerror", onLockError);
   window.addEventListener("blur", onBlur);
 
-  // ── mando en pantalla (el mismo de los demás mundos) ──
+  // ── mando en pantalla ──
   // Vertical: la cruceta y los botones A/B del deck Game Boy (objeto `touch` compartido).
-  // Horizontal: botones A/B/CAMBIAR del HUD táctil + una cruceta propia con el mismo estilo.
-  // Además se puede arrastrar sobre la pantalla del juego para apuntar.
-  const pad = { up: false, down: false, left: false, right: false };
-  const dpadEl = $(".dd-dpad");
-  let dpadPointer = null;
-  function dpadFromPoint(x, y) {
-    const r = dpadEl.getBoundingClientRect();
-    const dx = x - (r.left + r.width / 2), dy = y - (r.top + r.height / 2), dz = 14;
-    pad.left = dx < -dz; pad.right = dx > dz; pad.up = dy < -dz; pad.down = dy > dz;
-    dpadEl.querySelector(".dd-dp-up").classList.toggle("active", pad.up);
-    dpadEl.querySelector(".dd-dp-down").classList.toggle("active", pad.down);
-    dpadEl.querySelector(".dd-dp-left").classList.toggle("active", pad.left);
-    dpadEl.querySelector(".dd-dp-right").classList.toggle("active", pad.right);
-  }
-  function dpadClear() {
-    dpadPointer = null;
-    pad.up = pad.down = pad.left = pad.right = false;
-    dpadEl.querySelectorAll(".dd-dp").forEach((b) => b.classList.remove("active"));
-  }
-  dpadEl.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    dpadPointer = e.pointerId;
-    try { dpadEl.setPointerCapture(e.pointerId); } catch (err) {}
-    dpadFromPoint(e.clientX, e.clientY);
-  });
-  dpadEl.addEventListener("pointermove", (e) => { if (e.pointerId === dpadPointer) dpadFromPoint(e.clientX, e.clientY); });
-  dpadEl.addEventListener("pointerup", dpadClear);
-  dpadEl.addEventListener("pointercancel", dpadClear);
+  // Horizontal: el mando táctil común (joystick flotante + botones de cuaderno), ver touchPad.js.
+  const touchFire = { on: false };
+  const touchPad = isTouch ? createTouchPad(root, {
+    actions: [
+      { id: "fire", label: "DISPARA", icon: ICON.fire, accent: "red", drag: true },
+      { id: "jump", label: "SALTA", icon: ICON.jump },
+      { id: "dash", label: "DASH", icon: ICON.dash },
+      { id: "reload", icon: ICON.reload }
+    ],
+    isActive: () => state === "play",
+    onLook: (dx, dy) => { lookX += dx * 2.2; lookY += dy * 2.2; },
+    onAction: (id, down) => {
+      if (id === "fire") touchFire.on = down;
+      if (!down) return;
+      if (id === "jump") input.jump = true;
+      if (id === "dash") input.dash = true;
+      if (id === "reload") startReload();
+    }
+  }) : null;
+  const joy = touchPad ? touchPad.joy : { x: 0, y: 0 };
 
-  // arrastrar sobre la pantalla del juego = apuntar
-  const lookTouch = { id: null, x: 0, y: 0 };
-  function onTouchStart(e) {
-    if (state !== "play") return;
-    for (const t of e.changedTouches) {
-      if (t.target.closest && t.target.closest("button, .dd-dpad")) continue;
-      if (lookTouch.id === null) { lookTouch.id = t.identifier; lookTouch.x = t.clientX; lookTouch.y = t.clientY; }
-      e.preventDefault();
-    }
-  }
-  function onTouchMove(e) {
-    for (const t of e.changedTouches) {
-      if (t.identifier !== lookTouch.id) continue;
-      lookX += (t.clientX - lookTouch.x) * 2.2;
-      lookY += (t.clientY - lookTouch.y) * 2.2;
-      lookTouch.x = t.clientX;
-      lookTouch.y = t.clientY;
-      e.preventDefault();
-    }
-  }
-  function onTouchEnd(e) {
-    for (const t of e.changedTouches) if (t.identifier === lookTouch.id) lookTouch.id = null;
-  }
-  if (isTouch) {
-    root.addEventListener("touchstart", onTouchStart, { passive: false });
-    root.addEventListener("touchmove", onTouchMove, { passive: false });
-    root.addEventListener("touchend", onTouchEnd);
-    root.addEventListener("touchcancel", onTouchEnd);
-  }
   const tapBtn = (sel, fn) => {
     const el = $(sel);
     el.addEventListener("pointerdown", (e) => { e.preventDefault(); e.stopPropagation(); fn(); });
@@ -369,6 +327,7 @@ export function startDoodleWorld({ char, getChar, onExit, onVictory } = {}) {
   };
   tapBtn(".dd-cambtn", () => toggleCam());
   tapBtn(".dd-dashbtn", () => { input.dash = true; });
+  tapBtn(".dd-swapbtn", () => { if (onSwitchChar) onSwitchChar(); });
   tapBtn(".dd-pausebtn", () => pause());
 
   // etiquetas del mando mientras estás en este mundo (se restauran al salir)
@@ -381,10 +340,6 @@ export function startDoodleWorld({ char, getChar, onExit, onVictory } = {}) {
   }
   relabel("#gbLabelB", "DISPARAR");
   relabel("#gbLabelA", "SALTAR");
-  relabel("#tB .tbtn-main", "✎");
-  relabel("#tB .tbtn-sub", "DISPARAR");
-  relabel("#tA .tbtn-main", "▲");
-  relabel("#tA .tbtn-sub", "SALTAR");
 
   // ── mando físico (Gamepad API, mapeo estándar) ──
   const gp = { active: false, prev: [], mx: 0, my: 0, lx: 0, ly: 0, fire: false };
@@ -751,8 +706,13 @@ export function startDoodleWorld({ char, getChar, onExit, onVictory } = {}) {
 
   function syncMandoUi() {
     const portrait = document.body.classList.contains("gameboy-mode");
-    dpadEl.classList.toggle("hidden", !(isTouch && !portrait && state === "play"));
-    $(".dd-dashbtn").classList.toggle("hidden", !isTouch);
+    const show = isTouch && !portrait && state === "play";
+    if (touchPad) touchPad.setVisible(show);
+    root.classList.toggle("dd-landpad", isTouch && !portrait);
+    // en horizontal el dash ya está junto al pulgar; en vertical va en la barra de arriba
+    $(".dd-dashbtn").classList.toggle("hidden", !isTouch || !portrait);
+    // en vertical el deck ya trae la barra de compañeros
+    $(".dd-swapbtn").classList.toggle("hidden", !onSwitchChar || portrait);
   }
   syncCamUi();
   renderLobby();
@@ -1549,14 +1509,14 @@ export function startDoodleWorld({ char, getChar, onExit, onVictory } = {}) {
     P.pitch = clamp(P.pitch - lookY * sens - gp.ly * 2.2 * dt, -1.45, 1.45);
     lookX = lookY = 0;
     // cruceta ◀▶: girar (con un poco de inercia para apuntar fino)
-    const turn = ctrl ? (mando.R || pad.right ? 1 : 0) - (mando.L || pad.left ? 1 : 0) : 0;
+    const turn = ctrl ? (mando.R ? 1 : 0) - (mando.L ? 1 : 0) : 0;
     P.turnV += (turn * 2.7 - P.turnV) * Math.min(1, dt * (turn ? 7 : 14));
     P.yaw -= P.turnV * dt;
     // A: saltar · doble toque en ▲: dash
     const aNow = ctrl && !!mando.A;
     if (aNow && !P.aPrev) input.jump = true;
     P.aPrev = aNow;
-    const upNow = ctrl && !!(mando.Up || pad.up);
+    const upNow = ctrl && !!mando.Up;
     if (upNow && !P.upPrev) {
       if (G.time - P.upTapT < 0.28) input.dash = true;
       P.upTapT = G.time;
@@ -1566,9 +1526,9 @@ export function startDoodleWorld({ char, getChar, onExit, onVictory } = {}) {
     // moverse
     let ix = 0, iy = 0;
     if (ctrl) {
-      ix = gp.mx; iy = gp.my;
+      ix = gp.mx + joy.x; iy = gp.my + joy.y;
       if (upNow) iy += 1;
-      if (mando.Down || pad.down) iy -= 1;
+      if (mando.Down) iy -= 1;
       if (keys.KeyW || keys.ArrowUp) iy += 1;
       if (keys.KeyS || keys.ArrowDown) iy -= 1;
       if (keys.KeyD || keys.ArrowRight) ix += 1;
@@ -1631,12 +1591,12 @@ export function startDoodleWorld({ char, getChar, onExit, onVictory } = {}) {
     if (P.reload > 0) {
       P.reload -= dt;
       if (P.reload <= 0) P.mag = MAG;
-    } else if (ctrl && (input.fire || mando.B || gp.fire) && P.fireCd <= 0) {
+    } else if (ctrl && (input.fire || mando.B || gp.fire || touchFire.on) && P.fireCd <= 0) {
       if (P.mag > 0) fire();
       else startReload();
     }
 
-    if (ctrl && assistOn() && (mando.B || gp.fire)) {
+    if (ctrl && assistOn() && (mando.B || gp.fire || touchFire.on)) {
       const tgt = assistTarget(0.35);
       if (tgt) {
         const want = Math.atan2(-(tgt.x - P.pos.x), -(tgt.z - P.pos.z));
@@ -1958,6 +1918,7 @@ export function startDoodleWorld({ char, getChar, onExit, onVictory } = {}) {
     document.body.classList.remove("doodle-mode");
     audio.destroy();
     sticker.dispose();
+    if (touchPad) touchPad.destroy();
     R.dispose();
     root.remove();
     if (window.__doodle) delete window.__doodle;

@@ -30,7 +30,8 @@ const PEER_OPTS = {
 export const randomCode = () => Array.from({ length: 5 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join("");
 export const cleanCode = (s) => String(s || "").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 5);
 
-export function createNet() {
+// `prefix` separa los juegos (shooter / pelea) en el servidor de señalización
+export function createNet({ prefix = PREFIX, maxPlayers = MAX_PLAYERS } = {}) {
   const handlers = {};
   const net = {
     peer: null,
@@ -61,13 +62,13 @@ export function createNet() {
     net.isHost = true;
     net.code = code;
     return new Promise((resolve, reject) => {
-      const peer = new Peer(PREFIX + code, PEER_OPTS);
+      const peer = new Peer(prefix + code, PEER_OPTS);
       net.peer = peer;
       let opened = false;
       const timer = setTimeout(() => { if (!opened) reject(new Error("El servidor de salas no responde")); }, 10000);
       peer.on("open", (id) => { opened = true; clearTimeout(timer); net.myId = id; net.hostId = id; resolve(id); });
       peer.on("connection", (conn) => {
-        if (net.conns.size >= MAX_PLAYERS - 1) {
+        if (net.conns.size >= maxPlayers - 1) {
           conn.on("open", () => { conn.send({ t: "full" }); setTimeout(() => conn.close(), 400); });
           return;
         }
@@ -88,7 +89,7 @@ export function createNet() {
     destroy();
     net.isHost = false;
     net.code = code;
-    net.hostId = PREFIX + code;
+    net.hostId = prefix + code;
     return new Promise((resolve, reject) => {
       const peer = new Peer(PEER_OPTS);
       net.peer = peer;

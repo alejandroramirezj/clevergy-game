@@ -3,6 +3,11 @@
 export const WORLDS = [
   {
     id: 1,
+    num: 1,
+    theme: "mario",
+    genre: "PLATAFORMAS 2D",
+    blurb: "Salta entre las cards del roadmap, recoge cafés y derrota a EMAIL CHAIN con las habilidades de todo el equipo.",
+    chips: ["👤 1 jugador", "🦸 18 héroes", "👾 Email Chain"],
     name: "The Office",
     title: "1. The Office",
     subtitle: "Notion Roadmap · Oficinas Clevergy",
@@ -19,6 +24,7 @@ export const WORLDS = [
   },
   {
     id: 2,
+    hidden: true, // oculto: sólo se muestran plataformas, arena y doodle
     name: "Integration Jungle",
     title: "2. Integration Jungle",
     subtitle: "Selva de Cables y Conectores",
@@ -35,6 +41,7 @@ export const WORLDS = [
   },
   {
     id: 3,
+    hidden: true, // oculto: sólo se muestran plataformas, arena y doodle
     name: "Product Kingdom",
     title: "3. Product Kingdom",
     subtitle: "La Fortaleza del Roadmap",
@@ -51,6 +58,7 @@ export const WORLDS = [
   },
   {
     id: 4,
+    hidden: true, // oculto: sólo se muestran plataformas, arena y doodle
     name: "Meeting Dimension",
     title: "4. Meeting Dimension",
     subtitle: "Dimensión de Reuniones Infinitas",
@@ -67,6 +75,7 @@ export const WORLDS = [
   },
   {
     id: 5,
+    hidden: true, // oculto: sólo se muestran plataformas, arena y doodle
     name: "The Retreat",
     title: "5. The Retreat",
     subtitle: "Campamento Final en la Montaña",
@@ -83,6 +92,11 @@ export const WORLDS = [
   },
   {
     id: 6,
+    num: 2,
+    theme: "arena",
+    genre: "LUCHA 1v1",
+    blurb: "Combate en The Office contra la CPU o reta a un compañero desde otro móvil en tiempo real.",
+    chips: ["🥊 1 contra 1", "🤖 CPU", "📱 Online"],
     name: "Code Clash Arena",
     title: "6. Code Clash Arena",
     subtitle: "La Batalla del Sprint (1v1)",
@@ -99,6 +113,11 @@ export const WORLDS = [
   },
   {
     id: 7,
+    num: 3,
+    theme: "doodle",
+    genre: "SHOOTER 3D",
+    blurb: "La oficina dibujada a boli: oleadas de emails en cooperativo o todos contra todos en sala con tus compañeros.",
+    chips: ["👥 Hasta 6", "⚔️ PvP", "🤝 Coop"],
     name: "Doodle District",
     title: "7. Doodle District",
     subtitle: "El Cuaderno del Sprint (3D)",
@@ -114,6 +133,9 @@ export const WORLDS = [
     mapCoordsPortrait: { x: 28, y: 8 }
   }
 ];
+
+// Mundos visibles en la pantalla de elección (en este orden)
+export const VISIBLE_WORLDS = WORLDS.filter((w) => !w.hidden).sort((a, b) => a.num - b.num);
 
 const STORAGE_KEY = "clevergy_worlds_progress_v1";
 

@@ -34,13 +34,38 @@ Elige a cualquiera de los **18 miembros del equipo** (cada uno con habilidades, 
 
 ---
 
-## ✏️ Mundo 7 · Doodle District (3D)
+## 🗺️ Mundos
+
+La pantalla «Elige mundo» muestra 3 columnas, cada una con la estética de su mundo (en móvil vertical, un carrusel deslizable):
+
+1. **The Office** — plataformas 2D (ilustración pixel art clásica).
+2. **Code Clash Arena** — lucha 1v1 en 3D (mismo render de boli que Doodle District) contra la CPU u online.
+3. **Doodle District** — shooter 3D a boli, con salas multijugador.
+
+Los antiguos mundos 2–5 del plataformas siguen definidos en `src/config/worlds.js` con `hidden: true`; basta con quitar esa marca para volver a mostrarlos.
+
+---
+
+## 🥊 Mundo 2 · Code Clash Arena (3D)
+
+Lucha 2.5D en la oficina dibujada a boli (`src/doodle/fight/`). Los luchadores son las pegatinas de los personajes; la cámara encuadra a los dos.
+
+- **Combate:** combo de 3 golpes (el último lanza), golpe aéreo, doble salto, bloqueo (reduce el daño al 18 %), bajar de las mesas con ▼ + salto, y un especial por personaje (`fightMoves.js`): embestida, proyectil, golpe al suelo, gancho ascendente o escudo con contraataque. 3 rondas de 60 s; gana quien haga 2.
+- **Online P2P (PeerJS):** cada jugador simula su propio luchador (sin retardo en tus controles) y envía su estado 30 veces por segundo; el rival se pinta interpolado 90 ms por detrás. Quien golpea detecta el impacto y la víctima aplica el daño y decide si ha bloqueado. El anfitrión sincroniza el reloj (ping/pong con la muestra de menor latencia), arranca las rondas a la misma hora en los dos móviles y arbitra K.O., tiempo y ganador. Si el rival deja de responder 6 s, se vuelve a la sala.
+- **Controles:** teclado (A/D, W, S, J, K), mando físico, deck Game Boy en vertical (A golpe, B especial, ▲ salto, ▼ bloqueo) y, en horizontal, el mando táctil común.
+
+### Mando táctil común (`src/doodle/touchPad.js`)
+Los dos mundos 3D usan el mismo componente, pensado para móvil en horizontal: joystick flotante bajo el pulgar izquierdo y hasta 4 botones de cuaderno en abanico bajo el derecho (el grande es la acción principal). Arrastrar en el resto de la pantalla apunta.
+
+---
+
+## ✏️ Mundo 3 · Doodle District (3D)
 
 Shooter en primera o tercera persona dibujado a boli sobre un cuaderno (Three.js). Sobrevive a 5 oleadas de emails, invitaciones de calendario y «¿tienes 5 minutos?» y derrota a **INBOX INFINITO**.
 
 - **Look de boli:** render en dos pasadas (`src/doodle/doodleRender.js`): la escena escribe luz/tinta/normal en un render target y un shader de pantalla completa dibuja contornos, rayado anclado al mundo y papel de libreta.
 - **Tercera persona:** tu personaje aparece como pegatina recortada usando sus mismos sprites (`doodleSticker.js`). Cambia con **V**, el botón 👁 o **Y** en el mando.
-- **Controles:** teclado + ratón, mando físico (sticks, RT dispara, A salta, B dash) y en móvil el mismo mando que el resto de mundos: deck Game Boy en vertical (▲▼ andar, ◀▶ girar, **B** disparar con autoapuntado, **A** saltar) y botones táctiles en horizontal. Arrastra sobre la pantalla para apuntar.
+- **Controles:** teclado + ratón, mando físico (sticks, RT dispara, A salta, B dash) y en móvil: en vertical el deck Game Boy del resto de mundos (▲▼ andar, ◀▶ girar, **B** disparar con autoapuntado, **A** saltar); en horizontal un joystick flotante que aparece bajo el pulgar izquierdo y botones de cuaderno para disparar (arrástralo para apuntar mientras disparas), saltar, dash y recargar. Arrastra sobre la pantalla para apuntar.
 - **Multijugador en sala (hasta 6):** «Crear sala» genera un código de 5 letras y los demás pulsan «Unirse». Es P2P por WebRTC con PeerJS (`doodleNet.js`). Cada jugador sale de un punto distinto del mapa. Quien crea la sala elige el modo:
   - **⚔️ Todos contra todos:** los disparos dañan a los demás jugadores; gana el primero en llegar a 10 bajas. Reapareces a los 3 s en el punto más alejado del resto, con 2 s de invulnerabilidad. Los rivales no se ven a través de las paredes y aparecen cafés por el mapa.
   - **🤝 Cooperativo:** todos contra las oleadas; el anfitrión simula enemigos y puntos. Si caes, vuelves en la siguiente oleada; la partida acaba si caéis todos.

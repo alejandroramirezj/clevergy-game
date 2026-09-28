@@ -163,5 +163,5 @@ export function loadWorld(worldId) {
   GameState.status = "play";
   GameState.worldMapOpen = false;
 
-  msg(`MUNDO ${w.id}: ${w.name.toUpperCase()}`, 3);
+  msg(`MUNDO ${w.num || w.id}: ${w.name.toUpperCase()}`, 3);
 }

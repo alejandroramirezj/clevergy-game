@@ -134,7 +134,6 @@ window.addEventListener("orientationchange", () => setTimeout(fitCanvas, 200));
 function startGame(worldId = 1) {
   document.getElementById("menuOv")?.classList.add("hidden");
   document.getElementById("worldMapOv")?.classList.add("hidden");
-  document.getElementById("worldCardModal")?.classList.add("hidden");
   document.getElementById("bootOv")?.classList.add("hidden");
   document.getElementById("lbOv")?.classList.add("hidden");
   document.getElementById("ctrlOv")?.classList.add("hidden");
@@ -149,28 +148,7 @@ function startGame(worldId = 1) {
   if (worldId === 7) {
     startDoodle();
   } else if (worldId === 6) {
-    GameState.gameMode = "fighting";
-    fitCanvas();
-    showFightLobby(
-      (p1Char, p2Char, mode) => {
-        // Switch to combat mode and resize canvas
-        GameState.gameMode = "fighting_active";
-        fitCanvas();
-        startFight(p1Char, p2Char, mode, () => {
-          netDisconnect();
-          GameState.gameMode = "platformer";
-          worldMap.showWorldMap();
-          fitCanvas();
-        });
-      },
-      () => {
-        // Back to map
-        netDisconnect();
-        GameState.gameMode = "platformer";
-        worldMap.showWorldMap();
-        fitCanvas();
-      }
-    );
+    startFight3D();
   } else {
     GameState.gameMode = "platformer";
     fitCanvas();
@@ -187,6 +165,31 @@ function startGame(worldId = 1) {
 }
 
 // Mundo 7: shooter 3D con Three.js. Se carga bajo demanda para no engordar el bundle principal.
+// Mundo 2: Code Clash Arena en 3D (Three.js, mismo render de boli que Doodle District)
+async function startFight3D() {
+  GameState.gameMode = "doodle";
+  stopMusic();
+  fitCanvas();
+  const back = () => {
+    GameState.gameMode = "platformer";
+    GameState.status = "ready";
+    fitCanvas();
+    worldMap.showWorldMap();
+  };
+  try {
+    const { startDoodleFight } = await import("./doodle/fight/doodleFight.js");
+    doodle = startDoodleFight({
+      charId: (CHARS[GameState.charIdx] || CHARS[0]).id,
+      onPickChar: (id) => { const i = CHARS.findIndex((c) => c.id === id); if (i >= 0) GameState.charIdx = i; },
+      onVictory: (score, rank) => saveWorldProgress(6, score, rank),
+      onExit: () => { doodle = null; back(); }
+    });
+  } catch (err) {
+    console.error("No se pudo cargar Code Clash Arena", err);
+    back();
+  }
+}
+
 let doodle = null;
 async function startDoodle() {
   GameState.gameMode = "doodle";
@@ -198,6 +201,7 @@ async function startDoodle() {
       char: CHARS[GameState.charIdx] || CHARS[0],
       // cualquier cambio de compañero (TAB, CAMBIAR, barra del deck) se refleja en el personaje
       getChar: () => CHARS[GameState.charIdx],
+      onSwitchChar: () => { switchChar(1); updateSpotlight(); },
       onVictory: (score, rank) => saveWorldProgress(7, score, rank),
       onExit: () => {
         doodle = null;
@@ -538,13 +542,11 @@ const { toggleTeam, tryStart, updateSpotlight, togglePause, showLevelBriefing } 
     showLevelBriefing(w, () => startGame(1));
   },
   onOpenMap: () => worldMap.showWorldMap(),
-  onNextWorld: () => {
-    const nextId = Math.min(5, (GameState.currentWorld || 1) + 1);
-    const w = WORLDS.find((x) => x.id === nextId) || WORLDS[0];
-    showLevelBriefing(w, () => startGame(nextId));
-  }
+  // sólo queda un mundo de plataformas: al superarlo se vuelve a la elección de mundo
+  onNextWorld: () => worldMap.showWorldMap()
 });
 toggleTeamFn = toggleTeam;
+document.getElementById("btnWinNextWorld")?.classList.add("hidden");
 showBriefingFn = showLevelBriefing;
 
 initInput({

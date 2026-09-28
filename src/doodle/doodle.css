@@ -1,7 +1,7 @@
 @import url("https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Caveat:wght@700&display=swap");
 
 /* =============================================================================
-   MUNDO 7 · DOODLE DISTRICT — HUD y menús de cuaderno
+   MUNDO 3 · DOODLE DISTRICT — HUD y menús de cuaderno
    ============================================================================= */
 
 #doodleRoot {
@@ -121,18 +121,6 @@
 .dd-score { right: max(170px, calc(env(safe-area-inset-right) + 170px)); }
 .dd-boss { top: 62px; }
 
-/* ── Mando en horizontal: cruceta con el estilo de los botones táctiles del juego ── */
-.dd-dpad {
-  position: absolute; left: max(18px, env(safe-area-inset-left)); bottom: max(18px, env(safe-area-inset-bottom));
-  width: 184px; height: 184px; z-index: 5; touch-action: none;
-}
-.dd-dp { position: absolute; width: 62px; height: 62px; font-size: 20px; pointer-events: none; }
-.dd-dp-up { left: 61px; top: 0; }
-.dd-dp-down { left: 61px; bottom: 0; }
-.dd-dp-left { left: 0; top: 61px; }
-.dd-dp-right { right: 0; top: 61px; }
-/* la cruceta propia sustituye a las flechas ◀ ▶ del HUD táctil */
-body.doodle-mode #touch .touch-cluster-left { display: none; }
 .dd-is-touch .dd-hp { left: auto; right: max(16px, env(safe-area-inset-right)); bottom: auto; top: 62px; width: min(190px, 30vw); }
 .dd-is-touch .dd-hp-label { font-size: 18px; text-align: right; }
 .dd-is-touch .dd-ammo { bottom: auto; top: 108px; }
@@ -141,14 +129,7 @@ body.doodle-mode #touch .touch-cluster-left { display: none; }
 .dd-is-touch .dd-dash { display: none; }
 .dd-is-touch .dd-score { right: auto; left: 50%; transform: translateX(-50%) rotate(-3deg); top: 6px; font-size: 32px; }
 .dd-is-touch .dd-boss { top: 48px; width: min(420px, 60%); }
-/* horizontal táctil: el botón CAMBIAR del HUD del juego ocupa la esquina superior izquierda */
-body.doodle-mode:not(.gameboy-mode) .dd-is-touch .dd-tl { left: calc(max(16px, env(safe-area-inset-left)) + 60px); top: 18px; }
-body.doodle-mode:not(.gameboy-mode) .dd-is-touch .dd-score { left: auto; right: calc(max(12px, env(safe-area-inset-right)) + 160px); transform: rotate(-3deg); }
 @media (max-height: 460px) {
-  .dd-dpad { width: 150px; height: 150px; }
-  .dd-dp { width: 50px; height: 50px; font-size: 17px; }
-  .dd-dp-up, .dd-dp-down { left: 50px; }
-  .dd-dp-left, .dd-dp-right { top: 50px; }
   .dd-is-touch .dd-msg { top: 18%; font-size: 48px; }
   .dd-is-touch .dd-sub { top: calc(18% + 54px); font-size: 19px; }
 }
@@ -253,7 +234,6 @@ body.gameboy-mode .dd-end-stats { font-size: 16px; margin: 6px 0 10px; }
 .dd-mate i { display: inline-block; width: 54px; height: 6px; border: 1.5px solid var(--dd-black); border-radius: 3px; overflow: hidden; }
 .dd-mate b { display: block; height: 100%; background: var(--dd-green); }
 .dd-mate.ko { opacity: 0.5; text-decoration: line-through; }
-body.doodle-mode:not(.gameboy-mode) .dd-is-touch .dd-team { left: calc(max(16px, env(safe-area-inset-left)) + 60px); top: 50px; }
 body.gameboy-mode .dd-team { top: 32px; }
 body.gameboy-mode .dd-mp { padding: 6px 8px; margin-bottom: 8px; }
 body.gameboy-mode .dd-mp-head { font-size: 15px; }
@@ -276,3 +256,74 @@ body.gameboy-mode .dd-mp-head small { display: none; }
 .dd-feed-item b { color: var(--dd-red); }
 .dd-is-touch .dd-feed { top: 150px; }
 body.gameboy-mode .dd-feed { top: 130px; }
+
+
+/* =============================================================================
+   Mando en horizontal: joystick flotante + botones de acción de cuaderno
+   ============================================================================= */
+/* en este mundo el HUD táctil genérico del juego se sustituye por el propio */
+body.doodle-mode:not(.gameboy-mode) #touch { display: none !important; }
+
+.dd-pad { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+
+/* joystick: fantasma en reposo abajo a la izquierda; al tocar aparece bajo el dedo */
+.dd-joy { position: absolute; inset: 0; }
+.dd-joy-base {
+  position: absolute; left: calc(max(18px, env(safe-area-inset-left)) + 66px); top: calc(100% - 92px);
+  width: 124px; height: 124px; margin: -62px 0 0 -62px; border-radius: 50%;
+  border: 3px dashed rgba(39, 42, 54, 0.55); opacity: 0.45; transition: opacity 0.15s;
+  background:
+    radial-gradient(circle, rgba(246, 243, 230, 0.75) 0 55%, rgba(246, 243, 230, 0.35) 56% 100%),
+    repeating-linear-gradient(45deg, rgba(31, 56, 184, 0.12) 0 2px, transparent 2px 7px);
+}
+.dd-joy.on .dd-joy-base { opacity: 1; border-style: solid; border-color: var(--dd-black); transition: none; }
+.dd-joy-knob {
+  position: absolute; left: 50%; top: 50%; width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%;
+  background: radial-gradient(circle at 38% 34%, #4e67d6 0 18%, var(--dd-ink) 55%);
+  border: 3px solid var(--dd-black); box-shadow: 2px 3px 0 rgba(39, 42, 54, 0.45);
+}
+.dd-joy.on .dd-joy-knob { box-shadow: 1px 1px 0 rgba(39, 42, 54, 0.45); }
+.dd-joy-hint {
+  position: absolute; left: calc(max(18px, env(safe-area-inset-left)) + 66px); top: calc(100% - 22px); transform: translateX(-50%);
+  font-size: 14px; color: var(--dd-black); opacity: 0.55; letter-spacing: 1px;
+}
+.dd-joy.on .dd-joy-hint { opacity: 0; }
+
+/* botones de acción en abanico alrededor del pulgar derecho */
+.dd-acts { position: absolute; right: max(14px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); width: 200px; height: 190px; }
+.dd-act {
+  pointer-events: auto; position: absolute; padding: 0; touch-action: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  background: rgba(246, 243, 230, 0.92); color: var(--dd-ink);
+  border: 3px solid var(--dd-black); border-radius: 50% 47% 52% 48% / 48% 52% 47% 51%;
+  box-shadow: 3px 4px 0 var(--dd-ink); transition: transform 0.06s, box-shadow 0.06s;
+}
+.dd-act svg { width: 52%; height: auto; fill: none; stroke: currentColor; stroke-width: 2.7; stroke-linecap: round; stroke-linejoin: round; }
+.dd-act small { font-size: 10px; letter-spacing: 1px; color: var(--dd-black); line-height: 1; }
+.dd-act.on { background: var(--dd-ink); color: var(--dd-paper); transform: translate(2px, 3px) scale(0.95); box-shadow: 1px 1px 0 var(--dd-ink); }
+.dd-act.on small { color: var(--dd-paper); }
+.dd-act.slot-0 { width: 92px; height: 92px; right: 6px; bottom: 16px; transform: rotate(-4deg); }
+.dd-act.accent-red { color: var(--dd-red); box-shadow: 3px 4px 0 var(--dd-red); }
+.dd-act.accent-red.on { background: var(--dd-red); box-shadow: 1px 1px 0 var(--dd-red); }
+.dd-act.slot-0 svg { width: 48%; }
+.dd-act.slot-0.on { transform: translate(2px, 3px) rotate(-4deg) scale(0.95); }
+.dd-act.slot-1 { width: 64px; height: 64px; right: 110px; bottom: 6px; transform: rotate(3deg); }
+.dd-act.slot-2 { width: 58px; height: 58px; right: 100px; bottom: 92px; transform: rotate(-2deg); }
+.dd-act.slot-3 { width: 46px; height: 46px; right: 26px; bottom: 124px; }
+.dd-act.slot-3 svg { width: 58%; }
+
+/* HUD reorganizado en horizontal táctil: vida y munición abajo en el centro, entre los pulgares */
+#doodleRoot.dd-landpad .dd-hp { left: 50%; right: auto; top: auto; bottom: max(14px, env(safe-area-inset-bottom)); width: min(190px, 26vw); transform: translateX(calc(-100% - 12px)); }
+#doodleRoot.dd-landpad .dd-hp-label { text-align: left; font-size: 17px; }
+#doodleRoot.dd-landpad .dd-ammo { left: 50%; right: auto; top: auto; bottom: max(10px, env(safe-area-inset-bottom)); transform: translateX(12px); text-align: left; }
+#doodleRoot.dd-landpad .dd-ammo b { font-size: 36px; }
+#doodleRoot.dd-landpad .dd-ammo small { font-size: 11px; }
+#doodleRoot.dd-landpad .dd-score { left: auto; right: calc(max(12px, env(safe-area-inset-right)) + 150px); transform: rotate(-3deg); top: 8px; font-size: 30px; }
+#doodleRoot.dd-landpad .dd-feed { top: 62px; }
+.dd-hb svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+
+@media (max-height: 400px) {
+  .dd-joy-base { width: 108px; height: 108px; margin: -54px 0 0 -54px; top: calc(100% - 80px); }
+  .dd-joy-knob { width: 46px; height: 46px; margin: -23px 0 0 -23px; }
+  .dd-acts { transform: scale(0.86); transform-origin: 100% 100%; }
+}

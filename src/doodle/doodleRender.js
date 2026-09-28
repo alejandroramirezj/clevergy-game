@@ -27,8 +27,15 @@ const lightUniform = { value: new THREE.Vector3(0, 1, 0) };
 const SCENE_VERT = /* glsl */ `
 varying vec3 vN;
 void main() {
-  vN = normalize(normalMatrix * normal);
-  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  vec4 p = vec4(position, 1.0);
+  vec3 n = normal;
+  #ifdef USE_INSTANCING
+    // pinos, rocas, boyas… dibujados en lote con InstancedMesh
+    p = instanceMatrix * p;
+    n = mat3(instanceMatrix) * n;
+  #endif
+  vN = normalize(normalMatrix * n);
+  gl_Position = projectionMatrix * modelViewMatrix * p;
 }`;
 
 const SCENE_FRAG = /* glsl */ `
@@ -66,6 +73,7 @@ uniform float uTime;
 uniform float uHurt;
 uniform float uLowHp;
 uniform float uFlash;
+uniform float uFadeScale;
 uniform mat4 uInvProj;
 uniform mat4 uInvView;
 uniform vec3 uPaper;
@@ -169,8 +177,8 @@ void main() {
       hatch = max(hatch, smoothstep(0.1, 0.0, shade) * 0.85);
     }
   }
-  float fade = mix(1.0, 0.3, smoothstep(16.0, 90.0, d));
-  float fadeE = mix(1.0, 0.5, smoothstep(30.0, 160.0, dFront));
+  float fade = mix(1.0, 0.3, smoothstep(16.0 * uFadeScale, 90.0 * uFadeScale, d));
+  float fadeE = mix(1.0, 0.5, smoothstep(30.0 * uFadeScale, 160.0 * uFadeScale, dFront));
 
   // ── papel de libreta ──
   vec2 pp = gl_FragCoord.xy;
@@ -228,7 +236,8 @@ export function mat(ink, opts = {}) {
   return m;
 }
 
-export function createDoodleRenderer(canvas) {
+// opts.fadeScale: escenarios grandes (carreras) difuminan el dibujo más lejos
+export function createDoodleRenderer(canvas, opts = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance" });
   const coarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
   const pr = Math.min(window.devicePixelRatio || 1, coarse ? 1.25 : 1.5);
@@ -263,6 +272,7 @@ export function createDoodleRenderer(canvas) {
       uHurt: { value: 0 },
       uLowHp: { value: 0 },
       uFlash: { value: 0 },
+      uFadeScale: { value: opts.fadeScale || 1 },
       uInvProj: { value: new THREE.Matrix4() },
       uInvView: { value: new THREE.Matrix4() },
       uPaper: { value: new THREE.Vector3(0.965, 0.952, 0.9) },

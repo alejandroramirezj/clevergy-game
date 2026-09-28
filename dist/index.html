@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>RETREAT: THE LEGEND OF THE TEAM · Clevergy</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
-  <script type="module" crossorigin src="/assets/index-CIUOA5ev.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-DDcPQNpB.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Caveat:wght@700&family=Patrick+Hand&display=swap" rel="stylesheet">
+  <script type="module" crossorigin src="/assets/index-C5ddU1_t.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BCnJeF19.css">
 </head>
 <body>
   <div id="wrap">
@@ -264,7 +266,7 @@
 
         <!-- Panel 2: Escenarios -->
         <div id="compTab-worlds" class="comp-panel hidden">
-          <div class="comp-section-title">LOS 6 MUNDOS DE LA EXPEDICIÓN:</div>
+          <div class="comp-section-title">LOS 3 MUNDOS DE LA EXPEDICIÓN:</div>
           <div class="comp-worlds-grid" id="compWorldsGrid"></div>
         </div>
 
@@ -289,85 +291,24 @@
     </div>
   </div>
 
-  <!-- WORLD MAP (MAPA DE AVENTURA ESTILO ANGRY BIRDS / SPRINT ODYSSEY) -->
+  <!-- ELECCIÓN DE MUNDO: 3 COLUMNAS, CADA UNA CON LA ESTÉTICA DE SU MUNDO -->
   <div id="worldMapOv" class="overlay hidden world-map-overlay">
-    <!-- TOP HEADER (CON RESPETO AL NOTCH / SAFE AREA) -->
-    <div class="map-header">
-      <div class="map-header-left">
-        <div id="mapProgressBadge" class="map-badge-progress">
-          <span class="star-icon">⭐</span>
-          <span id="mapProgressTxt">0/6 MUNDOS</span>
-        </div>
+    <div class="ws-header">
+      <button id="btnCloseMap" class="ws-back" aria-label="Volver al menú" title="Volver">↩</button>
+      <div class="ws-heading">
+        <div class="ws-heading-kicker">RETREAT · THE LEGEND OF THE TEAM</div>
+        <h1 class="ws-heading-title">ELIGE MUNDO</h1>
       </div>
-
-      <div class="map-header-right">
-        <div id="mapHeroBadge" class="map-hero-pill">
-          <img id="mapHeroImg" src="/sprites/alejandro/avatar.png" class="map-hero-avatar" alt="Héroe">
+      <div class="ws-header-right">
+        <div class="ws-progress"><span>⭐</span><span id="mapProgressTxt">0/3 MUNDOS</span></div>
+        <div class="ws-hero-pill">
+          <img id="mapHeroImg" src="/sprites/alejandro/avatar.png" alt="Héroe">
           <span id="mapHeroName">ALEJANDRO R.</span>
-          
         </div>
       </div>
     </div>
-
-    <!-- CURRENT SELECTED STAGE FLOATING BANNER (Like "MESETA DE COBALTO / COLINAS PLUMOSAS") -->
-    <div class="map-stage-banner" id="mapStageBanner">
-      <div class="stage-banner-wood">
-        <div class="stage-banner-badge" id="stageBannerBadge">MUNDO 1</div>
-        <div class="stage-banner-title" id="stageBannerTitle">THE OFFICE</div>
-        <div class="stage-banner-sub" id="stageBannerSub">OFICINAS CENTRALES · JEFE: EMAIL CHAIN</div>
-      </div>
-    </div>
-
-    <!-- MAP VIEWPORT (FULL-BLEED WINDING TRAIL) -->
-    <div class="map-viewport">
-      <!-- Background SVG Trail connecting the 6 nodes -->
-      <svg class="map-trail-svg landscape-trail" viewBox="0 0 1000 600" preserveAspectRatio="none">
-        <path class="trail-line-bg" d="M 120 384 Q 200 240 280 192 T 480 348 T 700 180 T 880 312 Q 720 468 500 468 Q 280 468 120 384" />
-        <path class="trail-line-dash" d="M 120 384 Q 200 240 280 192 T 480 348 T 700 180 T 880 312 Q 720 468 500 468 Q 280 468 120 384" />
-      </svg>
-      <svg class="map-trail-svg portrait-trail" viewBox="0 0 400 800" preserveAspectRatio="none">
-        <path class="trail-line-bg" d="M 104 672 C 104 600, 296 630, 296 560 C 296 490, 104 500, 104 432 C 104 360, 296 370, 296 304 C 296 230, 112 240, 112 176 C 112 120, 260 130, 260 72 C 260 20, 112 30, 112 64" />
-        <path class="trail-line-dash" d="M 104 672 C 104 600, 296 630, 296 560 C 296 490, 104 500, 104 432 C 104 360, 296 370, 296 304 C 296 230, 112 240, 112 176 C 112 120, 260 130, 260 72 C 260 20, 112 30, 112 64" />
-      </svg>
-      <!-- Interactive Nodes Container -->
-      <div id="mapNodesContainer" class="map-nodes-container"></div>
-    </div>
-
-    <!-- BOTTOM FLOATING ACTION DOCK (Like Image 2: Round Back Button + Big Golden ¡JUGAR! Button) -->
-    <div class="map-bottom-dock">
-      <button id="btnCloseMap" class="btn-round-back" aria-label="Volver al Menú" title="Volver">
-        <span>↩</span>
-      </button>
-
-      <button id="btnPlayMapDirect" class="btn-play-golden" aria-label="Jugar Mundo">
-        <span class="btn-play-golden-txt">¡JUGAR!</span>
-        <span class="btn-play-golden-hand">👆</span>
-      </button>
-
-      <div class="dock-spacer"></div>
-    </div>
-
-    <!-- World Detail Modal (Optional) -->
-    <div id="worldCardModal" class="world-card-modal hidden">
-      <div class="wc-content">
-        <div class="wc-top">
-          <span id="wcIcon" class="wc-emoji">🏢</span>
-          <div class="wc-headings">
-            <h2 id="wcTitle" class="wc-title">1. The Office</h2>
-            <div id="wcSubtitle" class="wc-sub">Oficinas Centrales de Clevergy</div>
-          </div>
-        </div>
-        <p id="wcDesc" class="wc-desc">Supera los bugs 404 y alcanza el Inbox Zero.</p>
-        <div class="wc-meta">
-          <div id="wcBoss" class="wc-boss">👾 JEFE: EMAIL CHAIN</div>
-          <div id="wcRecord" class="wc-record">⚪ PENDIENTE DE DOMINAR</div>
-        </div>
-        <div class="wc-actions">
-          <button id="btnPlayWorld" class="btn">▶ JUGAR ESTE MUNDO</button>
-          <button id="btnCloseWc" class="btn alt">CANCELAR</button>
-        </div>
-      </div>
-    </div>
+    <div id="wsGrid" class="ws-grid"></div>
+    <div id="wsDots" class="ws-dots"></div>
   </div>
 
   <!-- FIGHT LOBBY MODAL (CODE CLASH ARENA 1v1 - 100% RESPONSIVE) -->
@@ -375,7 +316,7 @@
     <div class="fl-card">
       <div class="fl-header">
         <div class="fl-title-group">
-          <div class="fl-badge">🥊 MUNDO 6 · 1v1 ARENA</div>
+          <div class="fl-badge">🥊 MUNDO 2 · 1v1 ARENA</div>
           <h2 class="fl-title">CODE CLASH ARENA</h2>
           <div class="fl-sub">The Office · Batalla del Sprint</div>
         </div>

@@ -1,6 +1,6 @@
 import { BOOT_LINES } from "../config/constants.js";
 import { CHARS } from "../config/characters.js";
-import { WORLDS } from "../config/worlds.js";
+import { VISIBLE_WORLDS } from "../config/worlds.js";
 import { GameState, respawn, fmtT, switchToChar } from "../game/state.js";
 import { sfx } from "../engine/audio.js";
 import { ANIM, SPR, anim, getCharacterAvatar } from "../engine/sprites.js";
@@ -887,7 +887,7 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     if (!compWorldsGrid) return;
     compWorldsGrid.innerHTML = "";
 
-    WORLDS.forEach((w) => {
+    VISIBLE_WORLDS.forEach((w) => {
       const card = document.createElement("div");
       card.className = "comp-world-card";
       card.style.borderColor = `${w.accentColor}55`;
@@ -1133,7 +1133,7 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     };
     const req = reqs[w.id] || reqs[1];
 
-    if (bfWorldTag) bfWorldTag.textContent = `MUNDO ${w.id} - ${w.name.toUpperCase()}`;
+    if (bfWorldTag) bfWorldTag.textContent = `MUNDO ${w.num || w.id} - ${w.name.toUpperCase()}`;
     if (bfLevelTitle) bfLevelTitle.textContent = `NIVEL 01: ${w.subtitle ? w.subtitle.toUpperCase() : "EXPEDICIÓN"}`;
     if (bfReqIcon) bfReqIcon.textContent = req.icon;
     if (bfReqTxt) bfReqTxt.textContent = req.txt;

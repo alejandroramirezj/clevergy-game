@@ -98,7 +98,9 @@ function stickerTexture(img, pixelArt, onReady) {
 }
 
 // `targetScene`: escena overlay compartida (tu personaje y los de tus compañeros)
-export function createSticker(targetScene) {
+// `opts.height`: altura del personaje en metros (1.75 por defecto)
+export function createSticker(targetScene, opts = {}) {
+  const baseH = opts.height || 1.75;
   const material = new THREE.MeshBasicMaterial({
     transparent: true,
     alphaTest: 0.5,
@@ -152,7 +154,7 @@ export function createSticker(targetScene) {
     material.map = p.tex;
     material.needsUpdate = true;
     // el personaje mide ~1.75 m (1.4 m los pixel art)
-    const H = (p.pixel ? 1.4 : 1.75) / p.charH;
+    const H = (p.pixel ? baseH * 0.8 : baseH) / p.charH;
     plane.scale.set(H * p.aspect, H, 1);
     plane.position.y = H / 2 - p.feet * H;
   }
@@ -168,8 +170,11 @@ export function createSticker(targetScene) {
     else if (s.firing) want = "attack";
     else if (s.speed > 7.5) want = "run";
     else if (s.speed > 0.6) want = "walk";
+    // pose forzada (pelea): si el personaje no la tiene, se usa la calculada
+    if (s.pose && poses[s.pose]) want = s.pose;
     setPose(want);
-    if (s.moveX > 0.2) facing = 1;
+    if (s.facing) facing = s.facing;
+    else if (s.moveX > 0.2) facing = 1;
     else if (s.moveX < -0.2) facing = -1;
     const target = facing * (faceRight ? 1 : -1);
     flip += (target - flip) * Math.min(1, dt * 14);
@@ -180,7 +185,8 @@ export function createSticker(targetScene) {
     pivot.position.set(s.pos.x, s.pos.y + hop, s.pos.z);
     pivot.rotation.set(0, Math.atan2(s.camera.position.x - s.pos.x, s.camera.position.z - s.pos.z), 0);
     flipper.scale.set(Math.abs(flip) < 0.08 ? 0.08 * Math.sign(flip || 1) : flip, breathe, 1);
-    flipper.rotation.z = Math.sin(t * 10) * 0.05 * walkAmt;
+    flipper.rotation.z = Math.sin(t * 10) * 0.05 * walkAmt + (s.tilt || 0);
+    if (s.squash) flipper.scale.y *= s.squash;
     // tinte rojo al recibir daño
     material.color.setRGB(1, 1 - s.hurt * 0.55, 1 - s.hurt * 0.6);
   }
@@ -192,5 +198,5 @@ export function createSticker(targetScene) {
     Object.values(poses).forEach((p) => p.tex.dispose());
   }
 
-  return { scene, pivot, setChar, update, dispose, setVisible: (v) => (pivot.visible = v) };
+  return { scene, pivot, setChar, update, dispose, setVisible: (v) => (pivot.visible = v), hasPose: (n) => !!poses[n] };
 }
