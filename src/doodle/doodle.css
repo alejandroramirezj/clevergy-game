@@ -190,6 +190,8 @@ body.gameboy-mode .dd-end-stats { font-size: 16px; margin: 6px 0 10px; }
 
 @media (max-height: 480px) {
   .dd-card { padding: 14px 18px; }
+  .dd-card h2 { font-size: 34px; margin-bottom: 4px; }
+  .dd-end-stats { font-size: 16px; margin: 4px 0 10px; gap: 2px 14px; }
   .dd-card h1 { font-size: 46px; }
   .dd-lead { font-size: 17px; margin-bottom: 8px; }
   .dd-controls { font-size: 16px; margin-bottom: 10px; }

@@ -147,6 +147,8 @@ function startGame(worldId = 1) {
 
   if (worldId === 7) {
     startDoodle();
+  } else if (worldId === 1) {
+    startPlatform3D();
   } else if (worldId === 8) {
     startRace3D();
   } else if (worldId === 6) {
@@ -188,6 +190,33 @@ async function startFight3D() {
     });
   } catch (err) {
     console.error("No se pudo cargar Code Clash Arena", err);
+    back();
+  }
+}
+
+// Mundo 1: The Office, plataformas 2.5D con el render de boli (sustituye al canvas 2D)
+async function startPlatform3D() {
+  GameState.gameMode = "doodle";
+  stopMusic();
+  fitCanvas();
+  const back = () => {
+    GameState.gameMode = "platformer";
+    GameState.status = "ready";
+    fitCanvas();
+    worldMap.showWorldMap();
+  };
+  try {
+    const { startDoodlePlatform } = await import("./doodle/platform/doodlePlatform.js");
+    doodle = startDoodlePlatform({
+      charId: (CHARS[GameState.charIdx] || CHARS[0]).id,
+      getChar: () => CHARS[GameState.charIdx],
+      onSwitchChar: () => { switchChar(1); updateSpotlight(); },
+      onPickChar: (id) => { const i = CHARS.findIndex((c) => c.id === id); if (i >= 0) GameState.charIdx = i; },
+      onVictory: (score, rank) => saveWorldProgress(1, score, rank),
+      onExit: () => { doodle = null; back(); }
+    });
+  } catch (err) {
+    console.error("No se pudo cargar The Office", err);
     back();
   }
 }

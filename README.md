@@ -38,13 +38,33 @@ Elige a cualquiera de los **18 miembros del equipo** (cada uno con habilidades, 
 
 La pantalla «Elige mundo» muestra 3 columnas, cada una con la estética de su mundo (en móvil vertical, un carrusel deslizable):
 
-1. **The Office** — plataformas 2D (ilustración pixel art clásica).
+1. **The Office** — plataformas 2.5D en 3D con el render de boli (`src/doodle/platform/`).
 2. **Code Clash Arena** — lucha 1v1 en 3D (mismo render de boli que Doodle District) contra la CPU u online.
 3. **Doodle District** — shooter 3D a boli, con salas multijugador.
+
+4. **Pantano Kart** — carreras de motos de agua por el Pantano de San Juan (`src/doodle/race/`).
+
+Todos los menús (portada, elección de mundo, briefing, modales y el deck Game Boy) comparten el estilo cuaderno de `src/ui/doodleTheme.css`, que se carga después de `style.css`.
 
 Los antiguos mundos 2–5 del plataformas siguen definidos en `src/config/worlds.js` con `hidden: true`; basta con quitar esa marca para volver a mostrarlos.
 
 ---
+
+## 🏢 Mundo 1 · The Office (plataformas 3D)
+
+Plataformas 2.5D por la oficina de Clevergy dibujada a boli. El nivel está en `platformLevel.js` en 7 tramos: oficina, café derramado (foso, plataforma móvil y muelle), hueco del ascensor (salto en pared), sala de reuniones, pasillo de servidores (pinchos, emails voladores, ascensor), el jefe **EMAIL CHAIN** y la bandera de **INBOX ZERO**.
+
+- **Mecánicas:** salto variable (mantén para subir más), *coyote time*, búfer de salto, salto en pared, pisotón con rebote, bloques ? (monedas y cafés que curan), ladrillos que se rompen con la cabeza, plataformas atravesables (▼ + salto para bajar), 3 corazones, puntos de control (cafeteras) y 3 disquetes secretos que suben el rango.
+- **Poder:** cada personaje usa su especial de la pelea (embestida, proyectil, golpe al suelo, supersalto o escudo), que también rompe ladrillos y tumba enemigos. Con EQUIPO cambias de compañero en plena partida.
+- **Jefe:** salta hacia ti, suelta emails y lanza ondas de choque al caer; cuando se cansa, písale la cabeza (3 veces).
+
+## 🚤 Mundo 4 · Pantano Kart (3D)
+
+Carreras de motos de agua estilo kart por el Pantano de San Juan (Madrid): la presa, la playa de la Virgen de la Nueva, pinares, islotes de granito, veleros y un embarcadero. 3 vueltas, 6 pilotos.
+
+- **Conducción:** acelera sola; derrapa en las curvas (azul → naranja) y suelta para el miniturbo; rampas, flechas de turbo y choques con boyas, islotes y rivales.
+- **Objetos de oficina:** ☕ café turbo, ✉️ email (sigue el canal), 📅 reunión teledirigida al de delante, 💧 mancha de tinta y ⭐ modo focus (invencible). Los de atrás reciben mejores objetos.
+- **Online P2P:** hasta 6 personas y el resto CPU (las simula el anfitrión). Cada móvil manda su moto; quien lanza un objeto decide el impacto y el anfitrión lo reenvía. Si alguien se va, la CPU toma su moto.
 
 ## 🥊 Mundo 2 · Code Clash Arena (3D)
 
