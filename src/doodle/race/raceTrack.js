@@ -118,7 +118,7 @@ export function buildRaceWorld(scene, track) {
   const { center } = track;
 
   // agua lejana (plana) y agua cercana con olas que sigue a la cámara
-  const farWater = new THREE.Mesh(new THREE.PlaneGeometry(5000, 5000), mat(INK.BLUE, { tone: 0.3 }));
+  const farWater = new THREE.Mesh(new THREE.PlaneGeometry(5000, 5000), mat(INK.BLUE, { tone: -0.28 }));
   farWater.rotation.x = -Math.PI / 2;
   farWater.position.y = -0.25;
   root.add(farWater);
@@ -127,7 +127,7 @@ export function buildRaceWorld(scene, track) {
   wGeo.rotateX(-Math.PI / 2);
   const wPos = wGeo.attributes.position, wNor = wGeo.attributes.normal;
   const base = Float32Array.from(wPos.array);
-  const water = new THREE.Mesh(wGeo, mat(INK.BLUE, { tone: 0.22 }));
+  const water = new THREE.Mesh(wGeo, mat(INK.BLUE, { tone: -0.3 }));
   water.frustumCulled = false;
   root.add(water);
   const cell = WS / WG;

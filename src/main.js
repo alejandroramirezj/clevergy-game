@@ -147,6 +147,8 @@ function startGame(worldId = 1) {
 
   if (worldId === 7) {
     startDoodle();
+  } else if (worldId === 8) {
+    startRace3D();
   } else if (worldId === 6) {
     startFight3D();
   } else {
@@ -186,6 +188,31 @@ async function startFight3D() {
     });
   } catch (err) {
     console.error("No se pudo cargar Code Clash Arena", err);
+    back();
+  }
+}
+
+// Mundo 4: Pantano Kart (carreras acuáticas en 3D)
+async function startRace3D() {
+  GameState.gameMode = "doodle";
+  stopMusic();
+  fitCanvas();
+  const back = () => {
+    GameState.gameMode = "platformer";
+    GameState.status = "ready";
+    fitCanvas();
+    worldMap.showWorldMap();
+  };
+  try {
+    const { startDoodleRace } = await import("./doodle/race/doodleRace.js");
+    doodle = startDoodleRace({
+      charId: (CHARS[GameState.charIdx] || CHARS[0]).id,
+      onPickChar: (id) => { const i = CHARS.findIndex((c) => c.id === id); if (i >= 0) GameState.charIdx = i; },
+      onVictory: (score, rank) => saveWorldProgress(8, score, rank),
+      onExit: () => { doodle = null; back(); }
+    });
+  } catch (err) {
+    console.error("No se pudo cargar Pantano Kart", err);
     back();
   }
 }

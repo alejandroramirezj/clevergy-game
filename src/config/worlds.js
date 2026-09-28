@@ -132,6 +132,28 @@ export const WORLDS = [
     mapCoords: { x: 27, y: 79 },
     mapCoordsPortrait: { x: 28, y: 8 }
   }
+,
+  {
+    id: 8,
+    num: 4,
+    theme: "kart",
+    genre: "CARRERAS",
+    blurb: "Carreras de motos de agua por el Pantano de San Juan: derrapes, rampas, turbos y objetos de oficina contra 5 rivales u online.",
+    chips: ["🚤 6 pilotos", "🎁 Objetos", "📱 Online"],
+    name: "Pantano Kart",
+    title: "4. Pantano Kart",
+    subtitle: "Pantano de San Juan · Madrid",
+    desc: "Carreras acuáticas estilo kart por el Pantano de San Juan, dibujadas a boli.",
+    bossName: "EL CRONO",
+    fragmentName: "Trofeo: Copa del Pantano 🏆",
+    bgClass: "world-kart",
+    bgGradient: ["#dff1ff", "#9fd3ff"],
+    platformColor: "#1f38b8",
+    accentColor: "#35b6ff",
+    iconEmoji: "🚤",
+    mapCoords: { x: 50, y: 50 },
+    mapCoordsPortrait: { x: 50, y: 50 }
+  }
 ];
 
 // Mundos visibles en la pantalla de elección (en este orden)

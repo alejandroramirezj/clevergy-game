@@ -66,6 +66,30 @@ function artDoodle(hero) {
     </div>`;
 }
 
+function artKart(hero) {
+  return `
+    <div class="ws-kart-bg">
+      <svg class="ws-kart-scene" viewBox="0 0 160 100" preserveAspectRatio="xMidYMax slice">
+        <path d="M0 52 L22 34 L40 44 L62 28 L86 42 L104 30 L126 40 L146 30 L160 38 L160 60 L0 60 Z" fill="#2f8f52"/>
+        <g fill="#1e6b3a">${[8, 20, 33, 47, 58, 71, 95, 110, 122, 138, 150].map((x, i) => `<path d="M${x} ${46 - (i % 3) * 3} l4 -10 l4 10 z"/>`).join("")}</g>
+        <path d="M112 36 L150 36 L150 58 L112 58 Z" fill="#c9c9c9" stroke="#555" stroke-width="1.2"/>
+        <g fill="#8a8a8a">${[116, 124, 132, 140].map((x) => `<rect x="${x}" y="40" width="4" height="10"/>`).join("")}</g>
+        <path d="M6 58 L40 58 L34 62 L2 62 Z" fill="#f2c27a"/>
+        <g><path d="M12 52 l6 -4 l6 4 z" fill="#e5484d"/><path d="M26 53 l6 -4 l6 4 z" fill="#3b82f6"/></g>
+        <rect x="0" y="58" width="160" height="42" fill="#3aa0ff"/>
+        <g stroke="#ffffff" stroke-width="1.6" fill="none" opacity=".8" class="ws-kart-waves">
+          <path d="M4 70 q6 -3 12 0 t12 0"/><path d="M60 78 q6 -3 12 0 t12 0"/><path d="M118 72 q6 -3 12 0 t12 0"/><path d="M30 90 q6 -3 12 0 t12 0"/><path d="M96 92 q6 -3 12 0 t12 0"/>
+        </g>
+        <g>${[0, 1, 2, 3, 4, 5, 6].map((i) => `<circle cx="${10 + i * 24}" cy="${66 + (i % 2) * 2}" r="2.6" fill="${i % 2 ? "#ff8a00" : "#ff3b3b"}" stroke="#222" stroke-width=".6"/>`).join("")}</g>
+        <g class="ws-kart-boat"><path d="M52 86 L94 86 L102 80 L60 80 Z" fill="#ff3b3b" stroke="#222" stroke-width="1.2"/><path d="M60 80 L74 80 L72 76 L64 76 Z" fill="#222"/>
+        <path d="M44 88 q-8 -2 -16 2 M46 84 q-10 -1 -18 -6" stroke="#fff" stroke-width="2" fill="none"/></g>
+      </svg>
+      ${hero ? `<img class="ws-hero ws-hero-kart${px(hero)}" src="${hero}" alt="">` : ""}
+      <div class="ws-kart-flag"></div>
+      <div class="ws-kart-lap">VUELTA 1/3</div>
+    </div>`;
+}
+
 export function initWorldMap({ onSelectWorld }) {
   const mapOv = document.getElementById("worldMapOv");
   const grid = document.getElementById("wsGrid");
@@ -112,7 +136,7 @@ export function initWorldMap({ onSelectWorld }) {
       const completed = progress.completed.includes(w.id);
       const score = (progress.highScores && progress.highScores[w.id]) || 0;
       const rank = (progress.ranks && progress.ranks[w.id]) || "";
-      const art = w.theme === "mario" ? artMario(hero) : w.theme === "arena" ? artArena(hero, rival) : artDoodle(hero);
+      const art = w.theme === "mario" ? artMario(hero) : w.theme === "arena" ? artArena(hero, rival) : w.theme === "kart" ? artKart(hero) : artDoodle(hero);
       const record = completed
         ? `<span class="ws-done">★ Dominado</span>${score ? ` · Récord <b>${score.toLocaleString("es-ES")}</b>` : ""}${rank ? ` · Rango <b>${rank}</b>` : ""}`
         : `<span class="ws-pending">○ Por dominar</span>`;

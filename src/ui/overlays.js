@@ -1129,6 +1129,7 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
       4: { icon: "⚡", txt: "ESCUDO Y REFLEJOS (BELTRÁN / JUAN)", desc: "Resiste los ataques de la All-Hands eterna y esquiva los micrófonos abiertos." },
       5: { icon: "✦", txt: "TRABAJO EN EQUIPO (TODO EL EQUIPO)", desc: "El gran reto final en la nieve. Utiliza las 3 habilidades para vencer a The Deadline." },
       6: { icon: "🥊", txt: "COMBATE 1v1 (TU MEJOR COMPAÑERO)", desc: "Pelea de código en el cuadrilátero contra la CPU o un compañero online." },
+      8: { icon: "🚤", txt: "CARRERAS SOBRE EL AGUA · 3 VUELTAS", desc: "Moto de agua por el Pantano de San Juan: derrapa en las curvas para ganar turbo y usa los objetos de oficina contra tus rivales." },
       7: { icon: "✏️", txt: "SHOOTER 3D EN PRIMERA PERSONA", desc: "Coge el boli Bic y sobrevive a 6 oleadas en la oficina dibujada. Tu héroe aporta su velocidad y su salto." }
     };
     const req = reqs[w.id] || reqs[1];
