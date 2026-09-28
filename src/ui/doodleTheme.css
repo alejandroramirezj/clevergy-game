@@ -762,3 +762,59 @@ html body #menuOv .cg-side-login .cg-glogo { width: 22px; height: 22px; }
   .cg-auth-chip { box-shadow: 3px 4px 0 var(--nb-red); }
 }
 .lb-wc-head h3 { white-space: normal !important; line-height: 0.95; }
+
+/* "THE" pequeño encima de RETREAT */
+html body #menuOv .lobby-brand-title .lobby-brand-the { display: inline-block; vertical-align: 0.9em; font-size: 0.36em; line-height: 1; letter-spacing: 2px; margin-right: 0.15em; color: var(--nb-red); text-shadow: 2px 2px 0 var(--nb-paper); transform: rotate(-8deg); }
+
+/* ── portada en móvil horizontal bajito: todo cabe, sin recortes arriba ni abajo ── */
+@media (orientation: landscape) and (max-height: 400px) {
+  html body #menuOv .clevergy-menu-container { padding-bottom: max(6px, env(safe-area-inset-bottom)) !important; }
+  html body #menuOv .lobby-header-row { height: 44px !important; padding-top: max(4px, env(safe-area-inset-top)) !important; padding-bottom: 0 !important; }
+  html body #menuOv .lobby-brand-title { font-size: 34px !important; line-height: 0.95 !important; }
+  html body #menuOv .lobby-brand-sub { font-size: 9px !important; margin-top: 0 !important; }
+  html body #menuOv .lobby-side-nav { gap: 6px !important; width: clamp(160px, 25vw, 200px) !important; }
+  html body #menuOv .hero-dossier-card { width: clamp(180px, 27vw, 260px) !important; }
+  html body #menuOv .side-nav-btn { height: 36px !important; min-height: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; font-size: 14px !important; }
+  html body #menuOv .side-nav-btn .nav-text { font-size: 14px !important; line-height: 1.05 !important; }
+  html body #menuOv .hero-dossier-card { padding: 7px 10px 8px 12px !important; }
+  html body #menuOv .dossier-title { font-size: 18px !important; margin-bottom: 2px !important; }
+  html body #menuOv .dossier-tag { display: none !important; }
+  html body #menuOv .dossier-power { padding: 5px 7px 6px !important; }
+  html body #menuOv .dossier-power .dossier-lore { font-size: 12px !important; }
+  html body #menuOv .lobby-bottom-bar { height: auto !important; min-height: 0 !important; padding-top: 0 !important; }
+  html body #menuOv .action-dock-item { height: 46px !important; min-height: 0 !important; }
+  html body #menuOv .lobby-cta-play { height: 48px !important; font-size: 28px !important; }
+  html body #menuOv .hero-stage-container { --ped: min(240px, calc(100dvh - 150px)); }
+  html body #menuOv .hero-pedestal-wrap { width: var(--ped) !important; height: var(--ped) !important; }
+  html body #menuOv .hero-nav-arrow.arrow-prev { left: calc(50% - var(--ped) / 2 - 22px) !important; }
+  html body #menuOv .hero-nav-arrow.arrow-next { right: calc(50% - var(--ped) / 2 - 22px) !important; }
+  html body #menuOv .hero-nav-arrow { width: 32px !important; height: 32px !important; font-size: 20px !important; }
+  html body #menuOv .lobby-brand-sub { margin-top: 2px !important; }
+}
+
+/* páginas de cuaderno: texto a la izquierda (el overlay genérico lo centraba) */
+.nb-page .nb-page-scroll, .nb-page .nb-page-head { text-align: left; }
+.nb-page .lb-podium, .nb-page .lb-champ, .nb-page .comp2-end, .nb-page .lb-empty { text-align: center; }
+.comp2-chars { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.comp2-cards { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+@media (orientation: landscape) and (max-height: 500px) {
+  .comp2-chars { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .comp2-char { grid-template-columns: 54px 1fr; padding: 7px; gap: 2px 8px; }
+  .comp2-char-av img { width: 50px; height: 60px; }
+  .comp2-char h3 { font-size: 19px; }
+  .comp2-char p { font-size: 13px; }
+  .comp2-worlds { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .comp2-cards { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+  .comp2-card { padding: 7px; }
+  .comp2-card-icon { width: 34px; height: 34px; font-size: 19px; }
+  .comp2-card h3 { font-size: 18px; }
+  .comp2-card p, .comp2-tip { font-size: 13px; }
+}
+.ctrl2 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.ctrl2 section { background: #fff; border: 2.5px solid var(--nb-pen); border-radius: 14px 9px 15px 10px; box-shadow: 4px 5px 0 rgba(31, 56, 184, 0.35); padding: 8px 12px 10px; }
+.ctrl2 section:nth-child(odd) { transform: rotate(-0.4deg); }
+.ctrl2 h3 { margin: 0 0 4px; font: 700 22px/1 var(--nb-title); color: var(--nb-ink); }
+.ctrl2 p { margin: 0; font: 15px/1.3 var(--nb-hand); color: var(--nb-pen); }
+.ctrl2 b { color: var(--nb-red); font-weight: 400; }
+@media (orientation: portrait) { .ctrl2 { grid-template-columns: 1fr; } }
+@media (orientation: landscape) and (max-height: 500px) { .ctrl2 h3 { font-size: 19px; } .ctrl2 p { font-size: 13.5px; } }

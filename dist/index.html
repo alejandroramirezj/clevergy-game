@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>RETREAT: THE LEGEND OF THE TEAM · Clevergy</title>
+  <title>The Retreat · Clevergy</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="apple-touch-icon" href="/favicon.svg">
   <meta name="theme-color" content="#f6f3e6">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Caveat:wght@700&family=Patrick+Hand&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="/assets/index-B4RegAPA.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-ygDaMS9B.css">
+  <script type="module" crossorigin src="/assets/index-oT2By2SH.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BzjW9TdM.css">
 </head>
 <body>
   <div id="wrap">
@@ -35,8 +35,8 @@
 
         <!-- Center: Brand Crest -->
         <div class="lobby-brand-crest">
-          <h1 class="lobby-brand-title">RETREAT</h1>
-          <div class="lobby-brand-sub">THE LEGEND OF THE FLY <span class="lobby-sub-ver">· v1.0.0</span></div>
+          <h1 class="lobby-brand-title"><small class="lobby-brand-the">THE</small>RETREAT</h1>
+          <div class="lobby-brand-sub">4 MUNDOS · UNA MISIÓN <span class="lobby-sub-ver">· v1.0.0</span></div>
         </div>
 
         <!-- Right: Version Pill -->
@@ -116,7 +116,7 @@
 
         <!-- 4 Actions Dock (Pose REMOVED as requested!) -->
         <div class="lobby-actions-dock" id="stumblePoseDock">
-          <button class="action-dock-item" data-pose="idle">
+          <button class="action-dock-item active" data-pose="idle">
             <span class="action-icon">🧍</span>
             <span class="action-label">Reposo</span>
             <span class="active-indicator"></span>
@@ -126,14 +126,15 @@
             <span class="action-label">Correr</span>
             <span class="active-indicator"></span>
           </button>
-          <button class="action-dock-item active" data-pose="attack">
-            <span class="action-icon">🥊</span>
-            <span class="action-label">Ataque</span>
-            <span class="active-indicator"></span>
-          </button>
+
           <button class="action-dock-item" data-pose="jump">
             <span class="action-icon">🏃‍♂️</span>
             <span class="action-label">Salto</span>
+            <span class="active-indicator"></span>
+          </button>
+          <button class="action-dock-item" data-pose="attack">
+            <span class="action-icon">🥊</span>
+            <span class="action-label">Ataque</span>
             <span class="active-indicator"></span>
           </button>
         </div>
@@ -169,22 +170,20 @@
   </div>
 
   <!-- CONTROLS & GUIDE MODAL -->
-  <div id="ctrlOv" class="overlay hidden">
-    <div class="modal-box">
-      <div class="title-big" style="font-size:clamp(18px,3.5vw,26px);">🕹️ CÓMO JUGAR</div>
-      <div class="sub" style="margin-bottom:12px;">Móvil en horizontal, en vertical (mando Game Boy), teclado o mando</div>
-      <div class="ctrl-grid">
-        <div class="ctrl-card"><span class="kbadge">📱 HORIZONTAL</span><span>Joystick flotante a la izquierda · botones a la derecha</span></div>
-        <div class="ctrl-card"><span class="kbadge">📱 VERTICAL</span><span>Cruceta + A / B · en los menús, A pulsa y B vuelve</span></div>
-        <div class="ctrl-card"><span class="kbadge">⌨️ TECLADO</span><span>A/D o flechas mover · Espacio saltar · J acción · K especial</span></div>
-        <div class="ctrl-card"><span class="kbadge">TAB · 1 2 3</span><span>Cambiar de compañero</span></div>
-        <div class="ctrl-card"><span class="kbadge">ESC · M</span><span>Pausa · música</span></div>
-        <div class="ctrl-card"><span class="kbadge">🎮 MANDO</span><span>Cualquier mando de consola conectado</span></div>
+  <div id="ctrlOv" class="overlay hidden nb-page">
+    <header class="nb-page-head">
+      <button class="nb-back" id="btnCloseCtrl" aria-label="Volver">↩</button>
+      <div class="nb-page-title"><small>THE RETREAT</small><h1>🕹️ Cómo jugar</h1></div>
+    </header>
+    <div class="nb-page-scroll">
+      <div class="ctrl2">
+        <section><h3>📱 Móvil en horizontal</h3><p>Joystick flotante donde pongas el pulgar izquierdo y botones de acción a la derecha. Es igual en los 4 mundos.</p></section>
+        <section><h3>📱 Móvil en vertical</h3><p>Mando Game Boy: cruceta, A y B. En los menús la cruceta elige, <b>A</b> pulsa y <b>B</b> vuelve.</p></section>
+        <section><h3>⌨️ Teclado</h3><p><b>A/D</b> o flechas para moverte · <b>Espacio</b> saltar · <b>J</b> acción · <b>K</b> especial · <b>Esc</b> pausa · <b>M</b> música.</p></section>
+        <section><h3>🔁 Compañeros</h3><p><b>Tab</b> o <b>1 2 3</b> cambian de compañero. Cada uno tiene su poder: míralos en <b>Historia</b>.</p></section>
+        <section><h3>🎮 Mando</h3><p>Cualquier mando de consola conectado al móvil o al ordenador.</p></section>
+        <section><h3>💡 En cada mundo</h3><p>Su pantalla de inicio explica los controles propios (disparar, derrapar, escudo…).</p></section>
       </div>
-      <div class="panel" style="margin-top:14px;">
-        💡 Cada mundo explica sus controles en su pantalla de inicio. En <b>Historia</b> tienes el poder de cada compañero, los mapas, los enemigos y los objetos.
-      </div>
-      <button class="btn" id="btnCloseCtrl" style="margin-top:16px;">¡ENTENDIDO!</button>
     </div>
   </div>
 
@@ -192,7 +191,7 @@
   <div id="compendiumOv" class="overlay hidden nb-page comp2">
     <header class="nb-page-head">
       <button class="nb-back" id="btnCloseCompendium" aria-label="Volver">↩</button>
-      <div class="nb-page-title"><small>EL CUADERNO DEL RETREAT</small><h1>📖 Historia</h1></div>
+      <div class="nb-page-title"><small>THE RETREAT</small><h1>📖 Historia</h1></div>
       <nav class="comp2-nav" aria-label="Capítulos">
         <button class="comp-tab-btn on" data-tab="characters"><b>1</b>Personajes</button>
         <button class="comp-tab-btn" data-tab="worlds"><b>2</b>Mundos</button>
@@ -227,7 +226,7 @@
     <div class="ws-header">
       <button id="btnCloseMap" class="ws-back" aria-label="Volver al menú" title="Volver">↩</button>
       <div class="ws-heading">
-        <div class="ws-heading-kicker">RETREAT · THE LEGEND OF THE TEAM</div>
+        <div class="ws-heading-kicker">THE RETREAT · CLEVERGY</div>
         <h1 class="ws-heading-title">ELIGE MUNDO</h1>
       </div>
       <div class="ws-header-right">

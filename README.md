@@ -1,4 +1,4 @@
-# ⚡ CLEVERGY GAME: RETREAT - THE LEGEND OF THE TEAM
+# ⚡ THE RETREAT · el juego de Clevergy
 
 Un juego arcade de plataformas retro en 2D creado para el equipo de **Clevergy**.
 
