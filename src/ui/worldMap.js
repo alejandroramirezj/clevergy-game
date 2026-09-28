@@ -57,7 +57,15 @@ function artDoodle(hero) {
         <path d="M104 18 L140 20 L138 44 L102 42 Z"/><path d="M104 19 L121 33 L139 21"/>
         <path d="M112 30 l3 -2 M128 29 l-3 -2"/><circle cx="114" cy="32" r="1.2" fill="#d6243a"/><circle cx="127" cy="32" r="1.2" fill="#d6243a"/>
       </g>
-      <g class="ws-boil2" stroke="#52307c" stroke-width="2"><path d="M18 20 L44 20 L44 44 L18 44 Z"/><path d="M18 27 L44 27"/><path d="M24 16 L24 23 M38 16 L38 23"/><path d="M24 34 h4 M32 34 h4 M24 39 h4"/></g>
+      <g class="ws-boil2">
+        <rect x="6" y="8" width="60" height="30" rx="3" fill="#fff" stroke="#272a36" stroke-width="2"/>
+        <g transform="translate(10 12) scale(2.2)" stroke="#272a36" stroke-width="0.75" fill="none">
+          <path d="M9 2.5 L6 0 L1 3.8 L1 6.2 L6 10 L9 7.5"/><path d="M6 2.5 L3.4 4.4 L3.4 5.6 L6 7.5 L8.6 5.6 L8.6 4.4 L6.6 3"/><path d="M6.6 3 L5.4 4.5 L6.6 5.4"/>
+        </g>
+        <text x="34" y="27" font-family="Caveat, cursive" font-weight="700" font-size="15" fill="#272a36">CINK</text>
+        <text x="34" y="34" font-family="Patrick Hand, cursive" font-size="5.2" letter-spacing=".6" fill="#272a36">COWORKING</text>
+        <path d="M12 38 L12 50 M60 38 L60 50" stroke="#272a36" stroke-width="1.6"/>
+      </g>
       <g stroke="#ec7f19" stroke-width="2"><circle cx="146" cy="78" r="9"/><path d="M146 72 L146 78 L150 80"/></g>
       <g stroke="#1f38b8" stroke-width="1.8"><path d="M10 88 c10 -6 18 6 28 0 s18 6 28 0 s18 6 28 0"/></g>
       <g stroke="#1f38b8" stroke-width="2.2"><path d="M60 70 L118 64"/><path d="M118 64 l8 -1"/><circle cx="122" cy="63.5" r="2.6" fill="#ec7f19"/></g>

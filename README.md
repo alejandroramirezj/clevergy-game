@@ -38,11 +38,11 @@ Elige a cualquiera de los **18 miembros del equipo** (cada uno con habilidades, 
 
 La pantalla «Elige mundo» muestra 3 columnas, cada una con la estética de su mundo (en móvil vertical, un carrusel deslizable):
 
-1. **Campus Madrid** — plataformas 2.5D en Google for Startups Campus Madrid, con el render de boli (`src/doodle/platform/`).
-2. **Code Clash Arena** — lucha 1v1 en 3D (mismo render de boli que Doodle District) contra la CPU u online.
-3. **Doodle District** — shooter 3D a boli, con salas multijugador.
+1. **La Oficina** — plataformas 2.5D en Google for Startups Campus Madrid, con el render de boli (`src/doodle/platform/`).
+2. **Coworking Fight** — pelea estilo Smash de hasta 4 en la azotea del CINK, contra CPUs u online (`src/doodle/fight/`).
+3. **BoliBic Tag** — laser tag en primera persona con el boli Bic por el CINK Coworking, con salas multijugador.
 
-4. **Pantano Kart** — carreras de motos de agua por el Pantano de San Juan (`src/doodle/race/`).
+4. **Pantano de San Juan** — carreras de motos de agua (`src/doodle/race/`).
 
 Todos los menús (portada, elección de mundo, briefing, modales y el deck Game Boy) comparten el estilo cuaderno de `src/ui/doodleTheme.css`, que se carga después de `style.css`.
 
@@ -50,7 +50,7 @@ Los antiguos mundos 2–5 del plataformas siguen definidos en `src/config/worlds
 
 ---
 
-## 🏢 Mundo 1 · Campus Madrid (plataformas 3D)
+## 🏢 Mundo 1 · La Oficina (plataformas 3D)
 
 Plataformas 2.5D por Google for Startups Campus Madrid (la fábrica neomudéjar de ladrillo de la calle Moreno Nieto, con el Palacio Real y la Almudena al fondo). El nivel está en `platformLevel.js`: terraza con sombrillas, Campus Café con altillo, la torre de cinco plantas de coworking (ascensor, rejilla de ventilación y forjados con huecos alternos), las salas de cristal de arriba (fosos, sillas plegables), las gradas del auditorio y el jefe **EMAIL CHAIN** en el escenario del **Demo Day**, y la salida con la bandera.
 
@@ -58,7 +58,7 @@ Plataformas 2.5D por Google for Startups Campus Madrid (la fábrica neomudéjar 
 - **Poderes originales:** Alejandro puñetazo + planeo · Ale se desliza · Álvaro M. bomba 404 que rebota · Álvaro onda de podcast · Ana trepa (mantén PODER en la pared) · Beltrán estocada + escudo (▼) · Bruno cara aleatoria · Gonzalo mini-brócolis · Javi trabajadores · Jesús smash / picado · **José Luis imprime plataformas (máx. 3, 9 s)** · Josu bote diagonal · Juan microondas · Maca modo pelota · Manu super step · Pablo rueda · Paloma vuela (mantén salto) · Silvia dash invulnerable.
 - **Jefe:** salta, suelta emails y lanza ondas al caer; cuando se cansa, písale la cabeza (3 veces).
 
-## 🚤 Mundo 4 · Pantano Kart (3D)
+## 🚤 Mundo 4 · Pantano de San Juan (3D)
 
 Carreras de motos de agua estilo kart por el Pantano de San Juan (Madrid): la presa, la playa de la Virgen de la Nueva, pinares, islotes de granito, veleros y un embarcadero. 3 vueltas, 6 pilotos.
 
@@ -66,20 +66,21 @@ Carreras de motos de agua estilo kart por el Pantano de San Juan (Madrid): la pr
 - **Objetos de oficina:** ☕ café turbo, ✉️ email (sigue el canal), 📅 reunión teledirigida al de delante, 💧 mancha de tinta y ⭐ modo focus (invencible). Los de atrás reciben mejores objetos.
 - **Online P2P:** hasta 6 personas y el resto CPU (las simula el anfitrión). Cada móvil manda su moto; quien lanza un objeto decide el impacto y el anfitrión lo reenvía. Si alguien se va, la CPU toma su moto.
 
-## 🥊 Mundo 2 · Code Clash Arena (3D)
+## 🥊 Mundo 2 · Coworking Fight (3D, estilo Smash)
 
-Lucha 2.5D en la oficina dibujada a boli (`src/doodle/fight/`). Los luchadores son las pegatinas de los personajes; la cámara encuadra a los dos.
+Hasta 4 luchadores en la azotea del CINK (terraza con bordes y tres bancos colgados, las Cuatro Torres al fondo). No hay barra de vida: cada golpe suma **porcentaje** y cuanto más llevas, más lejos sales volando; si cruzas la zona límite pierdes una de tus **3 vidas**.
 
-- **Combate:** combo de 3 golpes (el último lanza), golpe aéreo, doble salto, bloqueo (reduce el daño al 18 %), bajar de las mesas con ▼ + salto, y un especial por personaje (`fightMoves.js`): embestida, proyectil, golpe al suelo, gancho ascendente o escudo con contraataque. 3 rondas de 60 s; gana quien haga 2.
-- **Online P2P (PeerJS):** cada jugador simula su propio luchador (sin retardo en tus controles) y envía su estado 30 veces por segundo; el rival se pinta interpolado 90 ms por detrás. Quien golpea detecta el impacto y la víctima aplica el daño y decide si ha bloqueado. El anfitrión sincroniza el reloj (ping/pong con la muestra de menor latencia), arranca las rondas a la misma hora en los dos móviles y arbitra K.O., tiempo y ganador. Si el rival deja de responder 6 s, se vuelve a la sala.
-- **Controles:** teclado (A/D, W, S, J, K), mando físico, deck Game Boy en vertical (A golpe, B especial, ▲ salto, ▼ bloqueo) y, en horizontal, el mando táctil común.
+- **Golpes según hacia dónde apuntes:** combo neutro, golpe fuerte (lateral a tope), arriba, abajo; en el aire neutro, delante, arriba y picado. Especial de cada personaje y **súper salto** (▲ + especial) para volver.
+- **Defensa:** escudo (se gasta y se rompe), esquiva rodando y esquiva en el aire; te agarras a los bordes de la terraza.
+- **Objetos:** grapadora y bomba de post-its (se lanzan), Boli Bic gigante (golpes más fuertes), café (−25 %) y modo focus (invencible).
+- **Modos:** contra 1–3 CPUs, u online hasta 4 (el anfitrión puede rellenar con CPUs). Cada móvil simula su luchador; el anfitrión simula las CPUs, reparte objetos, reenvía mensajes y arbitra.
 
 ### Mando táctil común (`src/doodle/touchPad.js`)
 Los dos mundos 3D usan el mismo componente, pensado para móvil en horizontal: joystick flotante bajo el pulgar izquierdo y hasta 4 botones de cuaderno en abanico bajo el derecho (el grande es la acción principal). Arrastrar en el resto de la pantalla apunta.
 
 ---
 
-## ✏️ Mundo 3 · Doodle District (3D)
+## ✏️ Mundo 3 · BoliBic Tag (3D)
 
 **Escenario: CINK Coworking (Infanta Mercedes, Madrid)** — `src/doodle/cinkLevel.js`. Empiezas en la calle, en la esquina de Pedro Villar con Limonero, y entras por las puertas automáticas de la esquina redonda.
 - **Planta baja:** recepción con Victoria (te saluda; si le disparas, se queja), mesa alta con taburetes, comedor con mesas de madera, 4 microondas y vending, terraza con césped, y salas 1–4.

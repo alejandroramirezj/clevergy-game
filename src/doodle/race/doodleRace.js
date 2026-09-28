@@ -71,7 +71,7 @@ const TEMPLATE = `
   <div class="dd-card rk-card">
     <div class="rk-col">
       <div class="dd-kicker">MUNDO 4 · CARRERAS</div>
-      <h1 class="rk-title">Pantano Kart</h1>
+      <h1 class="rk-title">Pantano de San Juan</h1>
       <div class="rk-place">📍 Pantano de San Juan · Madrid</div>
       <div class="rk-picker">
         <button class="cf-arrow rk-arrow" data-d="-1" aria-label="Anterior">◀</button>

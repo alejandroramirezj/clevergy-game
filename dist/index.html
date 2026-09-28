@@ -7,13 +7,12 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Caveat:wght@700&family=Patrick+Hand&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="/assets/index-DdpDbBt-.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-Dkn6RxNy.css">
+  <script type="module" crossorigin src="/assets/index-D3x4-c-k.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-ygDaMS9B.css">
 </head>
 <body>
   <div id="wrap">
     <canvas id="cv" width="960" height="540"></canvas>
-    <canvas id="pixiCv" width="960" height="540" style="display: none;"></canvas>
   </div>
 
   <!-- MAIN MENU (PREMIUM RETRO ARCADE LOBBY · EXACT MATCH TO REFERENCE MOCKUPS) -->
@@ -208,7 +207,7 @@
     <div class="nb-page-scroll comp2-scroll" id="compScroll">
       <p class="comp2-intro">Clevergy se va de Retreat y el sprint amenaza con cancelarlo todo. Dieciocho compañeros, cada uno con su poder, cruzan cuatro mundos dibujados a boli para salvarlo.</p>
       <section class="comp2-sec" id="compTab-characters">
-        <h2 class="comp2-h"><span>1</span>Personajes <small>18 héroes · toca uno para jugar con él</small></h2>
+        <h2 class="comp2-h"><span>1</span>Personajes <small>18 compañeros, cada uno con su poder</small></h2>
         <div class="comp2-chars" id="compCharsGrid"></div>
       </section>
       <section class="comp2-sec" id="compTab-worlds">
@@ -247,89 +246,7 @@
     <div id="wsDots" class="ws-dots"></div>
   </div>
 
-  <!-- FIGHT LOBBY MODAL (CODE CLASH ARENA 1v1 - 100% RESPONSIVE) -->
-  <div id="fightLobbyModal" class="overlay hidden fight-lobby-overlay">
-    <div class="fl-card">
-      <div class="fl-header">
-        <div class="fl-title-group">
-          <div class="fl-badge">🥊 MUNDO 2 · 1v1 ARENA</div>
-          <h2 class="fl-title">CODE CLASH ARENA</h2>
-          <div class="fl-sub">The Office · Batalla del Sprint</div>
-        </div>
-        <button id="btnFlClose" class="btn-icon" title="Volver al mapa">✕</button>
-      </div>
 
-      <!-- Mode Switch: CPU vs Online -->
-      <div class="fl-modes">
-        <button id="flModeCpu" class="fl-mode-btn active">🤖 CONTRA CPU</button>
-        <button id="flModeOnline" class="fl-mode-btn">🌐 2 MÓVILES (ONLINE)</button>
-      </div>
-
-      <!-- Hero Showcase Carousel -->
-      <div class="fl-hero-display">
-        <button id="btnFlPrev" class="fl-nav-btn" aria-label="Anterior">◀</button>
-        <div class="fl-hero-card">
-          <div class="fl-avatar-wrap">
-            <img id="flHeroImg" src="/sprites/alejandro/avatar.png" alt="Hero Avatar" class="fl-hero-avatar">
-          </div>
-          <div class="fl-hero-info">
-            <div id="flHeroName" class="fl-hero-name">🪰 ALEJANDRO R.</div>
-            <div id="flHeroRole" class="fl-hero-role">Forma: Mosca boxeadora</div>
-            <div id="flHeroAb" class="fl-hero-ab">⚡ FLY PUNCH</div>
-            <p id="flHeroTip" class="fl-hero-tip">Guantes de boxeo y vuelo rápido.</p>
-          </div>
-        </div>
-        <button id="btnFlNext" class="fl-nav-btn" aria-label="Siguiente">▶</button>
-      </div>
-
-      <!-- Quick Character Grid for thumb tap -->
-      <div class="fl-team-strip" id="flTeamStrip"></div>
-
-      <!-- Online Room Settings (if online mode) -->
-      <div id="flOnlineBox" class="fl-online-box hidden">
-        <div class="fl-room-badge">
-          🔑 CÓDIGO DE SALA: <span id="flRoomCode">ABCD</span>
-          <button id="btnFlCopyCode" class="btn-micro" style="margin-left:8px;">📋 COPIAR</button>
-        </div>
-        <div class="fl-join-row">
-          <input type="text" id="flJoinInput" class="fl-join-input" maxlength="4" placeholder="CÓDIGO AMIGO">
-          <button id="btnFlJoin" class="btn-micro-action">UNIRME</button>
-        </div>
-        <div id="flOnlineStatus" class="fl-status-text">Comparte el código con tu compañero</div>
-      </div>
-
-      <!-- Actions -->
-      <div class="fl-actions">
-        <button id="btnFlStart" class="btn btn-hero fl-start-btn">🥊 ¡A PELEAR!</button>
-        <button id="btnFlBackMap" class="btn alt">🗺️ VOLVER AL MAPA</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 05. INTRO DEL NIVEL (BRIEFING CARD) -->
-  <div id="levelBriefingModal" class="overlay hidden">
-    <div class="pixel-modal-box briefing-card">
-      <div class="briefing-header">
-        <div class="briefing-world-tag" id="bfWorldTag">MUNDO 1 - THE OFFICE</div>
-        <h2 class="briefing-title" id="bfLevelTitle">NIVEL 01: TRABAJO EN EQUIPO</h2>
-        <div class="briefing-stars">★★★</div>
-      </div>
-      <div class="briefing-body">
-        <div class="briefing-req-box">
-          <span class="req-label">HABILIDAD RECOMENDADA:</span>
-          <div class="req-ability-pill" id="bfReqPill">
-            <span class="req-icon" id="bfReqIcon">🧗</span>
-            <span class="req-txt" id="bfReqTxt">ESCALAR PAREDES (ANA / JOSU)</span>
-          </div>
-          <p class="req-desc" id="bfReqDesc">Supera los bugs 404, escala las paredes de contención y alcanza el servidor central.</p>
-        </div>
-      </div>
-      <div class="briefing-actions">
-        <button class="pixel-btn btn-play-wood" id="bfBtnPlay">JUGAR NIVEL ▶</button>
-        <button class="pixel-btn btn-wood" id="bfBtnBack">VOLVER ↩</button>
-      </div>
-    </div>
-  </div>
 
   <!-- 08. MENÚ DE PAUSA -->
   <div id="pauseOv" class="overlay hidden">

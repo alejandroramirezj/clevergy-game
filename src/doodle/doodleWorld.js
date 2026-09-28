@@ -76,8 +76,8 @@ const TEMPLATE = `
 </div>
 <div class="dd-ov dd-start">
   <div class="dd-card">
-    <div class="dd-kicker">MUNDO 3</div>
-    <h1>Doodle District</h1>
+    <div class="dd-kicker">MUNDO 3 · LASER TAG</div>
+    <h1>BoliBic Tag</h1>
     <p class="dd-lead">CINK Coworking (Infanta Mercedes) se ha llenado de emails urgentes, reuniones sin agenda
       y «¿tienes 5 minutos?». Entra por la esquina, saluda a Victoria en recepción y limpia las tres plantas
       hasta la oficina de Clevergy con tu boli Bic.</p>

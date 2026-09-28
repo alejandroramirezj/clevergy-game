@@ -15,6 +15,8 @@ import { getCharacterAvatar } from "../engine/sprites.js";
 import { invitedCharId } from "./charRoute.js";
 
 const auth = { user: null, clientId: null, domain: null, ready: false };
+// la "G" de Google a color (se pinta dentro de un botón dibujado a boli)
+export const GOOGLE_G = `<svg class="cg-glogo" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>`;
 window.__cgAuth = auth;
 
 const api = async (path, opts = {}) => {
@@ -45,7 +47,7 @@ function loadGis() {
 export function initAuth({ onCharChosen } = {}) {
   // ── piezas de interfaz ──
   const chip = document.createElement("button");
-  chip.className = "cg-auth-chip hidden";
+  chip.className = "cg-auth-chip";
   chip.type = "button";
   (document.querySelector("#menuOv .lobby-header-right") || document.body).prepend(chip);
 
@@ -61,17 +63,29 @@ export function initAuth({ onCharChosen } = {}) {
   auth.open = () => { if (auth.user) showAccount(); else showLogin(); };
 
   function paintChip() {
-    chip.classList.toggle("hidden", !auth.clientId && !auth.user);
+    paintSide();
     if (auth.user) {
       const c = CHARS.find((x) => x.id === auth.user.character);
       chip.innerHTML = `${auth.user.picture ? `<img class="cg-auth-pic" src="${esc(auth.user.picture)}" alt="" referrerpolicy="no-referrer">` : ""}<span>${esc(auth.user.nick)}</span>${c ? `<i>${c.emoji}</i>` : ""}`;
       chip.title = "Tu cuenta";
     } else {
-      chip.innerHTML = `<b class="cg-g">G</b><span>Entrar</span>`;
+      chip.innerHTML = `${GOOGLE_G}<span>Entrar</span>`;
       chip.title = "Entrar con Google para guardar tu progreso";
     }
   }
   chip.addEventListener("click", () => auth.open());
+  // también en el menú lateral de la portada, bien a la vista
+  const side = document.createElement("button");
+  side.className = "side-nav-btn cg-side-login";
+  side.type = "button";
+  document.getElementById("lobbySideNav")?.appendChild(side);
+  side.addEventListener("click", () => auth.open());
+  function paintSide() {
+    const u = auth.user;
+    side.innerHTML = u
+      ? `<span class="nav-icon">${u.picture ? `<img class="cg-auth-pic" src="${esc(u.picture)}" alt="" referrerpolicy="no-referrer">` : "👤"}</span><span class="nav-text">${esc(u.nick)}</span><span class="nav-chevron">›</span>`
+      : `<span class="nav-icon">${GOOGLE_G}</span><span class="nav-text">ENTRAR CON GOOGLE</span><span class="nav-chevron">›</span>`;
+  }
 
   async function showLogin(invite) {
     const inv = invite && CHARS.find((c) => c.id === invite);
@@ -84,13 +98,15 @@ export function initAuth({ onCharChosen } = {}) {
         <li>💾 Tu progreso se guarda en cualquier móvil</li>
         <li>🪰 Eliges qué personaje eres tú</li>
       </ul>
-      <div class="cg-gbtn"><span class="cg-auth-wait">Cargando Google…</span></div>
+      <div class="cg-gbtn">${auth.clientId ? `<span class="cg-auth-wait">Cargando Google…</span>` : `<button class="cg-gfake" disabled>${GOOGLE_G}<span>Iniciar sesión con Google</span></button>`}</div>
+      ${auth.clientId ? "" : `<div class="cg-auth-note">El login se activa cuando el juego esté publicado en Cloudflare con el ID de cliente de Google.</div>`}
       ${auth.domain ? `<div class="cg-auth-note">Con tu cuenta @${esc(auth.domain)}</div>` : ""}
       <div class="cg-auth-err hidden"></div>
       <button class="cg-auth-skip">Jugar sin cuenta</button>`;
     card.querySelector(".cg-auth-x").onclick = close;
     card.querySelector(".cg-auth-skip").onclick = close;
     open();
+    if (!auth.clientId) return;
     try {
       await loadGis();
       window.google.accounts.id.initialize({ client_id: auth.clientId, callback: onCredential, ux_mode: "popup", context: "signin", itp_support: true });

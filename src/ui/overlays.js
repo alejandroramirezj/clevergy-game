@@ -5,6 +5,7 @@ import { GameState, respawn, fmtT, switchToChar } from "../game/state.js";
 import { sfx } from "../engine/audio.js";
 import { ANIM, SPR, anim, getCharacterAvatar } from "../engine/sprites.js";
 import { fetchGlobalLeaderboard } from "../game/leaderboard.js";
+import { GOOGLE_G } from "../game/auth.js";
 
 export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
   // Elements
@@ -290,17 +291,6 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
   // Header News / Compendium
   if (btnHeaderCompendium) {
     btnHeaderCompendium.addEventListener("click", openCompendium);
-  }
-
-  // 1v1 Arena shortcut
-  if (btnOpenArenaQuick) {
-    btnOpenArenaQuick.addEventListener("click", () => {
-      const fightLobbyModal = document.getElementById("fightLobbyModal");
-      if (fightLobbyModal) {
-        fightLobbyModal.classList.remove("hidden");
-        sfx(600, 0.08);
-      }
-    });
   }
 
   // Keyboard navigation for lobby (Left/Right arrows change character)
@@ -625,8 +615,8 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
   function paintLB() {
     if (!lbModalContent || !lbData) return;
     const A = window.__cgAuth;
-    const banner = A && A.clientId && !A.user
-      ? `<div class="lb-login"><span>🔒 Tus récords solo cuentan con sesión iniciada.</span><button class="lb-login-btn"><b class="cg-g">G</b> Entrar con Google</button></div>` : "";
+    const banner = A && !A.user
+      ? `<div class="lb-login"><span>🔒 Entra para que tus récords cuenten y se guarde tu progreso</span><button class="lb-login-btn">${GOOGLE_G}<span>Entrar con Google</span></button></div>` : "";
     lbModalContent.innerHTML = banner + (lbTab === "general" ? renderGeneral(lbData) : renderWorlds(lbData));
     lbModalContent.querySelector(".lb-login-btn")?.addEventListener("click", () => A.open());
     lbOv.querySelectorAll(".lb-tab").forEach((b) => b.classList.toggle("on", b.dataset.tab === lbTab));
@@ -685,27 +675,27 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
   let compSelectedCharIdx = GameState.charIdx || 0;
 
   const ENEMIES_DATA = [
-    { icon: "✉️", name: "Email urgente", where: "Campus Madrid · CINK", desc: "Sobres con dientes que vuelan hacia ti en bandada.", tip: "Písalos o dispárales antes de que muerdan." },
-    { icon: "⏰", name: "Reloj de fichar", where: "Campus Madrid · CINK", desc: "Patrulla los pasillos marcando la hora sin descanso.", tip: "Un pisotón y se para el tiempo." },
-    { icon: "📅", name: "Reunión de 5 minutos", where: "Campus Madrid · CINK", desc: "Te lanza invitaciones de calendario desde lejos.", tip: "Acércate entre invitación e invitación." },
-    { icon: "🥊", name: "El compañero rival", where: "Code Clash Arena", desc: "Otro héroe de Clevergy, de la CPU o desde otro móvil.", tip: "Bloquea, esquiva y guarda el especial para rematar." },
-    { icon: "🚤", name: "Los rivales del pantano", where: "Pantano Kart", desc: "Cinco motos de agua que no te dejarán ganar tan fácil.", tip: "Derrapa en las curvas para cargar turbo." },
-    { icon: "📨", name: "EMAIL CHAIN", where: "Jefe · Campus Madrid", boss: true, desc: "Una torre de correos que salta en el escenario del Demo Day.", tip: "Salta sus ondas y písale la cabeza cuando se canse." },
-    { icon: "📬", name: "INBOX INFINITO", where: "Jefe · CINK Coworking", boss: true, desc: "La bandeja de entrada hecha monstruo en la última oleada.", tip: "Muévete sin parar y apunta al centro." }
+    { icon: "✉️", name: "Email urgente", where: "La Oficina · BoliBic Tag", desc: "Sobres con dientes que vuelan hacia ti en bandada.", tip: "Písalos o dispárales antes de que muerdan." },
+    { icon: "⏰", name: "Reloj de fichar", where: "La Oficina · BoliBic Tag", desc: "Patrulla los pasillos marcando la hora sin descanso.", tip: "Un pisotón y se para el tiempo." },
+    { icon: "📅", name: "Reunión de 5 minutos", where: "La Oficina · BoliBic Tag", desc: "Te lanza invitaciones de calendario desde lejos.", tip: "Acércate entre invitación e invitación." },
+    { icon: "🥊", name: "El compañero rival", where: "Coworking Fight", desc: "Otro héroe de Clevergy, de la CPU o desde otro móvil.", tip: "Bloquea, esquiva y guarda el especial para rematar." },
+    { icon: "🚤", name: "Los rivales del pantano", where: "Pantano de San Juan", desc: "Cinco motos de agua que no te dejarán ganar tan fácil.", tip: "Derrapa en las curvas para cargar turbo." },
+    { icon: "📨", name: "EMAIL CHAIN", where: "Jefe · La Oficina", boss: true, desc: "Una torre de correos que salta en el escenario del Demo Day.", tip: "Salta sus ondas y písale la cabeza cuando se canse." },
+    { icon: "📬", name: "INBOX INFINITO", where: "Jefe · BoliBic Tag", boss: true, desc: "La bandeja de entrada hecha monstruo en la última oleada.", tip: "Muévete sin parar y apunta al centro." }
   ];
   const ITEMS_DATA = [
     { icon: "☕", name: "Café", where: "Todos los mundos", desc: "Recupera un corazón (o da puntos extra si vas a tope)." },
-    { icon: "🪙", name: "Monedas", where: "Campus Madrid", desc: "Suman puntos; cógelas casi todas para mejorar el rango." },
-    { icon: "💾", name: "Disquetes", where: "Campus Madrid", desc: "Tres escondidos por el nivel. Son la clave del rango S." },
-    { icon: "❓", name: "Bloque ?", where: "Campus Madrid", desc: "Dale con la cabeza: moneda o café." },
-    { icon: "🛋️", name: "Pufs de colores", where: "Campus Madrid", desc: "Rebotan y te lanzan muy alto." },
-    { icon: "🪑", name: "Sillas plegables", where: "Campus Madrid", desc: "Se hunden al poco de pisarlas y vuelven a aparecer." },
-    { icon: "🌀", name: "Rejillas de ventilación", where: "Campus Madrid", desc: "La corriente te sube por la torre de coworking." },
-    { icon: "✏️", name: "Boli Bic", where: "CINK Coworking", desc: "Tu arma en el shooter: dispara tinta azul." },
-    { icon: "⚡", name: "Café turbo", where: "Pantano Kart", desc: "Acelerón instantáneo en la moto de agua." },
-    { icon: "💧", name: "Mancha de tinta", where: "Pantano Kart", desc: "Déjala detrás y el rival que la pise patina." },
-    { icon: "📅", name: "Reunión", where: "Pantano Kart", desc: "Frena en seco a quien va primero." },
-    { icon: "⭐", name: "Modo focus", where: "Pantano Kart", desc: "Invencible y más rápido durante unos segundos." }
+    { icon: "🪙", name: "Monedas", where: "La Oficina", desc: "Suman puntos; cógelas casi todas para mejorar el rango." },
+    { icon: "💾", name: "Disquetes", where: "La Oficina", desc: "Tres escondidos por el nivel. Son la clave del rango S." },
+    { icon: "❓", name: "Bloque ?", where: "La Oficina", desc: "Dale con la cabeza: moneda o café." },
+    { icon: "🛋️", name: "Pufs de colores", where: "La Oficina", desc: "Rebotan y te lanzan muy alto." },
+    { icon: "🪑", name: "Sillas plegables", where: "La Oficina", desc: "Se hunden al poco de pisarlas y vuelven a aparecer." },
+    { icon: "🌀", name: "Rejillas de ventilación", where: "La Oficina", desc: "La corriente te sube por la torre de coworking." },
+    { icon: "✏️", name: "Boli Bic", where: "BoliBic Tag", desc: "Tu arma en el shooter: dispara tinta azul." },
+    { icon: "⚡", name: "Café turbo", where: "Pantano de San Juan", desc: "Acelerón instantáneo en la moto de agua." },
+    { icon: "💧", name: "Mancha de tinta", where: "Pantano de San Juan", desc: "Déjala detrás y el rival que la pise patina." },
+    { icon: "📅", name: "Reunión", where: "Pantano de San Juan", desc: "Frena en seco a quien va primero." },
+    { icon: "⭐", name: "Modo focus", where: "Pantano de San Juan", desc: "Invencible y más rápido durante unos segundos." }
   ];
   const avImg = (c) => {
     const av = getCharacterAvatar(c.id);
@@ -714,10 +704,9 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
 
   function renderCompendiumChars() {
     if (!compCharsGrid) return;
-    compCharsGrid.innerHTML = CHARS.map((c, idx) => {
+    compCharsGrid.innerHTML = CHARS.map((c) => {
       const p = POWER_INFO[c.id] || { icon: "★", desc: c.tip };
-      const cur = idx === GameState.charIdx;
-      return `<article class="comp2-char${cur ? " cur" : ""}" data-idx="${idx}">
+      return `<article class="comp2-char">
         <div class="comp2-char-av">${avImg(c)}</div>
         <div class="comp2-char-txt">
           <h3>${c.name}</h3>
@@ -725,19 +714,34 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
           <div class="comp2-power"><span>${p.icon}</span><b>${c.ab}</b></div>
           <p>${p.desc}</p>
         </div>
-        <button class="comp2-pick">${cur ? "✓ En tu equipo" : "Jugar con él"}</button>
       </article>`;
     }).join("");
-    compCharsGrid.querySelectorAll(".comp2-char").forEach((card) => card.addEventListener("click", () => {
-      const idx = Number(card.dataset.idx);
-      if (idx === GameState.charIdx) return;
-      switchToChar(idx);
-      updateSpotlight();
-      renderCompendiumChars();
-      sfx(800, 0.08);
-    }));
   }
   function renderCompendiumDossier() {}
+
+  // qué se hace en cada mapa, contado para la presentación
+  const WORLD_LORE = {
+    1: {
+      place: "Google for Startups Campus Madrid, la antigua fábrica de ladrillo junto al Palacio Real.",
+      steps: ["Terraza de la calle Moreno Nieto con sombrillas que hacen de plataforma", "Campus Café con barra, mesas y un altillo de sofás", "Torre de coworking de cinco plantas: ascensor, rejilla de ventilación y forjados con huecos", "Salas de cristal en lo alto, con fosos y sillas plegables que se hunden", "Gradas del auditorio hasta el escenario del Demo Day, donde espera EMAIL CHAIN"],
+      goal: "Llega a la bandera con el máximo de monedas y los 3 disquetes escondidos: así se saca el rango S."
+    },
+    6: {
+      place: "La terraza y las salas del CINK convertidas en ring.",
+      steps: ["Hasta 4 compañeros a la vez, contra la CPU o online", "Cada golpe suma porcentaje: cuanto más llevas, más lejos sales volando", "Echa a los demás fuera del escenario para quitarles una vida", "Del cielo caen grapadoras, cafés, bombas de post-its y más objetos"],
+      goal: "Gana quien se quede con vidas al final. ¡Todos contra todos!"
+    },
+    7: {
+      place: "Las tres plantas del CINK Coworking de Infanta Mercedes, a boli.",
+      steps: ["Entras por la recepción, donde te saluda Victoria", "Comedor con microondas y vending, terraza con césped y las salas 1, 2, 3 y 4", "Sube por las escaleras al hot desk y a la oficina de Clevergy, en la esquina redonda", "Oleadas de emails, reuniones y relojes que te siguen de planta en planta"],
+      goal: "Sobrevive a las oleadas y borra a INBOX INFINITO, en cooperativo o en laser tag todos contra todos."
+    },
+    8: {
+      place: "El Pantano de San Juan, en Madrid: la presa, los pinos y la playa de la Virgen de la Nueva.",
+      steps: ["Seis motos de agua, tres vueltas", "Derrapa en las curvas para cargar turbo y usa rampas y pads de impulso", "Cajas de objetos: café turbo, emails, reuniones, manchas de tinta y modo focus"],
+      goal: "Cruza la meta primero, contra la CPU o contra tus compañeros online."
+    }
+  };
 
   function renderCompendiumWorlds() {
     if (!compWorldsGrid) return;
@@ -748,7 +752,9 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
           <small>${w.genre || ""}</small>
           <h3>${w.name}</h3>
           <div class="comp2-world-sub">${w.subtitle || ""}</div>
-          <p>${w.desc}</p>
+          ${WORLD_LORE[w.id] ? `<p class="comp2-place">📍 ${WORLD_LORE[w.id].place}</p>
+          <ol class="comp2-steps">${WORLD_LORE[w.id].steps.map((t) => `<li>${t}</li>`).join("")}</ol>
+          <p class="comp2-goal">🏁 ${WORLD_LORE[w.id].goal}</p>` : `<p>${w.desc}</p>`}
           <div class="comp2-tags">${(w.chips || []).map((c) => `<span>${c}</span>`).join("")}</div>
         </div>
       </article>`).join("");
@@ -915,57 +921,6 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     window.location.reload();
   });
 
-  // 05. LEVEL BRIEFING CARD HANDLERS
-  const levelBriefingModal = document.getElementById("levelBriefingModal");
-  const bfWorldTag = document.getElementById("bfWorldTag");
-  const bfLevelTitle = document.getElementById("bfLevelTitle");
-  const bfReqIcon = document.getElementById("bfReqIcon");
-  const bfReqTxt = document.getElementById("bfReqTxt");
-  const bfReqDesc = document.getElementById("bfReqDesc");
-  const bfBtnPlay = document.getElementById("bfBtnPlay");
-  const bfBtnBack = document.getElementById("bfBtnBack");
-
-  let onBriefingPlayCallback = null;
-  function showLevelBriefing(w, onPlay) {
-    if (!levelBriefingModal) {
-      if (onPlay) onPlay();
-      return;
-    }
-    onBriefingPlayCallback = onPlay;
-
-    const reqs = {
-      1: { icon: "🖨️", txt: "CADA HÉROE CON SU PODER", desc: "José Luis imprime plataformas, Paloma vuela, Ana trepa, Manu da el super step… Sube la torre del Campus y gana el Demo Day." },
-      2: { icon: "🥊", txt: "ROMPER OBSTÁCULOS (ALEJANDRO / JESÚS)", desc: "Abrete paso entre la jungla de APIs y corta las conexiones bloqueadas." },
-      3: { icon: "🏃", txt: "VELOCIDAD Y VUELO (SILVIA / PALOMA)", desc: "Circuito contra reloj para entregar el sprint antes del cierre de Q4." },
-      4: { icon: "⚡", txt: "ESCUDO Y REFLEJOS (BELTRÁN / JUAN)", desc: "Resiste los ataques de la All-Hands eterna y esquiva los micrófonos abiertos." },
-      5: { icon: "✦", txt: "TRABAJO EN EQUIPO (TODO EL EQUIPO)", desc: "El gran reto final en la nieve. Utiliza las 3 habilidades para vencer a The Deadline." },
-      6: { icon: "🥊", txt: "COMBATE 1v1 (TU MEJOR COMPAÑERO)", desc: "Pelea de código en el cuadrilátero contra la CPU o un compañero online." },
-      8: { icon: "🚤", txt: "CARRERAS SOBRE EL AGUA · 3 VUELTAS", desc: "Moto de agua por el Pantano de San Juan: derrapa en las curvas para ganar turbo y usa los objetos de oficina contra tus rivales." },
-      7: { icon: "✏️", txt: "SHOOTER 3D EN PRIMERA PERSONA", desc: "Coge el boli Bic y sobrevive a 6 oleadas en la oficina dibujada. Tu héroe aporta su velocidad y su salto." }
-    };
-    const req = reqs[w.id] || reqs[1];
-
-    if (bfWorldTag) bfWorldTag.textContent = `MUNDO ${w.num || w.id} - ${w.name.toUpperCase()}`;
-    if (bfLevelTitle) bfLevelTitle.textContent = `NIVEL 01: ${w.subtitle ? w.subtitle.toUpperCase() : "EXPEDICIÓN"}`;
-    if (bfReqIcon) bfReqIcon.textContent = req.icon;
-    if (bfReqTxt) bfReqTxt.textContent = req.txt;
-    if (bfReqDesc) bfReqDesc.textContent = req.desc;
-
-    levelBriefingModal.classList.remove("hidden");
-    document.body.classList.add("has-modal");
-    try { sfx(700, 0.08, "triangle"); } catch (e) {}
-  }
-
-  bfBtnPlay?.addEventListener("click", () => {
-    document.body.classList.remove("has-modal");
-    levelBriefingModal?.classList.add("hidden");
-    if (onBriefingPlayCallback) onBriefingPlayCallback();
-  });
-  bfBtnBack?.addEventListener("click", () => {
-    document.body.classList.remove("has-modal");
-    levelBriefingModal?.classList.add("hidden");
-  });
-
   // 09. LEVEL COMPLETED & MVP CALCULATION
   window.addEventListener("level_completed", () => {
     updateWinScreenMVP();
@@ -1071,7 +1026,6 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     tryStart: triggerStart,
     updateSpotlight,
     togglePause,
-    showLevelBriefing,
     updateWinScreenMVP
   };
 }

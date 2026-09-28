@@ -14,10 +14,8 @@ import { WORLDS, saveWorldProgress } from "./config/worlds.js";
 import { submitScore } from "./game/leaderboard.js";
 import { consumeCharInvite } from "./game/charRoute.js";
 import { initAuth } from "./game/auth.js";
+import { initDeckNav } from "./ui/deckNav.js";
 import { updateProjectiles, updateMinions, updateEnemies, updateBoss, winGame } from "./game/enemies.js";
-import { startFight, updateFight, drawFight, FightState } from "./game/fighting.js";
-import { showFightLobby, hideFightLobby, drawFightLobby, updateFightLobby } from "./ui/fightLobby.js";
-import { disconnect as netDisconnect } from "./game/fightNet.js";
 
 const cv = document.getElementById("cv");
 const cx = cv.getContext("2d");
@@ -29,35 +27,7 @@ function fitCanvas() {
   const iw = window.innerWidth, ih = window.innerHeight;
   const isPortrait = ih > iw;
 
-  // Selection Lobby: fullscreen menu mode
-  if (GameState.gameMode === "fighting") {
-    document.body.classList.remove("gameboy-mode");
-    document.getElementById("touch")?.classList.add("hidden");
-    document.getElementById("gameboyDeck")?.classList.add("hidden");
-
-    const H = 540;
-    let W = Math.round(H * (iw / ih));
-    W = Math.max(960, Math.min(1600, W));
-
-    cv.width = Math.round(W * dpr);
-    cv.height = Math.round(H * dpr);
-    cv.style.position = "fixed";
-    cv.style.left = "0";
-    cv.style.top = "0";
-    cv.style.width = iw + "px";
-    cv.style.height = ih + "px";
-
-    cx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    cx.imageSmoothingEnabled = false;
-
-    GameState.W = W;
-    GameState.H = H;
-    GameState.DPR = dpr;
-    GameState.SAFEB = 0;
-    return;
-  }
-
-  // Active Gameplay (Platformer or Fighting Active)
+  // Partida (plataformas 2D antiguo o marco de los mundos 3D)
   if (isPortrait) {
     document.body.classList.add("gameboy-mode");
     document.getElementById("touch")?.classList.add("hidden");
@@ -119,16 +89,7 @@ function fitCanvas() {
     GameState.SAFEB = SAFEB;
   }
 
-  const pixiCv = document.getElementById("pixiCv");
-  if (pixiCv) {
-    pixiCv.width = cv.width;
-    pixiCv.height = cv.height;
-    pixiCv.style.position = cv.style.position;
-    pixiCv.style.left = cv.style.left;
-    pixiCv.style.top = cv.style.top;
-    pixiCv.style.width = cv.style.width;
-    pixiCv.style.height = cv.style.height;
-  }
+
 }
 
 window.addEventListener("resize", fitCanvas);
@@ -144,9 +105,17 @@ function startGame(worldId = 1) {
   document.getElementById("winOv")?.classList.add("hidden");
   document.getElementById("goOv")?.classList.add("hidden");
 
-  GameState.status = "play";
   GameState.worldMapOpen = false;
   GameState.currentWorld = worldId;
+
+  // los mundos 3D se cargan bajo demanda: mientras llega el módulo se ve una
+  // pantalla de carga (y NO los controles ni el bucle del plataformas antiguo)
+  if ([1, 6, 7, 8].includes(worldId)) {
+    GameState.status = "ready";
+    GameState.gameMode = "doodle";
+    document.body.classList.add("doodle-mode");
+    showLoading(true);
+  } else GameState.status = "play";
 
   if (worldId === 7) {
     startDoodle();
@@ -171,6 +140,20 @@ function startGame(worldId = 1) {
   }
 }
 
+function showLoading(on) {
+  let el = document.getElementById("worldLoading");
+  if (on && !el) {
+    el = document.createElement("div");
+    el.id = "worldLoading";
+    el.className = "world-loading";
+    el.innerHTML = `<div class="wl-card"><div class="wl-pen">✏️</div><b>Cargando mundo…</b><small>afilando el boli</small></div>`;
+    (document.getElementById("wrap") || document.body).appendChild(el);
+  }
+  if (!on && el) el.remove();
+}
+// cuando el mundo 3D ya ha montado su pantalla, se quita la de carga
+new MutationObserver(() => { if (document.getElementById("doodleRoot")) showLoading(false); }).observe(document.getElementById("wrap") || document.body, { childList: true });
+
 // Mundo 7: shooter 3D con Three.js. Se carga bajo demanda para no engordar el bundle principal.
 // Mundo 2: Code Clash Arena en 3D (Three.js, mismo render de boli que Doodle District)
 async function startFight3D() {
@@ -178,6 +161,8 @@ async function startFight3D() {
   stopMusic();
   fitCanvas();
   const back = () => {
+    showLoading(false);
+    document.body.classList.remove("doodle-mode");
     GameState.gameMode = "platformer";
     GameState.status = "ready";
     fitCanvas();
@@ -192,7 +177,7 @@ async function startFight3D() {
       onExit: () => { doodle = null; back(); }
     });
   } catch (err) {
-    console.error("No se pudo cargar Code Clash Arena", err);
+    console.error("No se pudo cargar Coworking Fight", err);
     back();
   }
 }
@@ -203,6 +188,8 @@ async function startPlatform3D() {
   stopMusic();
   fitCanvas();
   const back = () => {
+    showLoading(false);
+    document.body.classList.remove("doodle-mode");
     GameState.gameMode = "platformer";
     GameState.status = "ready";
     fitCanvas();
@@ -219,7 +206,7 @@ async function startPlatform3D() {
       onExit: () => { doodle = null; back(); }
     });
   } catch (err) {
-    console.error("No se pudo cargar Campus Madrid", err);
+    console.error("No se pudo cargar La Oficina", err);
     back();
   }
 }
@@ -230,6 +217,8 @@ async function startRace3D() {
   stopMusic();
   fitCanvas();
   const back = () => {
+    showLoading(false);
+    document.body.classList.remove("doodle-mode");
     GameState.gameMode = "platformer";
     GameState.status = "ready";
     fitCanvas();
@@ -244,7 +233,7 @@ async function startRace3D() {
       onExit: () => { doodle = null; back(); }
     });
   } catch (err) {
-    console.error("No se pudo cargar Pantano Kart", err);
+    console.error("No se pudo cargar Pantano de San Juan", err);
     back();
   }
 }
@@ -278,7 +267,9 @@ async function startDoodle() {
       }
     });
   } catch (err) {
-    console.error("No se pudo cargar Doodle District", err);
+    console.error("No se pudo cargar BoliBic Tag", err);
+    showLoading(false);
+    document.body.classList.remove("doodle-mode");
     GameState.gameMode = "platformer";
     GameState.status = "ready";
     fitCanvas();
@@ -596,32 +587,25 @@ initSprites();
 fitCanvas();
 
 let toggleTeamFn = () => {};
-let showBriefingFn = (w, cb) => cb();
 
 const worldMap = initWorldMap({
-  onSelectWorld: (worldId) => {
-    const w = WORLDS.find((x) => x.id === worldId) || WORLDS[0];
-    showBriefingFn(w, () => {
-      startGame(worldId);
-    });
-  },
+  // directo al mundo: cada uno ya tiene su propia pantalla de inicio (sin la ficha antigua)
+  onSelectWorld: (worldId) => startGame(worldId),
   onOpenTeam: () => toggleTeamFn()
 });
 
-const { toggleTeam, tryStart, updateSpotlight, togglePause, showLevelBriefing } = initOverlays({
-  onStartGame: () => {
-    const w = WORLDS[0];
-    showLevelBriefing(w, () => startGame(1));
-  },
+const { toggleTeam, tryStart, updateSpotlight, togglePause } = initOverlays({
+  onStartGame: () => worldMap.showWorldMap(),
   onOpenMap: () => worldMap.showWorldMap(),
   // sólo queda un mundo de plataformas: al superarlo se vuelve a la elección de mundo
   onNextWorld: () => worldMap.showWorldMap()
 });
 toggleTeamFn = toggleTeam;
+// en vertical, el mando Game Boy también maneja los menús (A pulsa, B vuelve)
+initDeckNav();
 // cuenta de Google (opcional): guarda progreso y ranking y fija "tu" personaje
 initAuth({ onCharChosen: (idx) => { switchToChar(idx); updateSpotlight(); worldMap.renderMap(); } });
 document.getElementById("btnWinNextWorld")?.classList.add("hidden");
-showBriefingFn = showLevelBriefing;
 
 initInput({
   onSwitchChar: (dir) => {
@@ -659,16 +643,6 @@ function loop(now) {
 
   if (GameState.gameMode === "doodle") {
     // el mundo 7 corre su propio bucle
-  } else if (GameState.gameMode === "fighting") {
-    updateFightLobby(frameTime);
-    drawFightLobby(cx);
-  } else if (GameState.gameMode === "fighting_active") {
-    accumulator += frameTime;
-    while (accumulator >= FIXED_STEP) {
-      updateFight(FIXED_STEP);
-      accumulator -= FIXED_STEP;
-    }
-    drawFight(cx);
   } else {
     accumulator += frameTime;
     while (accumulator >= FIXED_STEP) {

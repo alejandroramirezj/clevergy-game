@@ -58,8 +58,8 @@ const TEMPLATE = `
 <div class="dd-ov pf-start">
   <div class="dd-card pf-card">
     <div class="pf-col">
-      <div class="dd-kicker">MUNDO 1 · GOOGLE FOR STARTUPS</div>
-      <h1 class="pf-title">Campus Madrid</h1>
+      <div class="dd-kicker">MUNDO 1 · GOOGLE FOR STARTUPS CAMPUS</div>
+      <h1 class="pf-title">La Oficina</h1>
       <p class="pf-lead">De la terraza de Moreno Nieto al escenario del <b>Demo Day</b>: cruza el café, sube la torre de coworking, salta las salas de cristal y tumba a <b>EMAIL CHAIN</b> con el Palacio Real al fondo.</p>
       <div class="pf-picker">
         <button class="cf-arrow pf-arrow" data-d="-1" aria-label="Anterior">◀</button>
@@ -1218,7 +1218,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
   function endScreen(win) {
     screen = "end";
     const rank = win ? rankFor() : "";
-    $(".pf-end-kicker").textContent = win ? "MUNDO 1 · CAMPUS MADRID" : "GAME OVER";
+    $(".pf-end-kicker").textContent = win ? "MUNDO 1 · LA OFICINA" : "GAME OVER";
     $(".pf-end-title").textContent = win ? "¡Inbox Zero!" : "Te han enterrado en emails";
     $(".pf-end-stats").innerHTML = `
       <div><span>Puntos</span><b>${P.score.toLocaleString("es-ES")}</b></div>
@@ -1439,7 +1439,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     showOv(null);
     syncPad();
   }
-  $(".pf-go").addEventListener("click", () => { resetRun(false); play(); big("CAMPUS MADRID", "Google for Startups · ¡a por el Demo Day!", 1.8); });
+  $(".pf-go").addEventListener("click", () => { resetRun(false); play(); big("LA OFICINA", "Google for Startups Campus · ¡a por el Demo Day!", 1.8); });
   $(".pf-resume").addEventListener("click", () => play());
   $(".pf-restart").addEventListener("click", () => { resetRun(false); play(); });
   $(".pf-retry").addEventListener("click", () => { const won = P.won; resetRun(!won); play(); });
