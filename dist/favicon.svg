@@ -1,5 +1,25 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="14" fill="#0b0e1a"/>
-  <rect x="4" y="4" width="56" height="56" rx="10" fill="none" stroke="#2a3566" stroke-width="2"/>
-  <path d="M36 6 L18 36 L32 36 L26 58 L48 26 L34 26 Z" fill="#b6f542" stroke="#fff" stroke-width="1.5"/>
+  <!-- R de RETREAT dibujada a boli y coloreada con rayones en el verde de Clevergy -->
+  <defs>
+    <clipPath id="r">
+      <path fill-rule="evenodd" d="M15 55 L16 9 L37 9 C49 9 53 17 53 24 C53 31 48 36 41 37 L54 55 L42 55 L30 38.5 L26.5 38.5 L26 55 Z M26.5 18 L35.5 18 C40.5 18 42.5 20.8 42.5 24 C42.5 27.6 39.8 30 35.5 30 L26.5 30 Z"/>
+    </clipPath>
+  </defs>
+  <rect x="1" y="1" width="62" height="62" rx="14" fill="#f6f3e6"/>
+  <g stroke="#9fb3e8" stroke-width="1" opacity=".55"><path d="M2 17 H62 M2 31 H62 M2 45 H62 M2 59 H62"/></g>
+  <!-- sombra desplazada, como pegatina -->
+  <path fill-rule="evenodd" fill="#0e6b66" opacity=".25" transform="translate(2.5 2.5)" d="M15 55 L16 9 L37 9 C49 9 53 17 53 24 C53 31 48 36 41 37 L54 55 L42 55 L30 38.5 L26.5 38.5 L26 55 Z M26.5 18 L35.5 18 C40.5 18 42.5 20.8 42.5 24 C42.5 27.6 39.8 30 35.5 30 L26.5 30 Z"/>
+  <g clip-path="url(#r)">
+    <rect x="0" y="0" width="64" height="64" fill="#8fe3d7"/>
+    <!-- rayones -->
+    <path fill="none" stroke="#00a99d" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"
+      d="M8 20 L22 4 L12 30 L32 4 L14 44 L42 4 L18 56 L52 4 L28 60 L58 10 L38 60 L60 26 L48 60 L62 40"/>
+    <path fill="none" stroke="#0e8a80" stroke-width="1.6" stroke-linecap="round" opacity=".8"
+      d="M10 58 L60 6 M20 62 L62 18 M4 46 L50 2"/>
+  </g>
+  <!-- contorno de boli, doble y un poco temblón -->
+  <path fill-rule="evenodd" fill="none" stroke="#123a38" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"
+    d="M15 55 L16 9 L37 9 C49 9 53 17 53 24 C53 31 48 36 41 37 L54 55 L42 55 L30 38.5 L26.5 38.5 L26 55 Z M26.5 18 L35.5 18 C40.5 18 42.5 20.8 42.5 24 C42.5 27.6 39.8 30 35.5 30 L26.5 30 Z"/>
+  <path fill="none" stroke="#123a38" stroke-width="1.2" opacity=".6" stroke-linecap="round"
+    d="M14 53 L15.5 10.5 M17 8 L38 8.5 C50 9.5 54.5 17 54 24.5 M41.5 38 L55 54.5"/>
 </svg>

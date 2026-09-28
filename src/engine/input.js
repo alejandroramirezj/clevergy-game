@@ -1,5 +1,7 @@
 // =============================================================================
-// input.js — Centralized InputManager (Keyboard, Touch & Game Boy Deck)
+// input.js — Teclado global y mando Game Boy del modo vertical
+// `touch` refleja lo que se pulsa en el deck (cruceta, A, B); los mundos 3D lo
+// leen como "mando" y deckNav.js lo usa para moverse por los menús.
 // =============================================================================
 
 export const keys = {};
@@ -9,49 +11,19 @@ export const touch = {
   Up: false,
   Down: false,
   A: false,
-  B: false,
-  Atk: false
+  B: false
 };
 
-// ── Unified Action Getters ──────────────────────────────────────────────────
-export const isLeft = () => Boolean(keys["ArrowLeft"] || keys["KeyA"] || touch.L);
-export const isRight = () => Boolean(keys["ArrowRight"] || keys["KeyD"] || touch.R);
-export const isUp = () => Boolean(keys["ArrowUp"] || keys["KeyW"] || touch.Up);
-export const isDown = () => Boolean(keys["ArrowDown"] || keys["KeyS"] || touch.Down);
-
-export const isJump = () => Boolean(keys["ArrowUp"] || keys["KeyW"] || keys["Space"] || touch.A || touch.Up);
-export const isAttack = () => Boolean(keys["KeyZ"] || keys["KeyJ"] || touch.Atk);
-
-export const isSpecial = () => {
-  // X, K, or Game Boy button B / Touch button B
-  return Boolean(keys["KeyX"] || keys["KeyK"] || touch.B);
-};
-
-// ── Backward Compatible Platformer Aliases ───────────────────────────────────
-export const left = isLeft;
-export const right = isRight;
-export const upK = isUp;
-export const downK = isDown;
-export const jumpK = isJump;
-export const abilK = isSpecial;
-
-export function initInput({ onSwitchChar, onSwitchSlot, onToggleTeam, onToggleMusic, onTryStart, onOpenMap, onPause }) {
+export function initInput({ onSwitchChar, onSwitchSlot, onOpenMap }) {
   window.addEventListener("keydown", (e) => {
-    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Space", "Tab"].includes(e.code)) {
-      e.preventDefault();
-    }
+    if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
+    if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Space", "Tab"].includes(e.code)) e.preventDefault();
     if (keys[e.code]) return;
     keys[e.code] = true;
-
-    if (e.code === "Tab") {
-      e.shiftKey ? onSwitchChar(-1) : onSwitchChar(1);
-    }
-    if (e.code === "Digit1" || e.code === "Numpad1") onSwitchSlot ? onSwitchSlot(0) : onSwitchChar(1);
-    if (e.code === "Digit2" || e.code === "Numpad2") onSwitchSlot ? onSwitchSlot(1) : onSwitchChar(1);
-    if (e.code === "Digit3" || e.code === "Numpad3") onSwitchSlot ? onSwitchSlot(2) : onSwitchChar(1);
-    if (e.code === "Escape") onPause ? onPause() : null;
-    if (e.code === "KeyM") onToggleMusic();
-    if (e.code === "Enter") onTryStart();
+    // Tab / 1-2-3: cambiar de compañero (los mundos lo leen a través de getChar)
+    if (e.code === "Tab") onSwitchChar(e.shiftKey ? -1 : 1);
+    const slot = { Digit1: 0, Digit2: 1, Digit3: 2, Numpad1: 0, Numpad2: 1, Numpad3: 2 }[e.code];
+    if (slot !== undefined && onSwitchSlot) onSwitchSlot(slot);
   });
 
   window.addEventListener("keyup", (e) => {
@@ -83,13 +55,6 @@ export function initInput({ onSwitchChar, onSwitchSlot, onToggleTeam, onToggleMu
       })
     );
   }
-
-  // Landscape HUD touch buttons
-  bindT("tL", "L");
-  bindT("tR", "R");
-  bindT("tA", "A");
-  bindT("tB", "B");
-  bindT("tS", "Atk", () => onSwitchChar(1));
 
   // Portrait Game Boy Action & System Buttons
   bindT("gbA", "A");

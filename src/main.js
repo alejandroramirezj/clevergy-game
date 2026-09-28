@@ -1,36 +1,35 @@
-import { TILE, GRAV, LW, LH, CHECKPOINTS, ARENA_L, ARENA_R } from "./config/constants.js";
+// =============================================================================
+// main.js — Arranque del juego: portada, elección de mundo y los 4 mundos 3D
+//   1 · La Oficina (plataformas)   2 · Coworking Fight (pelea estilo Smash)
+//   3 · BoliBic Tag (laser tag)    4 · Pantano de San Juan (carreras)
+// Cada mundo se carga bajo demanda (import dinámico) y corre su propio bucle.
+// =============================================================================
+
 import { CHARS } from "./config/characters.js";
-import { initLevelGrid, moveX, moveY, touchingWall, rectsHit, tileAt } from "./engine/physics.js";
-import { sfx, startMusic, stopMusic, toggleMusic } from "./engine/audio.js";
-import { initSprites, updateAnim, anim } from "./engine/sprites.js";
-import { initInput, left, right, upK, downK, jumpK, abilK } from "./engine/input.js";
-import { GameState, initCoffees, hurt, respawn, msg, msg2, switchChar, switchToChar, addScore } from "./game/state.js";
-import { doAbility } from "./game/abilities.js";
-import { draw } from "./game/renderer.js";
+import { stopMusic } from "./engine/audio.js";
+import { initSprites } from "./engine/sprites.js";
+import { initInput } from "./engine/input.js";
+import { GameState, switchChar, switchToChar } from "./game/state.js";
 import { initOverlays } from "./ui/overlays.js";
 import { initWorldMap } from "./ui/worldMap.js";
-import { loadWorld } from "./game/levelLoader.js";
-import { WORLDS, saveWorldProgress } from "./config/worlds.js";
+import { saveWorldProgress } from "./config/worlds.js";
 import { submitScore } from "./game/leaderboard.js";
 import { consumeCharInvite } from "./game/charRoute.js";
 import { initAuth } from "./game/auth.js";
 import { initDeckNav } from "./ui/deckNav.js";
-import { updateProjectiles, updateMinions, updateEnemies, updateBoss, winGame } from "./game/enemies.js";
 
 const cv = document.getElementById("cv");
 const cx = cv.getContext("2d");
 
 function fitCanvas() {
-  // Mundo 7 (Doodle District) usa el mismo layout que el resto de mundos (deck Game Boy
-  // en vertical, botones táctiles en horizontal) y monta su canvas WebGL encima de #cv.
+  // Marco común de los mundos 3D: en vertical, pantalla + deck Game Boy; en horizontal,
+  // pantalla completa. #cv sólo reserva el hueco: cada mundo pinta su propio WebGL encima.
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const iw = window.innerWidth, ih = window.innerHeight;
   const isPortrait = ih > iw;
 
-  // Partida (plataformas 2D antiguo o marco de los mundos 3D)
   if (isPortrait) {
     document.body.classList.add("gameboy-mode");
-    document.getElementById("touch")?.classList.add("hidden");
     document.getElementById("gameboyDeck")?.classList.remove("hidden");
 
     // Game Boy screen takes ~58% of screen height (more screen space!)
@@ -65,12 +64,10 @@ function fitCanvas() {
     if (isHorizontalResponsive) {
       document.getElementById("touch")?.classList.remove("hidden");
     } else {
-      document.getElementById("touch")?.classList.add("hidden");
-    }
+      }
     const H = 540;
     let W = Math.round(H * (iw / ih));
     W = Math.max(700, Math.min(1600, W));
-    const SAFEB = isHorizontalResponsive ? 96 : 0;
 
     cv.width = Math.round(W * dpr);
     cv.height = Math.round(H * dpr);
@@ -86,7 +83,7 @@ function fitCanvas() {
     GameState.W = W;
     GameState.H = H;
     GameState.DPR = dpr;
-    GameState.SAFEB = SAFEB;
+    GameState.SAFEB = 0;
   }
 
 
@@ -95,48 +92,50 @@ function fitCanvas() {
 window.addEventListener("resize", fitCanvas);
 window.addEventListener("orientationchange", () => setTimeout(fitCanvas, 200));
 
-function startGame(worldId = 1) {
-  document.getElementById("menuOv")?.classList.add("hidden");
-  document.getElementById("worldMapOv")?.classList.add("hidden");
-  document.getElementById("bootOv")?.classList.add("hidden");
-  document.getElementById("lbOv")?.classList.add("hidden");
-  document.getElementById("ctrlOv")?.classList.add("hidden");
-  document.getElementById("teamOv")?.classList.add("hidden");
-  document.getElementById("winOv")?.classList.add("hidden");
-  document.getElementById("goOv")?.classList.add("hidden");
+// ── los mundos: id → módulo y cómo se arranca ──
+const WORLD_LOADERS = {
+  1: { name: "La Oficina", load: () => import("./doodle/platform/doodlePlatform.js"), start: (m, o) => m.startDoodlePlatform({ ...o, charId: o.char.id, getChar: o.getChar, onSwitchChar: o.onSwitchChar }) },
+  6: { name: "Coworking Fight", load: () => import("./doodle/fight/doodleFight.js"), start: (m, o) => m.startDoodleFight({ ...o, charId: o.char.id }) },
+  7: { name: "BoliBic Tag", load: () => import("./doodle/doodleWorld.js"), start: (m, o) => m.startDoodleWorld({ ...o, char: o.char, getChar: o.getChar, onSwitchChar: o.onSwitchChar }) },
+  8: { name: "Pantano de San Juan", load: () => import("./doodle/race/doodleRace.js"), start: (m, o) => m.startDoodleRace({ ...o, charId: o.char.id }) }
+};
 
+let doodle = null;
+function hideMenus() {
+  for (const id of ["menuOv", "worldMapOv", "bootOv", "lbOv", "ctrlOv", "compendiumOv"]) document.getElementById(id)?.classList.add("hidden");
+}
+async function startGame(worldId) {
+  const W = WORLD_LOADERS[worldId];
+  if (!W) return;
+  hideMenus();
   GameState.worldMapOpen = false;
   GameState.currentWorld = worldId;
-
-  // los mundos 3D se cargan bajo demanda: mientras llega el módulo se ve una
-  // pantalla de carga (y NO los controles ni el bucle del plataformas antiguo)
-  if ([1, 6, 7, 8].includes(worldId)) {
-    GameState.status = "ready";
-    GameState.gameMode = "doodle";
-    document.body.classList.add("doodle-mode");
-    showLoading(true);
-  } else GameState.status = "play";
-
-  if (worldId === 7) {
-    startDoodle();
-  } else if (worldId === 1) {
-    startPlatform3D();
-  } else if (worldId === 8) {
-    startRace3D();
-  } else if (worldId === 6) {
-    startFight3D();
-  } else {
-    GameState.gameMode = "platformer";
+  GameState.gameMode = "doodle";
+  document.body.classList.add("doodle-mode");
+  stopMusic();
+  fitCanvas();
+  showLoading(true);
+  const back = () => {
+    doodle = null;
+    showLoading(false);
+    document.body.classList.remove("doodle-mode");
+    GameState.gameMode = "menu";
     fitCanvas();
-    loadWorld(worldId);
-    startMusic(() => GameState.status);
-    anim.lock = null;
-    anim.name = "idle";
-    anim.frame = 0;
-    anim.t = 0;
-    sfx(880, 0.1);
-    sfx(1174, 0.15);
-    msg2(CHARS[GameState.charIdx].tip, 4);
+    worldMap.showWorldMap();
+  };
+  try {
+    const mod = await W.load();
+    doodle = W.start(mod, {
+      char: CHARS[GameState.charIdx] || CHARS[0],
+      getChar: () => CHARS[GameState.charIdx],
+      onSwitchChar: () => { switchChar(1); updateSpotlight(); },
+      onPickChar: (id) => { const i = CHARS.findIndex((c) => c.id === id); if (i >= 0) GameState.charIdx = i; },
+      onVictory: (score, rank) => recordWorld(worldId, score, rank),
+      onExit: back
+    });
+  } catch (err) {
+    console.error(`No se pudo cargar ${W.name}`, err);
+    back();
   }
 }
 
@@ -154,425 +153,11 @@ function showLoading(on) {
 // cuando el mundo 3D ya ha montado su pantalla, se quita la de carga
 new MutationObserver(() => { if (document.getElementById("doodleRoot")) showLoading(false); }).observe(document.getElementById("wrap") || document.body, { childList: true });
 
-// Mundo 7: shooter 3D con Three.js. Se carga bajo demanda para no engordar el bundle principal.
-// Mundo 2: Code Clash Arena en 3D (Three.js, mismo render de boli que Doodle District)
-async function startFight3D() {
-  GameState.gameMode = "doodle";
-  stopMusic();
-  fitCanvas();
-  const back = () => {
-    showLoading(false);
-    document.body.classList.remove("doodle-mode");
-    GameState.gameMode = "platformer";
-    GameState.status = "ready";
-    fitCanvas();
-    worldMap.showWorldMap();
-  };
-  try {
-    const { startDoodleFight } = await import("./doodle/fight/doodleFight.js");
-    doodle = startDoodleFight({
-      charId: (CHARS[GameState.charIdx] || CHARS[0]).id,
-      onPickChar: (id) => { const i = CHARS.findIndex((c) => c.id === id); if (i >= 0) GameState.charIdx = i; },
-      onVictory: (score, rank) => recordWorld(6, score, rank),
-      onExit: () => { doodle = null; back(); }
-    });
-  } catch (err) {
-    console.error("No se pudo cargar Coworking Fight", err);
-    back();
-  }
-}
-
-// Mundo 1: Campus Madrid, plataformas 2.5D con el render de boli (sustituye al canvas 2D)
-async function startPlatform3D() {
-  GameState.gameMode = "doodle";
-  stopMusic();
-  fitCanvas();
-  const back = () => {
-    showLoading(false);
-    document.body.classList.remove("doodle-mode");
-    GameState.gameMode = "platformer";
-    GameState.status = "ready";
-    fitCanvas();
-    worldMap.showWorldMap();
-  };
-  try {
-    const { startDoodlePlatform } = await import("./doodle/platform/doodlePlatform.js");
-    doodle = startDoodlePlatform({
-      charId: (CHARS[GameState.charIdx] || CHARS[0]).id,
-      getChar: () => CHARS[GameState.charIdx],
-      onSwitchChar: () => { switchChar(1); updateSpotlight(); },
-      onPickChar: (id) => { const i = CHARS.findIndex((c) => c.id === id); if (i >= 0) GameState.charIdx = i; },
-      onVictory: (score, rank) => recordWorld(1, score, rank),
-      onExit: () => { doodle = null; back(); }
-    });
-  } catch (err) {
-    console.error("No se pudo cargar La Oficina", err);
-    back();
-  }
-}
-
-// Mundo 4: Pantano Kart (carreras acuáticas en 3D)
-async function startRace3D() {
-  GameState.gameMode = "doodle";
-  stopMusic();
-  fitCanvas();
-  const back = () => {
-    showLoading(false);
-    document.body.classList.remove("doodle-mode");
-    GameState.gameMode = "platformer";
-    GameState.status = "ready";
-    fitCanvas();
-    worldMap.showWorldMap();
-  };
-  try {
-    const { startDoodleRace } = await import("./doodle/race/doodleRace.js");
-    doodle = startDoodleRace({
-      charId: (CHARS[GameState.charIdx] || CHARS[0]).id,
-      onPickChar: (id) => { const i = CHARS.findIndex((c) => c.id === id); if (i >= 0) GameState.charIdx = i; },
-      onVictory: (score, rank) => recordWorld(8, score, rank),
-      onExit: () => { doodle = null; back(); }
-    });
-  } catch (err) {
-    console.error("No se pudo cargar Pantano de San Juan", err);
-    back();
-  }
-}
-
 // guarda el progreso local y manda la puntuación al ranking (general y por mundo)
 function recordWorld(worldId, score, rank) {
   saveWorldProgress(worldId, score, rank);
   const c = CHARS[GameState.charIdx] || CHARS[0];
   if (score > 0) submitScore({ name: GameState.playerName, score: Math.round(score), character: c.id, char_name: c.name, time_seconds: 0, rank: rank || "", deaths: 0, world: worldId });
-}
-
-let doodle = null;
-async function startDoodle() {
-  GameState.gameMode = "doodle";
-  stopMusic();
-  fitCanvas();
-  try {
-    const { startDoodleWorld } = await import("./doodle/doodleWorld.js");
-    doodle = startDoodleWorld({
-      char: CHARS[GameState.charIdx] || CHARS[0],
-      // cualquier cambio de compañero (TAB, CAMBIAR, barra del deck) se refleja en el personaje
-      getChar: () => CHARS[GameState.charIdx],
-      onSwitchChar: () => { switchChar(1); updateSpotlight(); },
-      onVictory: (score, rank) => recordWorld(7, score, rank),
-      onExit: () => {
-        doodle = null;
-        GameState.gameMode = "platformer";
-        GameState.status = "ready";
-        fitCanvas();
-        worldMap.showWorldMap();
-      }
-    });
-  } catch (err) {
-    console.error("No se pudo cargar BoliBic Tag", err);
-    showLoading(false);
-    document.body.classList.remove("doodle-mode");
-    GameState.gameMode = "platformer";
-    GameState.status = "ready";
-    fitCanvas();
-    worldMap.showWorldMap();
-  }
-}
-
-function filterInPlace(arr, predicate) {
-  let writeIdx = 0;
-  for (let i = 0; i < arr.length; i++) {
-    if (predicate(arr[i])) {
-      arr[writeIdx++] = arr[i];
-    }
-  }
-  arr.length = writeIdx;
-}
-
-function update(dt) {
-  if (GameState.teamOpen) return;
-  const P = GameState.P;
-  GameState.time += dt;
-  GameState.gameTime += dt;
-
-  const C = CHARS[GameState.charIdx];
-  updateAnim(dt, C.id, P);
-
-  if (GameState.msgT > 0) GameState.msgT -= dt;
-  if (GameState.msg2T > 0) GameState.msg2T -= dt;
-  if (GameState.switchBanner > 0) GameState.switchBanner -= dt;
-  if (GameState.shake > 0) GameState.shake *= 0.85;
-  if (GameState.comboT > 0) {
-    GameState.comboT -= dt;
-    if (GameState.comboT <= 0) GameState.combo = 0;
-  }
-  if (P.cool > 0) P.cool -= dt;
-  if (P.spdBoost > 0) P.spdBoost -= dt;
-
-  const frozen = P.frozen > 0;
-  if (frozen) P.frozen -= dt;
-  if (P.inv > 0) P.inv -= dt;
-  if (P.atkT > 0) P.atkT -= dt;
-
-  // Beltrán shield energy & guard
-  if (C.id === "beltran") {
-    if (abilK()) P.shieldHold = (P.shieldHold || 0) + dt;
-    else P.shieldHold = 0;
-  }
-  const shieldOn = C.id === "beltran" && (downK() || (P.shieldHold || 0) > 0.18) && P.shieldE > 0 && !frozen;
-  P.shieldOn = shieldOn;
-  if (shieldOn) {
-    P.shieldE = Math.max(0, P.shieldE - dt * 0.35);
-    P.inv = Math.max(P.inv, 0.2);
-  } else {
-    P.shieldE = Math.min(1, P.shieldE + dt * 0.35);
-  }
-
-  /* Horizontal movement */
-  let sp = C.spd * (P.spdBoost > 0 ? 1.8 : 1);
-  if (P.ball) sp *= 1.4;
-  let ax = 0;
-  const rushing = P.dashT > 0 || P.roll > 0 || P.slide > 0;
-  if (!frozen && !rushing && !shieldOn) {
-    if (left()) ax = -sp;
-    if (right()) ax = sp;
-  }
-  if (ax !== 0) P.face = Math.sign(ax);
-
-  if (P.dashT > 0) {
-    P.dashT -= dt;
-  } else if (P.roll > 0) {
-    P.roll -= dt;
-    P.vx = P.face * 9;
-  } else if (P.slide > 0) {
-    P.slide -= dt;
-    P.vx = P.face * 10;
-  } else {
-    P.vx = ax;
-  }
-
-  moveX(P, P.vx, true, { active: GameState.boss.active, dead: GameState.boss.dead, L: ARENA_L, R: ARENA_R });
-
-  /* Vertical movement & physics */
-  const jp = jumpK();
-  const ab = abilK();
-  const wall = touchingWall(P);
-  let climbing = false;
-
-  if (C.id === "ana" && wall !== 0 && !P.onGround && !frozen) {
-    if ((wall < 0 && left()) || (wall > 0 && right())) {
-      climbing = true;
-      P.vy = upK() ? -2.6 : downK() ? 2.6 : 0.5;
-    }
-  }
-
-  if (!climbing) {
-    P.vy += GRAV;
-    if (C.id === "alejandro" && jp && !P.onGround && P.vy > 0 && P.flyMeter > 0 && !frozen) {
-      P.vy = Math.min(P.vy, 0.9);
-      P.flyMeter -= dt * 0.8;
-      if (Math.random() < 0.3) {
-        GameState.particles.push({
-          x: P.x + P.w / 2,
-          y: P.y + P.h,
-          vx: Math.random() - 0.5,
-          vy: 1,
-          t: 0.4,
-          col: "#9fb8e8"
-        });
-      }
-    }
-    if (C.id === "paloma" && jp && !P.onGround && P.stamina > 0 && !frozen) {
-      P.vy = Math.max(P.vy - 1.1, -3.6);
-      P.stamina -= dt * 0.55;
-      if (Math.random() < 0.4) {
-        GameState.particles.push({
-          x: P.x + P.w / 2,
-          y: P.y + P.h,
-          vx: (Math.random() - 0.5) * 2,
-          vy: 1.5,
-          t: 0.4,
-          col: "#ffffff"
-        });
-      }
-    }
-    if ((P.slam || P.megaslam) && P.vy > 0) P.vy = Math.max(P.vy, 13);
-    P.vy = Math.min(P.vy, 14);
-  }
-
-  P.onGround = false;
-  const wasFalling = P.vy > 0;
-  if (moveY(P, P.vy, P.vy >= 0, GameState.printed) && wasFalling && P.vy === 0 && !climbing) {
-    P.onGround = true;
-    P.flyMeter = Math.min(1, P.flyMeter + dt * 3);
-    P.stamina = Math.min(1, P.stamina + dt * 2);
-
-    if (P.slam || P.megaslam) {
-      const mega = P.megaslam;
-      P.slam = false;
-      P.megaslam = false;
-      GameState.shake = mega ? 16 : 14;
-      sfx(90, 0.25, "sawtooth", 0.09);
-      GameState.hitboxes.push({
-        x: P.x - (mega ? 90 : 70),
-        y: P.y - 14,
-        w: P.w + (mega ? 180 : 140),
-        h: P.h + 34,
-        t: 0.2,
-        dmg: 2
-      });
-      for (let i = 0; i < 14; i++) {
-        GameState.particles.push({
-          x: P.x + P.w / 2,
-          y: P.y + P.h,
-          vx: (Math.random() - 0.5) * 8,
-          vy: -Math.random() * 5,
-          t: 0.6,
-          col: "#ffc857"
-        });
-      }
-    }
-
-    if (P.ball) {
-      P.vy = -9;
-      P.onGround = false;
-      sfx(660, 0.05, "triangle", 0.03);
-    }
-  }
-
-  if (P.onGround) {
-    P.flyMeter = Math.min(1, P.flyMeter + dt * 2);
-    P.stamina = Math.min(1, P.stamina + dt * 2);
-  }
-
-  // Jumping
-  if (jp && !GameState.prevJump && !frozen && !shieldOn) {
-    if (P.onGround) {
-      P.vy = -C.jump;
-      sfx(500, 0.08);
-    } else if (climbing) {
-      P.vy = -C.jump * 0.95;
-      P.vx = -wall * 4;
-      sfx(560, 0.08);
-    } else if (C.id === "josu" && wall !== 0) {
-      P.vy = -C.jump;
-      P.vx = -wall * 6;
-      P.face = -wall;
-      sfx(600, 0.08);
-      for (let i = 0; i < 5; i++) {
-        GameState.particles.push({
-          x: P.x + (wall > 0 ? P.w : 0),
-          y: P.y + P.h / 2,
-          vx: -wall * 2,
-          vy: (Math.random() - 0.5) * 3,
-          t: 0.4,
-          col: "#d9954f"
-        });
-      }
-    }
-  }
-  GameState.prevJump = jp;
-
-  // Ability activation
-  if (ab && !GameState.prevAbil && !frozen) {
-    doAbility(C);
-  }
-  GameState.prevAbil = ab;
-
-  // Hazards & falling into pits
-  const feet = tileAt(P.x + P.w / 2, P.y + P.h - 2);
-  if (feet === "^" && P.inv <= 0) {
-    hurt(1);
-    P.vy = -7;
-  }
-  if (P.y > LH * TILE + 60) {
-    hurt(1);
-    respawn();
-  }
-
-  // Checkpoints
-  CHECKPOINTS.forEach((c, i) => {
-    if (i > P.checkpoint && P.x > c.x) {
-      P.checkpoint = i;
-      msg("CHECKPOINT ✔", 1.4);
-      sfx(900, 0.1);
-    }
-  });
-
-  // Coffee collectibles
-  for (const c of GameState.coffees) {
-    if (!c.got && rectsHit(P.x, P.y, P.w, P.h, c.x, c.y, 18, 18)) {
-      c.got = true;
-      GameState.coffeeCount++;
-      addScore(50, c.x, c.y, "☕");
-      sfx(1046, 0.08, "triangle", 0.04);
-      for (let i = 0; i < 5; i++) {
-        GameState.particles.push({
-          x: c.x + 9,
-          y: c.y + 9,
-          vx: (Math.random() - 0.5) * 3,
-          vy: -Math.random() * 3,
-          t: 0.4,
-          col: "#ffc857"
-        });
-      }
-    } else {
-      c.t += dt;
-    }
-  }
-
-  // Decay printed platforms & hitboxes in-place (Zero GC allocation)
-  for (let i = 0; i < GameState.printed.length; i++) GameState.printed[i].life -= dt;
-  filterInPlace(GameState.printed, (p) => p.life > 0);
-  for (let i = 0; i < GameState.hitboxes.length; i++) GameState.hitboxes[i].t -= dt;
-  filterInPlace(GameState.hitboxes, (h) => h.t > 0);
-
-  updateProjectiles(dt);
-  updateMinions(dt);
-  updateEnemies(dt);
-  updateBoss(dt);
-
-  if (GameState.fragment) {
-    GameState.fragment.t += dt;
-    if (rectsHit(P.x, P.y, P.w, P.h, GameState.fragment.x - 14, GameState.fragment.y - 14, 28, 28)) {
-      winGame();
-    }
-  }
-
-  // In-place particle & floater updates (Zero GC allocation)
-  for (let i = 0; i < GameState.particles.length; i++) {
-    const p = GameState.particles[i];
-    p.x += p.vx;
-    p.y += p.vy;
-    p.vy += 0.15;
-    p.t -= dt;
-  }
-  filterInPlace(GameState.particles, (p) => p.t > 0);
-
-  for (let i = 0; i < GameState.floaters.length; i++) {
-    const f = GameState.floaters[i];
-    f.y -= 0.5;
-    f.t -= dt;
-  }
-  filterInPlace(GameState.floaters, (f) => f.t > 0);
-
-  // Smooth camera following
-  const targetX = P.x + P.w / 2 - GameState.W / 2;
-  GameState.camX += (targetX - GameState.camX) * 0.14;
-  GameState.camX = Math.max(0, Math.min(GameState.camX, LW * TILE - GameState.W));
-  if (GameState.boss.active && !GameState.boss.dead) {
-    GameState.camX = Math.max(0, Math.min(ARENA_L - 48, LW * TILE - GameState.W));
-  }
-
-  const worldBottom = LH * TILE;
-  if (GameState.H < 500) {
-    // In portrait/handheld mode: anchor player in lower portion (~76% of screen height)
-    // to eliminate excessive subterranean dirt and give wide upward view of platforms!
-    const targetY = P.y + P.h - GameState.H * 0.76;
-    GameState.camY += (targetY - GameState.camY) * 0.14;
-    GameState.camY = Math.max(0, Math.min(GameState.camY, worldBottom - GameState.H));
-  } else {
-    GameState.camY = worldBottom - (GameState.H - GameState.SAFEB);
-    GameState.camY = Math.max(0, GameState.camY);
-  }
 }
 
 // ¿Viene de un enlace/QR de personaje (/jose-luis)? Empieza con ese personaje
@@ -581,78 +166,21 @@ function update(dt) {
   if (invited >= 0) GameState.charIdx = invited;
 }
 
-// Initialize components
-initLevelGrid();
 initSprites();
 fitCanvas();
 
-let toggleTeamFn = () => {};
-
-const worldMap = initWorldMap({
-  // directo al mundo: cada uno ya tiene su propia pantalla de inicio (sin la ficha antigua)
-  onSelectWorld: (worldId) => startGame(worldId),
-  onOpenTeam: () => toggleTeamFn()
-});
-
-const { toggleTeam, tryStart, updateSpotlight, togglePause } = initOverlays({
-  onStartGame: () => worldMap.showWorldMap(),
-  onOpenMap: () => worldMap.showWorldMap(),
-  // sólo queda un mundo de plataformas: al superarlo se vuelve a la elección de mundo
-  onNextWorld: () => worldMap.showWorldMap()
-});
-toggleTeamFn = toggleTeam;
+const worldMap = initWorldMap({ onSelectWorld: (worldId) => startGame(worldId) });
+const { updateSpotlight } = initOverlays({ onStartGame: () => worldMap.showWorldMap(), onOpenMap: () => worldMap.showWorldMap() });
 // en vertical, el mando Game Boy también maneja los menús (A pulsa, B vuelve)
 initDeckNav();
 // cuenta de Google (opcional): guarda progreso y ranking y fija "tu" personaje
 initAuth({ onCharChosen: (idx) => { switchToChar(idx); updateSpotlight(); worldMap.renderMap(); } });
-document.getElementById("btnWinNextWorld")?.classList.add("hidden");
 
 initInput({
-  onSwitchChar: (dir) => {
-    switchChar(dir);
-    updateSpotlight();
-    worldMap.renderMap();
-  },
-  onSwitchSlot: (slotIdx) => {
-    switchToChar(slotIdx);
-    updateSpotlight();
-    worldMap.renderMap();
-  },
-  onPause: () => { if (GameState.gameMode !== "doodle") togglePause(); },
-  onToggleTeam: () => toggleTeam(),
-  onToggleMusic: () => {
-    if (GameState.gameMode === "doodle") return;
-    const on = toggleMusic();
-    msg(on ? "MÚSICA: ON" : "MÚSICA: OFF", 1.2);
-  },
-  onTryStart: () => { if (GameState.gameMode !== "doodle") tryStart(); },
+  onSwitchChar: (dir) => { switchChar(dir); updateSpotlight(); worldMap.renderMap(); },
+  onSwitchSlot: (slotIdx) => { switchToChar(slotIdx); updateSpotlight(); worldMap.renderMap(); },
   onOpenMap: () => {
-    if (GameState.gameMode === "doodle" && doodle) return doodle.exit();
+    if (doodle) return doodle.exit();
     worldMap.showWorldMap();
   }
 });
-
-// Fixed Timestep Accumulator for deterministic 60 FPS physics (60Hz / 120Hz / 144Hz parity)
-const FIXED_STEP = 1 / 60;
-let last = performance.now();
-let accumulator = 0;
-
-function loop(now) {
-  const frameTime = Math.min((now - last) / 1000, 0.1);
-  last = now;
-
-  if (GameState.gameMode === "doodle") {
-    // el mundo 7 corre su propio bucle
-  } else {
-    accumulator += frameTime;
-    while (accumulator >= FIXED_STEP) {
-      if (GameState.status === "play") update(FIXED_STEP);
-      accumulator -= FIXED_STEP;
-    }
-    if (GameState.status === "play" || GameState.status === "gameover") draw(cx);
-  }
-
-  requestAnimationFrame(loop);
-}
-
-requestAnimationFrame(loop);

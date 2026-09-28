@@ -1,36 +1,24 @@
-import { BOOT_LINES } from "../config/constants.js";
 import { CHARS, POWER_INFO } from "../config/characters.js";
 import { VISIBLE_WORLDS } from "../config/worlds.js";
-import { GameState, respawn, fmtT, switchToChar } from "../game/state.js";
+import { GameState, switchToChar } from "../game/state.js";
 import { sfx } from "../engine/audio.js";
-import { ANIM, SPR, anim, getCharacterAvatar } from "../engine/sprites.js";
+import { ANIM, SPR, getCharacterAvatar } from "../engine/sprites.js";
 import { fetchGlobalLeaderboard } from "../game/leaderboard.js";
 import { GOOGLE_G } from "../game/auth.js";
 
-export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
+export function initOverlays({ onStartGame, onOpenMap }) {
   // Elements
   const menuOv = document.getElementById("menuOv");
   const nameInput = document.getElementById("nameInput");
   const btnPlay = document.getElementById("btnPlay");
   const btnOpenLB = document.getElementById("btnOpenLB");
   const btnOpenCtrl = document.getElementById("btnOpenCtrl");
-  const btnOpenStory = document.getElementById("btnOpenStory");
-  const btnChangeChar = document.getElementById("btnChangeChar");
 
   // Character spotlight elements
-  const spotlightAvatar = document.getElementById("spotlightAvatar");
   const spotlightName = document.getElementById("spotlightName");
   const spotlightForm = document.getElementById("spotlightForm");
   const spotlightAb = document.getElementById("spotlightAb");
   const spotlightTip = document.getElementById("spotlightTip");
-  const barSpd = document.getElementById("barSpd");
-  const barJump = document.getElementById("barJump");
-  const teamOv = document.getElementById("teamOv");
-  const teamGrid = document.getElementById("teamGrid");
-  const teamClose = document.getElementById("teamClose");
-  const bootOv = document.getElementById("bootOv");
-  const bootTxt = document.getElementById("bootTxt");
-  const pressSkipStory = document.getElementById("pressSkipStory");
 
   const lbOv = document.getElementById("lbOv");
   const lbModalContent = document.getElementById("lbModalContent");
@@ -40,10 +28,6 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
   const ctrlOv = document.getElementById("ctrlOv");
   const btnCloseCtrl = document.getElementById("btnCloseCtrl");
 
-  const retryBtn = document.getElementById("retryBtn");
-  const restartBtn = document.getElementById("restartBtn");
-  const winToMenuBtn = document.getElementById("winToMenuBtn");
-  const goBackMenuBtn = document.getElementById("goBackMenuBtn");
 
   // Touchbar de compañeros en el teclado táctil (encima de la cruceta)
   const gbTouchBarTrack = document.getElementById("gbTouchBarTrack");
@@ -115,16 +99,6 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     const c = CHARS[GameState.charIdx];
     if (!c) return;
 
-    if (spotlightAvatar) {
-      const av = getCharacterAvatar(c.id);
-      if (av) {
-        spotlightAvatar.innerHTML = `<img src="${av}" class="spotlight-avatar-img" alt="${c.name}">`;
-      } else {
-        spotlightAvatar.textContent = c.emoji;
-      }
-    }
-    const profilePlayerName = document.getElementById("profilePlayerName");
-    if (profilePlayerName) profilePlayerName.textContent = c.name.toUpperCase();
 
     // Side dossier: Form in uppercase, Skill in cyan, and numerical stats
     if (spotlightName) spotlightName.textContent = c.form.toUpperCase();
@@ -135,8 +109,6 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     const spIcon = document.getElementById("spotlightPowerIcon");
     if (spIcon) spIcon.textContent = pinfo ? pinfo.icon : c.emoji;
 
-    if (barSpd) barSpd.style.width = Math.min(100, Math.max(20, (c.spd / 5.4) * 100)) + "%";
-    if (barJump) barJump.style.width = Math.min(100, Math.max(20, (c.jump / 12) * 100)) + "%";
 
     // Update Mobile Controller Deck Action Labels: A -> SALTAR, B -> [HABILIDAD]
     const gbLabelB = document.getElementById("gbLabelB");
@@ -425,115 +397,6 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
   requestAnimationFrame(renderLobbyHero);
   updateSpotlight();
 
-  // Populate complete team selector
-  if (teamGrid) {
-    CHARS.forEach((c, i) => {
-      const d = document.createElement("div");
-    d.className = "tcell";
-    d.dataset.i = i;
-    const av = getCharacterAvatar(c.id);
-    const avHtml = av
-      ? `<div class="em"><img src="${av}" class="team-avatar-img" alt="${c.name}"></div>`
-      : `<div class="em">${c.emoji}</div>`;
-    d.innerHTML = `
-      ${avHtml}
-      <div class="nm">${c.name}</div>
-      <div class="fm">${c.form}</div>
-    `;
-    d.addEventListener("click", () => {
-      switchToChar(i);
-      updateTeamShowcase(i);
-      updateSpotlight();
-      sfx(700, 0.08);
-    });
-    teamGrid.appendChild(d);
-    });
-  }
-
-  // Team Showcase Carousel elements
-  let showcaseCharIdx = 0;
-  const teamHeroAvatar = document.getElementById("teamHeroAvatar");
-  const teamHeroName = document.getElementById("teamHeroName");
-  const teamHeroForm = document.getElementById("teamHeroForm");
-  const teamHeroAb = document.getElementById("teamHeroAb");
-  const teamHeroTip = document.getElementById("teamHeroTip");
-  const teamBarPwr = document.getElementById("teamBarPwr");
-  const teamBarSpd = document.getElementById("teamBarSpd");
-  const teamBarFly = document.getElementById("teamBarFly");
-  const teamBarChaos = document.getElementById("teamBarChaos");
-  const teamActiveImg = document.getElementById("teamActiveImg");
-  const teamActiveName = document.getElementById("teamActiveName");
-  const teamActiveAb = document.getElementById("teamActiveAb");
-
-  function updateTeamShowcase(cIdx) {
-    showcaseCharIdx = (cIdx + CHARS.length) % CHARS.length;
-    const c = CHARS[showcaseCharIdx];
-    if (!c) return;
-
-    if (teamHeroAvatar) {
-      const av = getCharacterAvatar(c.id);
-      teamHeroAvatar.innerHTML = av ? `<img src="${av}" class="team-showcase-img" alt="${c.name}">` : c.emoji;
-    }
-    if (teamHeroName) teamHeroName.textContent = `${showcaseCharIdx + 1}. ${c.name}`;
-    if (teamHeroForm) teamHeroForm.textContent = c.form;
-    if (teamHeroAb) teamHeroAb.textContent = c.ab;
-    if (teamHeroTip) teamHeroTip.textContent = c.tip;
-
-    if (teamActiveImg) teamActiveImg.src = getCharacterAvatar(c.id) || "";
-    if (teamActiveName) teamActiveName.textContent = c.name.toUpperCase();
-    if (teamActiveAb) teamActiveAb.textContent = `✦ ${c.ab.toUpperCase()} (${c.form})`;
-
-    // Segmented stats
-    if (teamBarSpd) teamBarSpd.style.width = Math.min(100, Math.max(20, (c.spd / 5.4) * 100)) + "%";
-    if (teamBarFly) teamBarFly.style.width = Math.min(100, Math.max(20, (c.jump / 12) * 100)) + "%";
-    if (teamBarPwr) teamBarPwr.style.width = ((c.id === "alejandro" || c.id === "manu" || c.id === "jesus") ? 95 : 65) + "%";
-    if (teamBarChaos) teamBarChaos.style.width = ((c.id === "bruno" || c.id === "maca" || c.id === "pablo") ? 95 : 55) + "%";
-
-    if (teamGrid) {
-      [...teamGrid.children].forEach((el, i) => {
-        el.classList.toggle("sel", i === showcaseCharIdx);
-      });
-    }
-  }
-
-  const teamHeroPrev = document.getElementById("teamHeroPrev");
-  const teamHeroNext = document.getElementById("teamHeroNext");
-  teamHeroPrev?.addEventListener("click", (e) => {
-    e.stopPropagation();
-    updateTeamShowcase(showcaseCharIdx - 1);
-    switchToChar(showcaseCharIdx);
-    updateSpotlight();
-    try { sfx(660, 0.06); } catch (e) {}
-  });
-  teamHeroNext?.addEventListener("click", (e) => {
-    e.stopPropagation();
-    updateTeamShowcase(showcaseCharIdx + 1);
-    switchToChar(showcaseCharIdx);
-    updateSpotlight();
-    try { sfx(660, 0.06); } catch (e) {}
-  });
-
-  updateTeamShowcase(0);
-
-  function toggleTeam(forceClose) {
-    if (!teamOv) return;
-    const currentlyOpen = !teamOv.classList.contains("hidden");
-    const wantOpen = forceClose ? false : !currentlyOpen;
-    teamOv.classList.toggle("hidden", !wantOpen);
-    GameState.teamOpen = wantOpen;
-    if (wantOpen && typeof updateTeamShowcase === "function") {
-      updateTeamShowcase(GameState.charIdx);
-    }
-  }
-
-  if (teamClose) {
-    teamClose.addEventListener("click", () => {
-      toggleTeam(true);
-      try { sfx(880, 0.1, "triangle"); } catch (e) {}
-    });
-  }
-  if (btnChangeChar) btnChangeChar.addEventListener("click", () => toggleTeam(false));
-
   const btnOpenMapMenu = document.getElementById("btnOpenMapMenu");
   if (btnOpenMapMenu) {
     btnOpenMapMenu.addEventListener("click", () => {
@@ -665,14 +528,11 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
   const compendiumOv = document.getElementById("compendiumOv");
   const btnOpenCompendium = document.getElementById("btnOpenCompendium");
   const btnCloseCompendium = document.getElementById("btnCloseCompendium");
-  const btnBackCompendium = document.getElementById("btnBackCompendium");
   const compCharsGrid = document.getElementById("compCharsGrid");
-  const compCharDossier = document.getElementById("compCharDossier");
   const compWorldsGrid = document.getElementById("compWorldsGrid");
   const compEnemiesGrid = document.getElementById("compEnemiesGrid");
   const compItemsGrid = document.getElementById("compItemsGrid");
 
-  let compSelectedCharIdx = GameState.charIdx || 0;
 
   const ENEMIES_DATA = [
     { icon: "✉️", name: "Email urgente", where: "La Oficina · BoliBic Tag", desc: "Sobres con dientes que vuelan hacia ti en bandada.", tip: "Písalos o dispárales antes de que muerdan." },
@@ -717,7 +577,6 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
       </article>`;
     }).join("");
   }
-  function renderCompendiumDossier() {}
 
   // qué se hace en cada mapa, contado para la presentación
   const WORLD_LORE = {
@@ -774,7 +633,6 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
 
   function openCompendium() {
     if (!compendiumOv) return;
-    compSelectedCharIdx = GameState.charIdx;
     renderCompendiumChars();
     renderCompendiumWorlds();
     renderCompendiumEnemies();
@@ -813,7 +671,6 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
 
   if (btnOpenCompendium) btnOpenCompendium.addEventListener("click", openCompendium);
   if (btnCloseCompendium) btnCloseCompendium.addEventListener("click", closeCompendium);
-  if (btnBackCompendium) btnBackCompendium.addEventListener("click", closeCompendium);
 
   // Start game from Menu: Opens the 5-World Adventure Map!
   function triggerStart() {
@@ -824,43 +681,14 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     } catch (e) {}
 
     menuOv.classList.add("hidden");
-    bootOv.classList.add("hidden");
     lbOv.classList.add("hidden");
     ctrlOv.classList.add("hidden");
-    teamOv?.classList.add("hidden");
     compendiumOv?.classList.add("hidden");
 
     onStartGame();
   }
 
   if (btnPlay) btnPlay.addEventListener("click", triggerStart);
-
-  // Terminal boot story replay
-  let bootI = 0;
-  function bootStep() {
-    if (bootOv.classList.contains("hidden")) return;
-    if (bootI < BOOT_LINES.length) {
-      const raw = BOOT_LINES[bootI++];
-      bootTxt.innerHTML += raw.replace(/##(.*?)##/g, '<span class="err">$1</span>') + "\n";
-      sfx(raw.includes("##") ? 180 : 700, 0.04, "square", 0.03);
-      setTimeout(bootStep, raw === "" ? 150 : raw.includes("##") ? 480 : 170);
-    }
-  }
-
-  if (btnOpenStory) {
-    btnOpenStory.addEventListener("click", () => {
-      bootOv.classList.remove("hidden");
-      bootI = 0;
-      bootTxt.innerHTML = "";
-      bootStep();
-    });
-  }
-
-  if (pressSkipStory) {
-    pressSkipStory.addEventListener("click", () => {
-      bootOv.classList.add("hidden");
-    });
-  }
 
   // Keyboard shortcut listener for menu (Enter starts game, Esc closes modals)
   window.addEventListener("keydown", (e) => {
@@ -871,161 +699,11 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
       }
       if (!lbOv.classList.contains("hidden")) closeLeaderboard();
       if (!ctrlOv.classList.contains("hidden")) ctrlOv.classList.add("hidden");
-      if (teamOv && !teamOv.classList.contains("hidden")) toggleTeam(true);
-      if (!bootOv.classList.contains("hidden")) bootOv.classList.add("hidden");
     }
-    if (e.code === "Enter" && !menuOv.classList.contains("hidden") && lbOv.classList.contains("hidden") && ctrlOv.classList.contains("hidden") && (!compendiumOv || compendiumOv.classList.contains("hidden")) && (!teamOv || teamOv.classList.contains("hidden"))) {
+    if (e.code === "Enter" && !menuOv.classList.contains("hidden") && lbOv.classList.contains("hidden") && ctrlOv.classList.contains("hidden") && (!compendiumOv || compendiumOv.classList.contains("hidden"))) {
       triggerStart();
     }
   });
 
-  // 08. PAUSE OVERLAY HANDLERS
-  const pauseOv = document.getElementById("pauseOv");
-  const btnResumeGame = document.getElementById("btnResumeGame");
-  const btnRestartLevel = document.getElementById("btnRestartLevel");
-  const btnPauseTeam = document.getElementById("btnPauseTeam");
-  const btnPauseCtrl = document.getElementById("btnPauseCtrl");
-  const btnPauseExit = document.getElementById("btnPauseExit");
-
-  function togglePause(forceOpen) {
-    if (!pauseOv) return;
-    const isCurrentlyPaused = !pauseOv.classList.contains("hidden");
-    const wantPause = forceOpen !== undefined ? forceOpen : !isCurrentlyPaused;
-    pauseOv.classList.toggle("hidden", !wantPause);
-
-    if (wantPause) {
-      GameState.prevStatusBeforePause = GameState.status;
-      GameState.status = "pause";
-      try { sfx(440, 0.08, "square"); } catch (e) {}
-    } else {
-      GameState.status = GameState.prevStatusBeforePause || "play";
-      try { sfx(660, 0.08, "triangle"); } catch (e) {}
-    }
-  }
-
-  btnResumeGame?.addEventListener("click", () => togglePause(false));
-  btnRestartLevel?.addEventListener("click", () => {
-    togglePause(false);
-    respawn();
-    GameState.P.hp = 5;
-    GameState.status = "play";
-  });
-  btnPauseTeam?.addEventListener("click", () => {
-    toggleTeam(false);
-  });
-  btnPauseCtrl?.addEventListener("click", () => {
-    if (ctrlOv) ctrlOv.classList.remove("hidden");
-  });
-  btnPauseExit?.addEventListener("click", () => {
-    togglePause(false);
-    window.location.reload();
-  });
-
-  // 09. LEVEL COMPLETED & MVP CALCULATION
-  window.addEventListener("level_completed", () => {
-    updateWinScreenMVP();
-  });
-  function updateWinScreenMVP() {
-    const winTimeTxt = document.getElementById("winTimeTxt");
-    const winRetosTxt = document.getElementById("winRetosTxt");
-    const winCharsTxt = document.getElementById("winCharsTxt");
-    const winSwitchesTxt = document.getElementById("winSwitchesTxt");
-    const winMvpImg = document.getElementById("winMvpImg");
-    const winMvpName = document.getElementById("winMvpName");
-    const winMvpStat = document.getElementById("winMvpStat");
-
-    if (winTimeTxt) winTimeTxt.textContent = `⏱️ ${(GameState.gameTime || 0).toFixed(2)}s`;
-    if (winRetosTxt) winRetosTxt.textContent = `3 / 3 ⭐`;
-    if (winCharsTxt) winCharsTxt.textContent = `3 / 3`;
-    if (winSwitchesTxt) winSwitchesTxt.textContent = String(GameState.levelSwitches || 8);
-
-    // Calculate MVP based on GameState.charUsage
-    let maxUsage = 0;
-    let mvpCharId = "alejandro";
-    Object.entries(GameState.charUsage || {}).forEach(([id, count]) => {
-      if (count > maxUsage) {
-        maxUsage = count;
-        mvpCharId = id;
-      }
-    });
-
-    const mvpChar = CHARS.find(c => c.id === mvpCharId) || CHARS[GameState.charIdx] || CHARS[0];
-    if (winMvpImg) winMvpImg.src = getCharacterAvatar(mvpChar.id) || "";
-    if (winMvpName) winMvpName.textContent = mvpChar.name;
-    if (winMvpStat) winMvpStat.textContent = `Usado/a ${Math.max(1, maxUsage)} veces en momentos clave`;
-  }
-
-  // Game over and win handlers
-  if (retryBtn) {
-    retryBtn.addEventListener("click", () => {
-      document.getElementById("goOv").classList.add("hidden");
-      GameState.P.hp = 5;
-      GameState.score = Math.max(0, GameState.score - 300);
-      respawn();
-      GameState.P.inv = 2;
-      GameState.status = "play";
-      anim.lock = null;
-      anim.name = "idle";
-      anim.frame = 0;
-      anim.t = 0;
-    });
-  }
-
-  const btnWinMap = document.getElementById("btnWinMap");
-  const btnWinNextWorld = document.getElementById("btnWinNextWorld");
-  const btnGoMap = document.getElementById("btnGoMap");
-
-  if (btnWinMap) {
-    btnWinMap.addEventListener("click", () => {
-      document.getElementById("winOv").classList.add("hidden");
-      if (onOpenMap) onOpenMap();
-    });
-  }
-
-  if (btnWinNextWorld) {
-    btnWinNextWorld.addEventListener("click", () => {
-      document.getElementById("winOv").classList.add("hidden");
-      if (onNextWorld) onNextWorld();
-    });
-  }
-
-  if (btnGoMap) {
-    btnGoMap.addEventListener("click", () => {
-      document.getElementById("goOv").classList.add("hidden");
-      if (onOpenMap) onOpenMap();
-    });
-  }
-
-  const btnGbMap = document.getElementById("btnGbMap");
-  if (btnGbMap) {
-    btnGbMap.addEventListener("click", () => {
-      if (onOpenMap) onOpenMap();
-    });
-  }
-
-  if (restartBtn) {
-    restartBtn.addEventListener("click", () => {
-      window.location.reload();
-    });
-  }
-
-  if (winToMenuBtn) {
-    winToMenuBtn.addEventListener("click", () => {
-      window.location.reload();
-    });
-  }
-
-  if (goBackMenuBtn) {
-    goBackMenuBtn.addEventListener("click", () => {
-      window.location.reload();
-    });
-  }
-
-  return {
-    toggleTeam,
-    tryStart: triggerStart,
-    updateSpotlight,
-    togglePause,
-    updateWinScreenMVP
-  };
+  return { tryStart: triggerStart, updateSpotlight };
 }

@@ -5,9 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>RETREAT: THE LEGEND OF THE TEAM · Clevergy</title>
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="apple-touch-icon" href="/favicon.svg">
+  <meta name="theme-color" content="#f6f3e6">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Caveat:wght@700&family=Patrick+Hand&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="/assets/index-D3x4-c-k.js"></script>
+  <script type="module" crossorigin src="/assets/index-B4RegAPA.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-ygDaMS9B.css">
 </head>
 <body>
@@ -149,11 +151,6 @@
 
   </div>
 
-  <!-- TERMINAL BOOT STORY (OPTIONAL RE-WATCH) -->
-  <div id="bootOv" class="overlay hidden">
-    <div id="bootTxt" class="boot"></div>
-    <div class="press" id="pressSkipStory">— TOCA O PULSA ENTER PARA SALTAR AL MENÚ —</div>
-  </div>
 
   <!-- CLOUDFLARE D1 LEADERBOARD MODAL -->
   <div id="lbOv" class="overlay hidden nb-page">
@@ -175,18 +172,17 @@
   <div id="ctrlOv" class="overlay hidden">
     <div class="modal-box">
       <div class="title-big" style="font-size:clamp(18px,3.5vw,26px);">🕹️ CÓMO JUGAR</div>
-      <div class="sub" style="margin-bottom:12px;">Controles para Teclado y Pantalla Táctil</div>
+      <div class="sub" style="margin-bottom:12px;">Móvil en horizontal, en vertical (mando Game Boy), teclado o mando</div>
       <div class="ctrl-grid">
-        <div class="ctrl-card"><span class="kbadge">← → / A D</span><span>Moverse</span></div>
-        <div class="ctrl-card"><span class="kbadge">↑ / W / ESPACIO</span><span>Saltar</span></div>
-        <div class="ctrl-card"><span class="kbadge">X / J</span><span>Habilidad especial</span></div>
-        <div class="ctrl-card"><span class="kbadge">TAB</span><span>Siguiente compañero</span></div>
-
-        <div class="ctrl-card"><span class="kbadge">M</span><span>Música ON/OFF</span></div>
+        <div class="ctrl-card"><span class="kbadge">📱 HORIZONTAL</span><span>Joystick flotante a la izquierda · botones a la derecha</span></div>
+        <div class="ctrl-card"><span class="kbadge">📱 VERTICAL</span><span>Cruceta + A / B · en los menús, A pulsa y B vuelve</span></div>
+        <div class="ctrl-card"><span class="kbadge">⌨️ TECLADO</span><span>A/D o flechas mover · Espacio saltar · J acción · K especial</span></div>
+        <div class="ctrl-card"><span class="kbadge">TAB · 1 2 3</span><span>Cambiar de compañero</span></div>
+        <div class="ctrl-card"><span class="kbadge">ESC · M</span><span>Pausa · música</span></div>
+        <div class="ctrl-card"><span class="kbadge">🎮 MANDO</span><span>Cualquier mando de consola conectado</span></div>
       </div>
       <div class="panel" style="margin-top:14px;">
-        💡 <b>Mecánicas clave:</b> Encadena enemigos sin tocar el suelo para multiplicar tu <b>COMBO (hasta x5)</b>.<br>
-        Recoge las tazas de ☕ para sumar puntos y curarte. ¡Derrota a <b>The Email Chain</b> para recuperar el Retreat!
+        💡 Cada mundo explica sus controles en su pantalla de inicio. En <b>Historia</b> tienes el poder de cada compañero, los mapas, los enemigos y los objetos.
       </div>
       <button class="btn" id="btnCloseCtrl" style="margin-top:16px;">¡ENTENDIDO!</button>
     </div>
@@ -248,138 +244,9 @@
 
 
 
-  <!-- 08. MENÚ DE PAUSA -->
-  <div id="pauseOv" class="overlay hidden">
-    <div class="pixel-modal-box pause-modal">
-      <div class="modal-header-pixel">
-        <div class="pixel-title-wood">PAUSA</div>
-        <div class="pixel-sub-cyan">EXPEDICIÓN EN ESPERA</div>
-      </div>
-      <div class="pause-actions-stack">
-        <button class="pixel-btn btn-play-wood" id="btnResumeGame">CONTINUAR ▶</button>
-        <button class="pixel-btn btn-wood" id="btnRestartLevel">REINICIAR 🔄</button>
-        
-        <button class="pixel-btn btn-wood" id="btnPauseCtrl">AJUSTES / CONTROLES ⚙</button>
-        <button class="pixel-btn btn-danger-wood" id="btnPauseExit">SALIR AL MENÚ 🏠</button>
-      </div>
-    </div>
-  </div>
 
-  <!-- 09 & 10. NIVEL COMPLETADO & MVP DEL RETREAT -->
-  <div id="winOv" class="overlay hidden">
-    <div class="pixel-modal-box win-modal">
-      <div class="win-header">
-        <div class="win-stars-row">
-          <span class="win-star s1">★</span>
-          <span class="win-star s2">★</span>
-          <span class="win-star s3">★</span>
-        </div>
-        <div class="pixel-title-gold" id="rankTitle">¡NIVEL COMPLETADO!</div>
-        <div class="win-time-badge" id="winTimeTxt">⏱️ 03:42.18</div>
-      </div>
 
-      <div class="boot hidden" id="winTxt"></div>
-      <div id="lbWin" class="hidden"></div>
 
-      <!-- Stats summary -->
-      <div class="win-stats-grid">
-        <div class="win-stat-cell">
-          <span class="stat-lbl">RETOS SUPERADOS</span>
-          <span class="stat-val" id="winRetosTxt">3 / 3</span>
-        </div>
-        <div class="win-stat-cell">
-          <span class="stat-lbl">COMPAÑEROS USADOS</span>
-          <span class="stat-val" id="winCharsTxt">3 / 3</span>
-        </div>
-        <div class="win-stat-cell">
-          <span class="stat-lbl">CAMBIOS REALIZADOS</span>
-          <span class="stat-val" id="winSwitchesTxt">12</span>
-        </div>
-      </div>
-
-      <!-- MVP OF THE RETREAT -->
-      <div class="win-mvp-card">
-        <div class="mvp-trophy">🏆</div>
-        <div class="mvp-avatar-box">
-          <img id="winMvpImg" src="/sprites/ana/avatar.png" alt="MVP" class="mvp-img">
-        </div>
-        <div class="mvp-details">
-          <div class="mvp-label">MVP DEL NIVEL</div>
-          <div class="mvp-name" id="winMvpName">ANA</div>
-          <div class="mvp-stat" id="winMvpStat">Usada 17 veces en momentos clave</div>
-        </div>
-      </div>
-
-      <!-- XP Reward & Progression -->
-      <div class="win-xp-bar-box">
-        <div class="xp-title-row">
-          <span>EXPERIENCIA DE EQUIPO</span>
-          <span class="xp-val-green">+850 XP</span>
-        </div>
-        <div class="xp-track"><div class="xp-fill" style="width: 78%;"></div></div>
-        <div class="xp-level-row">
-          <span>NIVEL 12</span>
-          <span class="xp-arrow">➔</span>
-          <span style="color:#ffd25e;">NIVEL 13 (¡NUEVA HABILIDAD!)</span>
-        </div>
-      </div>
-
-      <div class="win-actions-row">
-        <button class="pixel-btn btn-play-wood" id="btnWinNextWorld">CONTINUAR ▶</button>
-        <button class="pixel-btn btn-wood" id="btnWinMap">🗺️ MAPA DE MUNDOS</button>
-        <button class="pixel-btn btn-wood" id="restartBtn">REPETIR NIVEL 🔄</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- GAME OVER -->
-  <div id="goOv" class="overlay hidden">
-    <div class="pixel-modal-box go-modal">
-      <div class="modal-header-pixel">
-        <div class="pixel-title-wood" style="color:#ff4d5e;">MEETING ETERNA</div>
-        <div class="pixel-sub-cyan">"¿Tienes 5 minutos?" te ha alcanzado</div>
-      </div>
-      <div class="panel" id="goStats" style="text-align:center;margin:12px 0;"></div>
-      <div class="go-actions-stack">
-        <button class="pixel-btn btn-play-wood" id="retryBtn">REINTENTAR NIVEL 🔄</button>
-        <button class="pixel-btn btn-wood" id="btnGoMap">🗺️ VOLVER AL MAPA</button>
-        <button class="pixel-btn btn-wood" id="goBackMenuBtn">MENÚ PRINCIPAL 🏠</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- TOUCH CONTROLS (HORIZONTAL / LANDSCAPE BOTONES FLOTANTES CLÁSICOS) -->
-  <div id="touch">
-    <!-- Directional cluster bottom-left -->
-    <div class="touch-cluster-left">
-      <button class="tbtn tbtn-dir" id="tL" aria-label="Izquierda">
-        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-      </button>
-      <button class="tbtn tbtn-dir" id="tR" aria-label="Derecha">
-        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
-      </button>
-    </div>
-
-    <!-- Quick Switch Utility top-left -->
-    <div class="touch-cluster-top">
-      <button class="tbtn tbtn-utility" id="tS" aria-label="Cambiar compañero" title="Cambiar de personaje (TAB)">
-        <span class="tbtn-icon">⇄</span>
-        <span class="tbtn-tag">CAMBIAR</span>
-      </button>
-    </div>
-
-    <!-- Actions cluster bottom-right: B (Poder) & A (Salto) -->
-    <div class="touch-cluster-right">
-      <button class="tbtn tbtn-action tbtn-b" id="tB" aria-label="Habilidad">
-        <span class="tbtn-main">✦</span>
-        <span class="tbtn-sub">PODER</span>
-      </button>
-      <button class="tbtn tbtn-action tbtn-a" id="tA" aria-label="Salto">
-        <span class="tbtn-main">▲</span>
-        <span class="tbtn-sub">SALTAR</span>
-      </button>
-    </div>
-  </div>
 
   <!-- GAME BOY CONTROLLER DECK (VERTICAL / PORTRAIT) -->
   <div id="gameboyDeck" class="gameboy-deck">

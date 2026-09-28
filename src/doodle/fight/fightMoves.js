@@ -1,18 +1,9 @@
 // =============================================================================
-// fightMoves.js — Golpes y especiales de Code Clash Arena
-// Unidades: metros y segundos. `box` = [delante, abajo, ancho, alto] relativo a
-// los pies del luchador, mirando a la derecha.
+// fightMoves.js — El especial de cada personaje en Coworking Fight
+// (los golpes normales y el empuje estilo Smash están en doodleFight.js)
 // =============================================================================
 
 import { INK } from "../doodleRender.js";
-
-// combo de 3 golpes en el suelo (el 3º lanza por los aires)
-export const JABS = [
-  { name: "jab", dmg: 5, start: 0.05, active: 0.09, rec: 0.12, box: [0.2, 0.9, 1.05, 0.7], kb: [1.8, 0], stun: 0.24, heavy: false },
-  { name: "jab2", dmg: 6, start: 0.05, active: 0.09, rec: 0.13, box: [0.2, 0.8, 1.15, 0.8], kb: [2.2, 0], stun: 0.26, heavy: false },
-  { name: "finisher", dmg: 10, start: 0.09, active: 0.1, rec: 0.26, box: [0.15, 0.7, 1.35, 1.0], kb: [6.5, 6.5], stun: 0.5, heavy: true }
-];
-export const AIR = { name: "air", dmg: 8, start: 0.05, active: 0.14, rec: 0.16, box: [0.1, 0.1, 1.2, 1.3], kb: [4, -3], stun: 0.35, heavy: false };
 
 // tipos de especial:
 //  dash   — embestida horizontal golpeando todo el trayecto

@@ -102,18 +102,10 @@ Shooter en primera o tercera persona dibujado a boli sobre un cuaderno (Three.js
 
 ## 🕹️ Controles
 
-### Teclado
-- **← / →** o **A / D**: Moverse
-- **↑ / W / Espacio**: Saltar
-- **X / J**: Usar habilidad especial
-- **TAB**: Cambiar al siguiente compañero del equipo (Shift+TAB para anterior)
-- **T**: Abrir / cerrar selector del equipo
-- **M**: Activar / desactivar música chiptune
-- **Enter**: Iniciar partida / revivir
-
-### Pantalla Táctil (Móvil / Tablet)
-- Botones en pantalla: **◀ ▶** (Mover), **▲** (Saltar), **✦** (Habilidad), **⇄** (Siguiente héroe), **👥** (Elegir equipo).
-- Modo horizontal automático con aviso de rotación de pantalla.
+- **Móvil en horizontal** (el uso principal): joystick flotante a la izquierda y botones de acción a la derecha, iguales en los 4 mundos.
+- **Móvil en vertical**: mando Game Boy. En los menús la cruceta mueve el foco, ◀ ▶ cambian de personaje o de mundo, **A** pulsa el botón marcado y **B** vuelve atrás (`src/ui/deckNav.js`).
+- **Teclado**: A/D o flechas para moverse, Espacio para saltar, J acción, K especial, Tab o 1-2-3 para cambiar de compañero, Esc pausa, M música.
+- **Mando** de consola: cualquiera compatible con la Gamepad API.
 
 ---
 
@@ -139,34 +131,23 @@ npm run build
 
 ```
 clevergy-game/
-├── index.html              # HTML principal y overlays arcade
-├── package.json            # Dependencias y scripts
-├── vite.config.js          # Configuración de Vite
-├── public/
-│   ├── favicon.svg         # Favicon estilo pixel art
-│   └── sprites/
-│       └── alejandro.png   # Spritesheet optimizado de Alejandro
+├── index.html              # Portada, elección de mundo, ranking, historia y deck Game Boy
+├── functions/api/          # Cloudflare Pages Functions: ranking y login con Google
+├── server/                 # Utilidades de las Functions (verificación del token, sesión)
+├── migrations/             # Migraciones de D1
+├── public/                 # favicon (la R a rayones), sprites y qr.html
 └── src/
-    ├── style.css           # Estilos arcade CRT, UI y botones táctiles
-    ├── main.js             # Entrada y bucle principal (requestAnimationFrame)
-    ├── config/
-    │   ├── constants.js    # Constantes físicas, mapa y checkpoints
-    │   └── characters.js   # Datos de los 18 personajes de Clevergy
-    ├── engine/
-    │   ├── audio.js        # Sintetizador chiptune y sfx con Web Audio API
-    │   ├── input.js        # Input manager (teclado + controles táctiles)
-    │   ├── physics.js      # Colisiones por tiles AABB y plataformas
-    │   └── sprites.js      # Render pixel art y spritesheets animados
-    ├── game/
-    │   ├── state.js        # Estado global reactivo del juego
-    │   ├── abilities.js    # Lógica de las 18 habilidades únicas
-    │   ├── enemies.js      # IA de enemigos, esbirros y combate contra el Boss
-    │   ├── renderer.js     # Renderizado por capas en Canvas 2D
-    │   └── leaderboard.js  # Sistema de ranking y puntuaciones
-    └── ui/
-        └── overlays.js     # Menús (boot, equipo, game over, victoria)
+    ├── main.js             # Arranque: menús y carga bajo demanda de los 4 mundos 3D
+    ├── config/             # Personajes (y su poder) y mundos
+    ├── engine/             # Audio de menús, mando del deck y sprites/avatares
+    ├── game/               # Estado, ranking, login, enlaces por personaje
+    ├── ui/                 # Menús: portada, mundos, ranking, historia, tema de cuaderno
+    └── doodle/             # Motor a boli (Three.js) y los mundos:
+        ├── platform/       #   1 · La Oficina
+        ├── fight/          #   2 · Coworking Fight
+        ├── doodleWorld.js  #   3 · BoliBic Tag (+ cinkLevel.js)
+        └── race/           #   4 · Pantano de San Juan
 ```
-
 
 ## 🔗 Enlaces por personaje (QR)
 

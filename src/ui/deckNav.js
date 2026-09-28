@@ -7,7 +7,12 @@
 
 import { touch } from "../engine/input.js";
 
-const visible = (el) => !!el && el.offsetParent !== null && getComputedStyle(el).visibility !== "hidden";
+// (offsetParent no vale: es null en los elementos position: fixed)
+const visible = (el) => {
+  if (!el || !el.getClientRects().length) return false;
+  const cs = getComputedStyle(el);
+  return cs.visibility !== "hidden" && cs.display !== "none" && Number(cs.opacity) > 0.05;
+};
 
 // la pantalla de menú que está delante (o null si se está jugando)
 function activeScreen() {
@@ -29,38 +34,20 @@ const backOf = (scr) =>
   [...scr.querySelectorAll(".nb-back, #btnCloseMap, .cg-auth-x, .cg-auth-skip, .pf-exit, .cf-exit, .dd-ghost")].find(visible);
 
 export function initDeckNav({ onMenuChar } = {}) {
-  const prev = { A: false, B: false, L: false, R: false, Up: false, Down: false };
+  const prev = { L: false, R: false, Up: false, Down: false };
   let focusEl = null, lastScr = null;
   const setFocus = (el) => {
     if (focusEl) focusEl.classList.remove("deck-focus");
     focusEl = el;
     if (el) { el.classList.add("deck-focus"); el.scrollIntoView?.({ block: "nearest", inline: "nearest" }); }
   };
-  function step() {
-    requestAnimationFrame(step);
-    const on = document.body.classList.contains("gameboy-mode");
-    const scr = on ? activeScreen() : null;
-    const press = {};
-    for (const k in prev) { press[k] = !!touch[k] && !prev[k]; prev[k] = !!touch[k]; }
-    if (!scr) { if (focusEl) setFocus(null); lastScr = null; return; }
-    if (scr !== lastScr || (focusEl && !scr.contains(focusEl))) { lastScr = scr; setFocus(primaryOf(scr)); }
-    if (press.L || press.R) {
-      const d = press.L ? -1 : 1;
-      // selector de personaje del mundo, portada o tarjetas de mundo
-      const arrow = [...scr.querySelectorAll(`.cf-arrow[data-d="${d}"], .pf-arrow[data-d="${d}"]`)].find(visible);
-      if (arrow) arrow.click();
-      else if (scr.id === "menuOv") document.getElementById(d < 0 ? "btnCharPrev" : "btnCharNext")?.click();
-      else if (scr.id === "worldMapOv") {
-        const cards = [...scr.querySelectorAll(".ws-card")];
-        const i = cards.findIndex((c) => c.classList.contains("selected"));
-        const next = cards[(i + d + cards.length) % cards.length];
-        if (next) { next.click(); setFocus(next.querySelector(".ws-play")); }
-      } else moveFocus(scr, d);
-      if (onMenuChar) onMenuChar();
-    }
-    if (press.Up || press.Down) moveFocus(scr, press.Up ? -1 : 1);
-    if (press.A && focusEl) focusEl.click();
-    if (press.B) backOf(scr)?.click();
+  // la pantalla de menú activa (o null en partida); recoloca el foco si ha cambiado
+  function current() {
+    if (!document.body.classList.contains("gameboy-mode")) return null;
+    const scr = activeScreen();
+    if (!scr) { if (focusEl) setFocus(null); lastScr = null; return null; }
+    if (scr !== lastScr || !focusEl || !scr.contains(focusEl) || !visible(focusEl)) { lastScr = scr; setFocus(primaryOf(scr)); }
+    return scr;
   }
   function moveFocus(scr, d) {
     const list = focusables(scr);
@@ -68,5 +55,42 @@ export function initDeckNav({ onMenuChar } = {}) {
     const i = list.indexOf(focusEl);
     setFocus(list[(i + d + list.length) % list.length]);
   }
-  requestAnimationFrame(step);
+  function side(scr, d) {
+    const arrow = [...scr.querySelectorAll(`.cf-arrow[data-d="${d}"], .pf-arrow[data-d="${d}"]`)].find(visible);
+    if (arrow) arrow.click();
+    else if (scr.id === "menuOv") document.getElementById(d < 0 ? "btnCharPrev" : "btnCharNext")?.click();
+    else if (scr.id === "worldMapOv") {
+      const cards = [...scr.querySelectorAll(".ws-card")];
+      const i = cards.findIndex((c) => c.classList.contains("selected"));
+      const next = cards[(i + d + cards.length) % cards.length];
+      if (next) { next.click(); setFocus(next.querySelector(".ws-play")); }
+    } else moveFocus(scr, d);
+    if (onMenuChar) onMenuChar();
+  }
+  // A y B: al instante, en el propio toque (no se pierde aunque el móvil vaya lento)
+  const onBtn = (which) => (e) => {
+    const scr = current();
+    if (!scr) return;
+    e.preventDefault();
+    if (which === "A") { if (focusEl) focusEl.click(); }
+    else backOf(scr)?.click();
+  };
+  document.getElementById("gbA")?.addEventListener("pointerdown", onBtn("A"));
+  document.getElementById("gbB")?.addEventListener("pointerdown", onBtn("B"));
+  // cruceta: input.js actualiza `touch` en el mismo evento; aquí miramos qué dirección es nueva
+  const onPad = () => setTimeout(() => {
+    const scr = current();
+    const now = { L: !!touch.L, R: !!touch.R, Up: !!touch.Up, Down: !!touch.Down };
+    if (scr) {
+      if (now.L && !prev.L) side(scr, -1);
+      else if (now.R && !prev.R) side(scr, 1);
+      else if (now.Up && !prev.Up) moveFocus(scr, -1);
+      else if (now.Down && !prev.Down) moveFocus(scr, 1);
+    }
+    Object.assign(prev, now);
+  }, 0);
+  const pad = document.querySelector(".gb-dpad");
+  ["pointerdown", "pointermove", "pointerup", "pointercancel"].forEach((ev) => pad?.addEventListener(ev, onPad));
+  // al abrir/cerrar pantallas, el foco va al botón principal
+  new MutationObserver(() => current()).observe(document.body, { subtree: true, attributes: true, attributeFilter: ["class"], childList: true });
 }
