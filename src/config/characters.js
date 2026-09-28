@@ -51,3 +51,25 @@ export const FLY_META = {
     victory: { row: 7, frames: 3 }
   }
 };
+
+// Habilidad especial de cada héroe, contada para los menús (icono + qué hace)
+export const POWER_INFO = {
+  alejandro: { icon: "🥊", desc: "Puñetazo de mosca y, si mantienes el salto, planea por el aire." },
+  ale: { icon: "🫒", desc: "Se derrama y se desliza por el suelo arrollando todo lo que pilla." },
+  alvaroM: { icon: "🧮", desc: "Lanza una operación ERROR 404 que rebota y explota." },
+  alvaroP: { icon: "🎙️", desc: "Onda sonora de podcast que atraviesa a varios enemigos." },
+  ana: { icon: "🧗", desc: "Trepa por cualquier pared y lanza zarpazos de leona." },
+  beltran: { icon: "🛡️", desc: "Estocada de aguja y, manteniendo abajo, un escudo que lo para todo." },
+  bruno: { icon: "🗿", desc: "Tira una cara al azar: cura, furia, velocidad o modo zen invencible." },
+  gonzalo: { icon: "🥦", desc: "Se multiplica en tres mini-brócolis saltarines que arrasan." },
+  javi: { icon: "☭", desc: "Invoca trabajadores que marchan en huelga contra los enemigos." },
+  jesus: { icon: "🍺", desc: "Smash de Cruzcampo en el suelo; en el aire, se lanza en picado." },
+  joseluis: { icon: "🖨️", desc: "Imprime plataformas en 3D donde las necesites (hasta 3 a la vez)." },
+  josu: { icon: "🥮", desc: "Bote diagonal de panetón y rebotes de pared más potentes." },
+  juan: { icon: "📻", desc: "Calienta todo a su alrededor con una onda de microondas." },
+  maca: { icon: "🏐", desc: "Modo pelota: bota sin parar, corre más y arrolla." },
+  manu: { icon: "💪", desc: "Super step: salto gigantesco con un impacto enorme al caer." },
+  pablo: { icon: "🍊", desc: "Rueda a toda velocidad como una naranja rompiendo ladrillos." },
+  paloma: { icon: "🕊️", desc: "Mantén el salto para volar con su barra de vuelo." },
+  silvia: { icon: "👟", desc: "Speedrun: dash invulnerable que arrolla todo." }
+};

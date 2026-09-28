@@ -15,11 +15,12 @@ import { sfx } from "../engine/audio.js";
 const px = (src) => (src && src.startsWith("data:") ? " px" : "");
 
 // ── Ilustración de cada mundo: todas a boli sobre el mismo cuaderno ─────────
-const PAPER_BG = `<div class="ws-ink-paper"></div>`;
+// cada foto tiene su propio "paisaje" a color (cielo, estadio, oficina, pantano)
+const scene = (t) => `<div class="ws-scene ws-scene-${t}"><i></i><i></i><i></i></div>`;
 const heroImg = (hero, cls) => (hero ? `<img class="ws-hero ws-ink-hero ${cls}${px(hero)}" src="${hero}" alt="">` : "");
 
 function artMario(hero) {
-  return `${PAPER_BG}
+  return `${scene("mario")}
     <svg class="ws-ink-svg" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid meet" fill="none" stroke-linecap="round" stroke-linejoin="round">
       <g class="ws-boil"><path d="M4 84 L156 84" stroke="#272a36" stroke-width="2.4"/><path d="M4 84 L4 98 M156 84 L156 98" stroke="#272a36" stroke-width="2"/>
       <g stroke="#1f38b8" stroke-width="1.2" opacity=".55">${[10, 22, 34, 46, 58, 70, 82, 94, 106, 118, 130, 142].map((x) => `<path d="M${x} 86 l8 10"/>`).join("")}</g></g>
@@ -35,7 +36,7 @@ function artMario(hero) {
 }
 
 function artArena(hero, rival) {
-  return `${PAPER_BG}
+  return `${scene("arena")}
     <svg class="ws-ink-svg" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid meet" fill="none" stroke-linecap="round" stroke-linejoin="round">
       <g class="ws-boil"><path d="M8 88 L152 88" stroke="#272a36" stroke-width="2.4"/>
       <g stroke="#d6243a" stroke-width="2"><rect x="10" y="10" width="54" height="7" rx="2"/><rect x="96" y="10" width="54" height="7" rx="2"/></g>
@@ -50,7 +51,7 @@ function artArena(hero, rival) {
 }
 
 function artDoodle(hero) {
-  return `${PAPER_BG}
+  return `${scene("doodle")}
     <svg class="ws-ink-svg" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid meet" fill="none" stroke-linecap="round" stroke-linejoin="round">
       <g class="ws-boil" stroke="#d6243a" stroke-width="2.2">
         <path d="M104 18 L140 20 L138 44 L102 42 Z"/><path d="M104 19 L121 33 L139 21"/>
@@ -66,7 +67,7 @@ function artDoodle(hero) {
 }
 
 function artKart(hero) {
-  return `${PAPER_BG}
+  return `${scene("kart")}
     <svg class="ws-ink-svg" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid meet" fill="none" stroke-linecap="round" stroke-linejoin="round">
       <g class="ws-boil" stroke="#1a8c52" stroke-width="2"><path d="M0 50 L20 34 L36 44 L56 30 L78 44 L96 32 L112 42"/>
         ${[10, 24, 44, 62, 84, 100].map((x, i) => `<path d="M${x} ${46 - (i % 2) * 5} l4 -10 l4 10 z"/>`).join("")}</g>
@@ -132,9 +133,13 @@ export function initWorldMap({ onSelectWorld }) {
         : `<span class="ws-pending">○ Por dominar</span>`;
       return `
         <article class="ws-card ws-${w.theme}" data-id="${w.id}" tabindex="0">
-          <div class="ws-art">${art}<div class="ws-num">${w.num}</div></div>
+          <div class="ws-polaroid">
+            <span class="ws-tape"></span>
+            <div class="ws-art">${art}</div>
+            <div class="ws-num">${w.num}</div>
+            <div class="ws-label">${w.genre}</div>
+          </div>
           <div class="ws-body">
-            <div class="ws-kicker">MUNDO ${w.num} · ${w.genre}</div>
             <h2 class="ws-title">${w.name}</h2>
             <p class="ws-desc">${w.blurb || w.desc}</p>
             <div class="ws-chips">${(w.chips || []).map((c) => `<span>${c}</span>`).join("")}</div>

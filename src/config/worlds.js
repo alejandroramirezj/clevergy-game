@@ -6,12 +6,12 @@ export const WORLDS = [
     num: 1,
     theme: "mario",
     genre: "PLATAFORMAS 2D",
-    blurb: "Salta entre las cards del roadmap, recoge cafés y derrota a EMAIL CHAIN con las habilidades de todo el equipo.",
-    chips: ["👤 1 jugador", "🦸 18 héroes", "👾 Email Chain"],
-    name: "The Office",
-    title: "1. The Office",
-    subtitle: "Notion Roadmap · Oficinas Clevergy",
-    desc: "Navega por las tareas del Roadmap de Notion, escala por las cards del sprint y derrota a Email Chain para alcanzar Inbox Zero.",
+    blurb: "La vieja fábrica de ladrillo de Google for Startups junto al Palacio Real: café, torre de coworking y el escenario del Demo Day.",
+    chips: ["👤 1 jugador", "🦸 18 poderes", "👾 Email Chain"],
+    name: "Campus Madrid",
+    title: "1. Campus Madrid",
+    subtitle: "Google for Startups · Moreno Nieto",
+    desc: "Cruza el Campus Café, sube la torre de coworking, salta entre las salas de cristal y derrota a Email Chain en el Demo Day.",
     bossName: "EMAIL CHAIN",
     fragmentName: "Fragmento 1: El Backend",
     bgClass: "world-office",
@@ -194,6 +194,19 @@ export function saveWorldProgress(worldId, score, rank) {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(prog));
   } catch (e) {}
+  try { window.dispatchEvent(new CustomEvent("cg_progress", { detail: prog })); } catch (e) {}
+  return prog;
+}
+
+/** Fusiona el progreso guardado en la cuenta con el de este dispositivo. */
+export function mergeWorldProgress(remote) {
+  const prog = loadWorldProgress();
+  if (!remote) return prog;
+  for (const id of remote.completed || []) if (!prog.completed.includes(Number(id))) prog.completed.push(Number(id));
+  for (const [w, sc] of Object.entries(remote.highScores || {})) {
+    if ((Number(sc) || 0) > (prog.highScores[w] || 0)) { prog.highScores[w] = Number(sc) || 0; prog.ranks[w] = (remote.ranks || {})[w] || ""; }
+  }
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(prog)); } catch (e) {}
   return prog;
 }
 

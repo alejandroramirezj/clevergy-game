@@ -38,7 +38,7 @@ Elige a cualquiera de los **18 miembros del equipo** (cada uno con habilidades, 
 
 La pantalla «Elige mundo» muestra 3 columnas, cada una con la estética de su mundo (en móvil vertical, un carrusel deslizable):
 
-1. **The Office** — plataformas 2.5D en 3D con el render de boli (`src/doodle/platform/`).
+1. **Campus Madrid** — plataformas 2.5D en Google for Startups Campus Madrid, con el render de boli (`src/doodle/platform/`).
 2. **Code Clash Arena** — lucha 1v1 en 3D (mismo render de boli que Doodle District) contra la CPU u online.
 3. **Doodle District** — shooter 3D a boli, con salas multijugador.
 
@@ -50,13 +50,13 @@ Los antiguos mundos 2–5 del plataformas siguen definidos en `src/config/worlds
 
 ---
 
-## 🏢 Mundo 1 · The Office (plataformas 3D)
+## 🏢 Mundo 1 · Campus Madrid (plataformas 3D)
 
-Plataformas 2.5D por la oficina de Clevergy dibujada a boli. El nivel está en `platformLevel.js` en 7 tramos: oficina, café derramado (foso, plataforma móvil y muelle), hueco del ascensor (salto en pared), sala de reuniones, pasillo de servidores (pinchos, emails voladores, ascensor), el jefe **EMAIL CHAIN** y la bandera de **INBOX ZERO**.
+Plataformas 2.5D por Google for Startups Campus Madrid (la fábrica neomudéjar de ladrillo de la calle Moreno Nieto, con el Palacio Real y la Almudena al fondo). El nivel está en `platformLevel.js`: terraza con sombrillas, Campus Café con altillo, la torre de cinco plantas de coworking (ascensor, rejilla de ventilación y forjados con huecos alternos), las salas de cristal de arriba (fosos, sillas plegables), las gradas del auditorio y el jefe **EMAIL CHAIN** en el escenario del **Demo Day**, y la salida con la bandera.
 
-- **Mecánicas:** salto variable (mantén para subir más), *coyote time*, búfer de salto, salto en pared, pisotón con rebote, bloques ? (monedas y cafés que curan), ladrillos que se rompen con la cabeza, plataformas atravesables (▼ + salto para bajar), 3 corazones, puntos de control (cafeteras) y 3 disquetes secretos que suben el rango.
-- **Poder:** cada personaje usa su especial de la pelea (embestida, proyectil, golpe al suelo, supersalto o escudo), que también rompe ladrillos y tumba enemigos. Con EQUIPO cambias de compañero en plena partida.
-- **Jefe:** salta hacia ti, suelta emails y lanza ondas de choque al caer; cuando se cansa, písale la cabeza (3 veces).
+- **Mecánicas:** salto variable, *coyote time*, búfer, salto en pared, pisotón, bloques ?, ladrillos, plataformas atravesables (▼ + salto), sillas plegables que se hunden, rejillas que te suben, pufs que rebotan, 3 corazones, cafeteras de control y 3 disquetes secretos.
+- **Poderes originales:** Alejandro puñetazo + planeo · Ale se desliza · Álvaro M. bomba 404 que rebota · Álvaro onda de podcast · Ana trepa (mantén PODER en la pared) · Beltrán estocada + escudo (▼) · Bruno cara aleatoria · Gonzalo mini-brócolis · Javi trabajadores · Jesús smash / picado · **José Luis imprime plataformas (máx. 3, 9 s)** · Josu bote diagonal · Juan microondas · Maca modo pelota · Manu super step · Pablo rueda · Paloma vuela (mantén salto) · Silvia dash invulnerable.
+- **Jefe:** salta, suelta emails y lanza ondas al caer; cuando se cansa, písale la cabeza (3 veces).
 
 ## 🚤 Mundo 4 · Pantano Kart (3D)
 
@@ -165,3 +165,22 @@ clevergy-game/
     └── ui/
         └── overlays.js     # Menús (boot, equipo, game over, victoria)
 ```
+
+
+## 🔗 Enlaces por personaje (QR)
+
+`https://<dominio>/jose-luis`, `/paloma`, `/alvaro-merino`… abren el juego con ese personaje ya elegido (también vale el id o el nombre sin tildes). La página **`/qr.html`** genera los 18 QR listos para imprimir (`/qr.html?base=https://otro-dominio` para otro dominio). Código: `src/game/charRoute.js`.
+
+## 🔐 Cuenta con Google, progreso y ranking
+
+Login con "Iniciar sesión con Google" (Google Identity Services): el navegador obtiene un ID token y `functions/api/auth/google.js` verifica su firma contra las claves de Google, guarda el usuario en D1 y deja una cookie de sesión firmada. Es opcional: botón **Entrar** en la portada, aviso en el ranking y bienvenida con tu cara si llegas por un QR. Al entrar por primera vez eliges qué personaje eres (por defecto, el del QR) y lo confirmas. Con sesión, tu nombre en el ranking es el de tu cuenta y el progreso de los mundos se guarda en la cuenta.
+
+Puesta en marcha (una vez):
+
+1. Google Cloud Console → APIs y servicios → Credenciales → **ID de cliente de OAuth · Aplicación web**. En *Orígenes de JavaScript autorizados* añade el dominio de Pages (y `http://localhost:8788` si pruebas con `wrangler pages dev`).
+2. Cloudflare Pages → Settings → Variables: `GOOGLE_CLIENT_ID` (el ID de cliente), `SESSION_SECRET` (cadena aleatoria larga, como secreto), opcional `ALLOWED_DOMAIN=clever.gy` (sólo el equipo) y `REQUIRE_LOGIN=1` (sólo cuentan récords con sesión).
+3. Migraciones de D1:
+   `npx wrangler d1 execute clevergy-game-db --remote --file=migrations/0002_add_world.sql`
+   `npx wrangler d1 execute clevergy-game-db --remote --file=migrations/0003_users.sql`
+
+API: `GET /api/auth/config`, `POST /api/auth/google`, `POST /api/auth/logout`, `GET|POST /api/me` (personaje y progreso), `GET|POST /api/leaderboard` (ahora con `world` para el ranking por mundo). Todos los mundos 3D envían su puntuación al ranking al terminar.

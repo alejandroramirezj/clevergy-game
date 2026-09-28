@@ -1,5 +1,5 @@
 import { BOOT_LINES } from "../config/constants.js";
-import { CHARS } from "../config/characters.js";
+import { CHARS, POWER_INFO } from "../config/characters.js";
 import { VISIBLE_WORLDS } from "../config/worlds.js";
 import { GameState, respawn, fmtT, switchToChar } from "../game/state.js";
 import { sfx } from "../engine/audio.js";
@@ -129,14 +129,10 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     if (spotlightName) spotlightName.textContent = c.form.toUpperCase();
     if (spotlightForm) spotlightForm.textContent = `FORMA: ${c.form.toUpperCase()}`;
     if (spotlightAb) spotlightAb.textContent = c.ab.toUpperCase();
-    if (spotlightTip) spotlightTip.textContent = c.tip;
-
-    const statAtkVal = document.getElementById("statAtkVal");
-    const statSpdVal = document.getElementById("statSpdVal");
-    const statHpVal = document.getElementById("statHpVal");
-    if (statAtkVal) statAtkVal.textContent = Math.round(c.spd * 16 + (c.jump > 9 ? 15 : 8));
-    if (statSpdVal) statSpdVal.textContent = Math.round((c.spd / 5.2) * 100);
-    if (statHpVal) statHpVal.textContent = Math.round(70 + (c.jump * 2.5));
+    const pinfo = POWER_INFO[c.id];
+    if (spotlightTip) spotlightTip.textContent = pinfo ? pinfo.desc : c.tip;
+    const spIcon = document.getElementById("spotlightPowerIcon");
+    if (spIcon) spIcon.textContent = pinfo ? pinfo.icon : c.emoji;
 
     if (barSpd) barSpd.style.width = Math.min(100, Math.max(20, (c.spd / 5.4) * 100)) + "%";
     if (barJump) barJump.style.width = Math.min(100, Math.max(20, (c.jump / 12) * 100)) + "%";
@@ -556,58 +552,94 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     });
   }
 
-  // Leaderboard Modal logic (Cloudflare D1)
+  // Ranking (Cloudflare D1): general por puntos totales y el mejor de cada mundo
+  let lbTab = "general";
+  let lbData = null;
+  const esc = (t) => String(t ?? "").replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+  const fmtN = (n) => Number(n || 0).toLocaleString("es-ES");
+  const avatarOf = (id) => {
+    const src = getCharacterAvatar(id);
+    const c = CHARS.find((x) => x.id === id);
+    return src ? `<img class="lb-av${src.startsWith("data:") ? " px" : ""}" src="${src}" alt="">` : `<span class="lb-av lb-av-emoji">${c ? c.emoji : "🪰"}</span>`;
+  };
+  function aggregate(list) {
+    // mejor puntuación de cada jugador en cada mundo (las antiguas sin mundo son del Mundo 1)
+    const players = new Map();
+    for (const it of list) {
+      const name = String(it.name || it.n || "ANON").toUpperCase();
+      const score = Number(it.score ?? it.s) || 0;
+      const world = Number(it.world) || 1;
+      const p = players.get(name) || { name, best: {}, top: null };
+      if (!p.best[world] || score > p.best[world].score) p.best[world] = { score, character: it.character || it.c, rank: it.rank || it.r || "" };
+      if (!p.top || score > p.top.score) p.top = { score, character: it.character || it.c };
+      players.set(name, p);
+    }
+    const all = [...players.values()].map((p) => ({ ...p, total: Object.values(p.best).reduce((a, b) => a + b.score, 0), worlds: Object.keys(p.best).length }));
+    all.sort((a, b) => b.total - a.total);
+    const perWorld = {};
+    for (const w of VISIBLE_WORLDS) {
+      perWorld[w.id] = all.filter((p) => p.best[w.id]).map((p) => ({ name: p.name, ...p.best[w.id] })).sort((a, b) => b.score - a.score);
+    }
+    return { all, perWorld };
+  }
+  function renderGeneral({ all }) {
+    if (!all.length) return `<div class="lb-empty">🏆 ¡Aún no hay nadie! Supera cualquier mundo y estrena el ranking.</div>`;
+    const me = GameState.playerName;
+    const podium = [all[1], all[0], all[2]].map((p, i) => {
+      if (!p) return `<div class="lb-pod lb-pod-empty"></div>`;
+      const place = [2, 1, 3][i];
+      return `<div class="lb-pod lb-pod-${place}${p.name === me ? " me" : ""}">
+        <div class="lb-pod-av">${avatarOf(p.top && p.top.character)}<span class="lb-medal">${["🥇", "🥈", "🥉"][place - 1]}</span></div>
+        <div class="lb-pod-name">${esc(p.name)}</div>
+        <div class="lb-pod-pts">${fmtN(p.total)}</div>
+        <div class="lb-pod-block">${place}</div>
+      </div>`;
+    }).join("");
+    const rows = all.slice(3, 60).map((p, i) => `
+      <li class="lb-row${p.name === me ? " me" : ""}">
+        <span class="lb-pos">${i + 4}</span>
+        ${avatarOf(p.top && p.top.character)}
+        <span class="lb-name">${esc(p.name)}</span>
+        <span class="lb-wbadges">${VISIBLE_WORLDS.map((w) => `<i class="lb-wb${p.best[w.id] ? " on" : ""}" title="${esc(w.name)}">${w.num}</i>`).join("")}</span>
+        <b class="lb-pts">${fmtN(p.total)}</b>
+      </li>`).join("");
+    return `<div class="lb-general">
+      <div class="lb-podium">${podium}</div>
+      <div class="lb-list-wrap">
+        <div class="lb-note">Suma del mejor récord de cada jugador en cada mundo</div>
+        <ol class="lb-list">${rows || `<li class="lb-row lb-row-empty">Solo hay podio… ¡entra tú en la lista!</li>`}</ol>
+      </div>
+    </div>`;
+  }
+  function renderWorlds({ perWorld }) {
+    return `<div class="lb-worlds">${VISIBLE_WORLDS.map((w, i) => {
+      const list = perWorld[w.id] || [];
+      const champ = list[0];
+      return `<section class="lb-wcard lb-wc-${i % 4}">
+        <div class="lb-wc-head"><span class="lb-wc-num">${w.num}</span><div><small>${esc(w.genre || "")}</small><h3>${esc(w.name)}</h3></div></div>
+        ${champ ? `<div class="lb-champ">${avatarOf(champ.character)}<div><small>👑 El mejor</small><b>${esc(champ.name)}</b><span>${fmtN(champ.score)} pts${champ.rank ? ` · rango ${esc(champ.rank)}` : ""}</span></div></div>` : `<div class="lb-champ lb-champ-empty">Nadie lo ha dominado aún</div>`}
+        <ol class="lb-wlist">${list.slice(1, 6).map((p, k) => `<li class="${p.name === GameState.playerName ? "me" : ""}"><span>${k + 2}</span>${esc(p.name)}<b>${fmtN(p.score)}</b></li>`).join("")}</ol>
+      </section>`;
+    }).join("")}</div>`;
+  }
+  function paintLB() {
+    if (!lbModalContent || !lbData) return;
+    const A = window.__cgAuth;
+    const banner = A && A.clientId && !A.user
+      ? `<div class="lb-login"><span>🔒 Tus récords solo cuentan con sesión iniciada.</span><button class="lb-login-btn"><b class="cg-g">G</b> Entrar con Google</button></div>` : "";
+    lbModalContent.innerHTML = banner + (lbTab === "general" ? renderGeneral(lbData) : renderWorlds(lbData));
+    lbModalContent.querySelector(".lb-login-btn")?.addEventListener("click", () => A.open());
+    lbOv.querySelectorAll(".lb-tab").forEach((b) => b.classList.toggle("on", b.dataset.tab === lbTab));
+  }
   async function renderLeaderboardModal() {
     if (!lbModalContent) return;
-    lbModalContent.innerHTML = `<div style="color:var(--cyan);padding:24px;font-size:13px;">⚡ Consultando base de datos Cloudflare D1...</div>`;
+    lbModalContent.innerHTML = `<div class="lb-empty">⚡ Consultando la clasificación…</div>`;
     const list = await fetchGlobalLeaderboard();
-
-    if (!list || list.length === 0) {
-      lbModalContent.innerHTML = `
-        <div style="color:var(--text-muted);padding:30px;line-height:1.6;">
-          🏆 ¡Sé el primero en la clasificación!<br>
-          Completa la misión o derrota al Boss para registrar tu récord mundial.
-        </div>
-      `;
-      return;
-    }
-
-    let html = `
-      <table class="lb">
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>JUGADOR</th>
-            <th>PERSONAJE</th>
-            <th>PUNTOS</th>
-            <th>TIEMPO</th>
-            <th>RANGO</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
-
-    list.slice(0, 50).forEach((item, idx) => {
-      const isMe = (item.name || item.n) === GameState.playerName;
-      const medal = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : (idx + 1);
-      const charObj = CHARS.find(c => c.id === (item.character || item.c));
-      const charDisplay = charObj ? `${charObj.emoji} ${charObj.name}` : (item.char_name || item.character || "🪰");
-
-      html += `
-        <tr class="${isMe ? "me" : ""}">
-          <td style="font-weight:bold;">${medal}</td>
-          <td style="color:#fff;font-weight:bold;">${item.name || item.n}</td>
-          <td>${charDisplay}</td>
-          <td style="color:var(--lime);font-weight:bold;">${Number(item.score || item.s).toLocaleString()}</td>
-          <td>${fmtT(item.time_seconds || item.t || 0)}</td>
-          <td style="color:var(--amber);font-weight:bold;">${item.rank || item.r || "C"}</td>
-        </tr>
-      `;
-    });
-
-    html += `</tbody></table>`;
-    lbModalContent.innerHTML = html;
+    lbData = aggregate(list || []);
+    paintLB();
   }
+  window.addEventListener("cg_auth", () => { if (lbOv && !lbOv.classList.contains("hidden")) paintLB(); });
+  lbOv?.querySelectorAll(".lb-tab").forEach((b) => b.addEventListener("click", () => { lbTab = b.dataset.tab; sfx(660, 0.05); paintLB(); }));
 
   function openLeaderboard() {
     lbOv.classList.remove("hidden");
@@ -653,322 +685,97 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
   let compSelectedCharIdx = GameState.charIdx || 0;
 
   const ENEMIES_DATA = [
-    {
-      name: "Email Spam",
-      danger: "Amenaza Básica · The Office",
-      desc: "Correos urgentes y cadenas descontroladas que rebotan por los pasillos de Clevergy.",
-      tip: "Salta sobre ellos o golpéalos de frente con tu ataque especial.",
-      icon: "✉️",
-      isBoss: false
-    },
-    {
-      name: "Meeting '5 Minutos'",
-      danger: "Interrupción Peligrosa · The Office",
-      desc: "Aparece de improvisto diciendo '¿Tienes 5 minutos?' y te absorbe tiempo y energía.",
-      tip: "Mantén la distancia y elimínala a tiempo antes de que empiece a hablar.",
-      icon: "💬",
-      isBoss: false
-    },
-    {
-      name: "Webhook Spider",
-      danger: "Trampa de Red · Integration Jungle",
-      desc: "Araña cibernética que teje hilos de red y salta entre terminales de servidores.",
-      tip: "Espera a que aterrice o esquívala rodando antes de asestar el golpe.",
-      icon: "🕷️",
-      isBoss: false
-    },
-    {
-      name: "Scope Creep Knight",
-      danger: "Acorazado Pesado · Product Kingdom",
-      desc: "Caballero que añade requisitos imprevistos. Bloquea ataques frontales con su escudo.",
-      tip: "Salta por detrás de su espalda o utiliza habilidades de área.",
-      icon: "🛡️",
-      isBoss: false
-    },
-    {
-      name: "Meeting Ghost",
-      danger: "Llamada Silenciada · Meeting Dimension",
-      desc: "Pantalla de videollamada flotante en mute que desconcierta con su vuelo errático.",
-      tip: "Aprovecha los momentos en los que desciende para rematarlo desde arriba.",
-      icon: "🎙️",
-      isBoss: false
-    },
-    {
-      name: "Clock Demon",
-      danger: "Cuenta Atrás · The Retreat",
-      desc: "Reloj demoníaco cuyas manecillas giran a toda velocidad marcando el fin de plazo.",
-      tip: "Calcula con precisión tus saltos para esquivar su giro cortante.",
-      icon: "⏰",
-      isBoss: false
-    },
-    // Jefes
-    {
-      name: "THE EMAIL CHAIN",
-      danger: "JEFE MUNDO 1 · OFICINAS CLEVERGY",
-      desc: "Cadena monstruosa de 200 mensajes en bucle que satura la bandeja de entrada.",
-      tip: "Esquiva los correos bomba y salta sobre el servidor central para lograr Inbox Zero.",
-      icon: "👾",
-      isBoss: true
-    },
-    {
-      name: "API GATEWAY BEAST",
-      danger: "JEFE MUNDO 2 · SELVA DE APIS",
-      desc: "Monstruo de endpoints saturados que dispara errores 500 y colapsa microservicios.",
-      tip: "Súbete a las plataformas de fibra óptica para esquivar sus llamaradas de red.",
-      icon: "🦎",
-      isBoss: true
-    },
-    {
-      name: "THE ROADMAP GOLEM",
-      danger: "JEFE MUNDO 3 · PRODUCT KINGDOM",
-      desc: "Gigante de piedra formado por bloques de prioridades inamovibles y épicas congeladas.",
-      tip: "Derriba sus pilares inferiores para hacerle perder el equilibrio.",
-      icon: "🗿",
-      isBoss: true
-    },
-    {
-      name: "ALL-HANDS MONSTER",
-      danger: "JEFE MUNDO 4 · MEETING DIMENSION",
-      desc: "El caos sonoro definitivo: 50 micrófonos con eco y pantallas compartidas a la vez.",
-      tip: "Destruye los altavoces periféricos para deshabilitar su escudo acústico.",
-      icon: "📺",
-      isBoss: true
-    },
-    {
-      name: "THE DEADLINE (0 DAYS)",
-      danger: "JEFE FINAL DEFINITIVO · THE RETREAT",
-      desc: "La cuenta atrás final que amenaza con cancelar el Retreat. ¡Salva a Clevergy!",
-      tip: "Combina los poderes de todos tus compañeros para superar el sprint final.",
-      icon: "🔥",
-      isBoss: true
-    }
+    { icon: "✉️", name: "Email urgente", where: "Campus Madrid · CINK", desc: "Sobres con dientes que vuelan hacia ti en bandada.", tip: "Písalos o dispárales antes de que muerdan." },
+    { icon: "⏰", name: "Reloj de fichar", where: "Campus Madrid · CINK", desc: "Patrulla los pasillos marcando la hora sin descanso.", tip: "Un pisotón y se para el tiempo." },
+    { icon: "📅", name: "Reunión de 5 minutos", where: "Campus Madrid · CINK", desc: "Te lanza invitaciones de calendario desde lejos.", tip: "Acércate entre invitación e invitación." },
+    { icon: "🥊", name: "El compañero rival", where: "Code Clash Arena", desc: "Otro héroe de Clevergy, de la CPU o desde otro móvil.", tip: "Bloquea, esquiva y guarda el especial para rematar." },
+    { icon: "🚤", name: "Los rivales del pantano", where: "Pantano Kart", desc: "Cinco motos de agua que no te dejarán ganar tan fácil.", tip: "Derrapa en las curvas para cargar turbo." },
+    { icon: "📨", name: "EMAIL CHAIN", where: "Jefe · Campus Madrid", boss: true, desc: "Una torre de correos que salta en el escenario del Demo Day.", tip: "Salta sus ondas y písale la cabeza cuando se canse." },
+    { icon: "📬", name: "INBOX INFINITO", where: "Jefe · CINK Coworking", boss: true, desc: "La bandeja de entrada hecha monstruo en la última oleada.", tip: "Muévete sin parar y apunta al centro." }
   ];
-
   const ITEMS_DATA = [
-    {
-      name: "Taza de Café Clevergy",
-      type: "Consumible Esencial",
-      desc: "Café de especialidad recién preparado. El motor indispensable del equipo.",
-      effect: "Restaura +1 Corazón de Vida y recarga la velocidad de movimiento.",
-      icon: "☕"
-    },
-    {
-      name: "Fragmentos de Código",
-      type: "Coleccionable de Misión",
-      desc: "Módulos de código fuente recuperados tras vencer a cada jefe del sprint.",
-      effect: "Reparan el sistema y abren el camino hacia el Campamento del Retreat.",
-      icon: "💎"
-    },
-    {
-      name: "Bomba Error 404",
-      type: "Proyectil Táctico",
-      desc: "Operación de cálculo crítico que explota al impactar contra bugs y servidores.",
-      effect: "Elimina grupos de correos y bugs en un radio considerable.",
-      icon: "💣"
-    },
-    {
-      name: "Plataforma Impresa 3D",
-      type: "Herramienta de Campo",
-      desc: "Estructura física generada en tiempo real por José Luis.",
-      effect: "Crea hasta 3 apoyos flotantes en el aire para salvar saltos imposibles.",
-      icon: "🖨️"
-    },
-    {
-      name: "Ejército de Mini-Brócolis",
-      type: "Invocación Táctica",
-      desc: "Gonzalo se multiplica en pequeños aliados veloces y nutritivos.",
-      effect: "Avanzan en oleada limpiando el suelo de obstáculos y enemigos.",
-      icon: "🥦"
-    },
-    {
-      name: "Multiplicador de Combo",
-      type: "Mecánica de Puntuación",
-      desc: "Encadenar saltos sobre enemigos consecutivos sin tocar el suelo.",
-      effect: "Multiplica los puntos de x1 a x5 y llena la pantalla de fuegos artificiales.",
-      icon: "⭐"
-    }
+    { icon: "☕", name: "Café", where: "Todos los mundos", desc: "Recupera un corazón (o da puntos extra si vas a tope)." },
+    { icon: "🪙", name: "Monedas", where: "Campus Madrid", desc: "Suman puntos; cógelas casi todas para mejorar el rango." },
+    { icon: "💾", name: "Disquetes", where: "Campus Madrid", desc: "Tres escondidos por el nivel. Son la clave del rango S." },
+    { icon: "❓", name: "Bloque ?", where: "Campus Madrid", desc: "Dale con la cabeza: moneda o café." },
+    { icon: "🛋️", name: "Pufs de colores", where: "Campus Madrid", desc: "Rebotan y te lanzan muy alto." },
+    { icon: "🪑", name: "Sillas plegables", where: "Campus Madrid", desc: "Se hunden al poco de pisarlas y vuelven a aparecer." },
+    { icon: "🌀", name: "Rejillas de ventilación", where: "Campus Madrid", desc: "La corriente te sube por la torre de coworking." },
+    { icon: "✏️", name: "Boli Bic", where: "CINK Coworking", desc: "Tu arma en el shooter: dispara tinta azul." },
+    { icon: "⚡", name: "Café turbo", where: "Pantano Kart", desc: "Acelerón instantáneo en la moto de agua." },
+    { icon: "💧", name: "Mancha de tinta", where: "Pantano Kart", desc: "Déjala detrás y el rival que la pise patina." },
+    { icon: "📅", name: "Reunión", where: "Pantano Kart", desc: "Frena en seco a quien va primero." },
+    { icon: "⭐", name: "Modo focus", where: "Pantano Kart", desc: "Invencible y más rápido durante unos segundos." }
   ];
+  const avImg = (c) => {
+    const av = getCharacterAvatar(c.id);
+    return av ? `<img src="${av}" class="${av.startsWith("data:") ? "px" : ""}" alt="">` : `<span>${c.emoji}</span>`;
+  };
 
   function renderCompendiumChars() {
     if (!compCharsGrid) return;
-    compCharsGrid.innerHTML = "";
-
-    CHARS.forEach((c, idx) => {
-      const chip = document.createElement("div");
-      const isCur = idx === compSelectedCharIdx;
-      chip.className = `comp-char-chip ${isCur ? "active" : ""}`;
-      chip.dataset.idx = idx;
-
-      const av = getCharacterAvatar(c.id);
-      const iconHtml = av
-        ? `<img src="${av}" alt="${c.name}">`
-        : `<span>${c.emoji}</span>`;
-
-      chip.innerHTML = `
-        <div class="comp-chip-avatar">${iconHtml}</div>
-        <span class="comp-chip-name">${c.name.split(" ")[0]}</span>
-      `;
-
-      chip.addEventListener("click", () => {
-        compSelectedCharIdx = idx;
-        const allChips = compCharsGrid.querySelectorAll(".comp-char-chip");
-        allChips.forEach((ch, i) => ch.classList.toggle("active", i === idx));
-        renderCompendiumDossier();
-        sfx(550, 0.04);
-      });
-
-      compCharsGrid.appendChild(chip);
-    });
+    compCharsGrid.innerHTML = CHARS.map((c, idx) => {
+      const p = POWER_INFO[c.id] || { icon: "★", desc: c.tip };
+      const cur = idx === GameState.charIdx;
+      return `<article class="comp2-char${cur ? " cur" : ""}" data-idx="${idx}">
+        <div class="comp2-char-av">${avImg(c)}</div>
+        <div class="comp2-char-txt">
+          <h3>${c.name}</h3>
+          <div class="comp2-form">${c.form}</div>
+          <div class="comp2-power"><span>${p.icon}</span><b>${c.ab}</b></div>
+          <p>${p.desc}</p>
+        </div>
+        <button class="comp2-pick">${cur ? "✓ En tu equipo" : "Jugar con él"}</button>
+      </article>`;
+    }).join("");
+    compCharsGrid.querySelectorAll(".comp2-char").forEach((card) => card.addEventListener("click", () => {
+      const idx = Number(card.dataset.idx);
+      if (idx === GameState.charIdx) return;
+      switchToChar(idx);
+      updateSpotlight();
+      renderCompendiumChars();
+      sfx(800, 0.08);
+    }));
   }
-
-  function renderCompendiumDossier() {
-    if (!compCharDossier) return;
-    const c = CHARS[compSelectedCharIdx] || CHARS[0];
-    const isPlayingThis = compSelectedCharIdx === GameState.charIdx;
-
-    const av = getCharacterAvatar(c.id);
-    const iconHtml = av
-      ? `<img src="${av}" class="dossier-avatar-img" alt="${c.name}">`
-      : `<span class="dossier-avatar-emoji">${c.emoji}</span>`;
-
-    const spdPct = Math.round(Math.min(100, Math.max(15, ((c.spd - 2) / 3.6) * 100)));
-    const jumpPct = Math.round(Math.min(100, Math.max(15, ((c.jump - 8) / 3) * 100)));
-    const cdPct = Math.round(Math.min(100, Math.max(15, ((2.5 - c.cd) / 2.3) * 100)));
-
-    compCharDossier.innerHTML = `
-      <div class="dossier-hero-row">
-        <div class="dossier-avatar-box">${iconHtml}</div>
-        <div class="dossier-meta">
-          <h3 class="dossier-name">${c.emoji} ${c.name}</h3>
-          <div class="dossier-form">Forma: ${c.form}</div>
-          <div class="dossier-ab-pill">✦ ${c.ab}</div>
-        </div>
-      </div>
-
-      <div class="dossier-stats-grid">
-        <div class="dossier-stat-row">
-          <span class="stat-label">VELOCIDAD</span>
-          <div class="stat-track"><div class="stat-fill" style="width:${spdPct}%;background:#59d8ff;"></div></div>
-          <span class="stat-val-text">${c.spd.toFixed(1)}</span>
-        </div>
-        <div class="dossier-stat-row">
-          <span class="stat-label">SALTO</span>
-          <div class="stat-track"><div class="stat-fill" style="width:${jumpPct}%;background:#ffd25e;"></div></div>
-          <span class="stat-val-text">${c.jump.toFixed(1)}</span>
-        </div>
-        <div class="dossier-stat-row">
-          <span class="stat-label">CADENCIA</span>
-          <div class="stat-track"><div class="stat-fill" style="width:${cdPct}%;background:#42f584;"></div></div>
-          <span class="stat-val-text">${c.cd}s</span>
-        </div>
-      </div>
-
-      <div class="dossier-tip-box">
-        💡 <b>Cómo usar:</b> ${c.tip}
-      </div>
-
-      <button id="btnSelectCompChar" class="btn-select-char-dossier ${isPlayingThis ? "is-selected" : ""}">
-        ${isPlayingThis ? "✓ COMPAÑERO ACTUALMENTE ACTIVO" : "▶ SELECCIONAR COMO COMPAÑERO"}
-      </button>
-    `;
-
-    const btnSelect = compCharDossier.querySelector("#btnSelectCompChar");
-    if (btnSelect && !isPlayingThis) {
-      btnSelect.addEventListener("click", () => {
-        switchToChar(compSelectedCharIdx);
-        updateSpotlight();
-        renderCompendiumDossier();
-        sfx(800, 0.1);
-      });
-    }
-  }
+  function renderCompendiumDossier() {}
 
   function renderCompendiumWorlds() {
     if (!compWorldsGrid) return;
-    compWorldsGrid.innerHTML = "";
-
-    VISIBLE_WORLDS.forEach((w) => {
-      const card = document.createElement("div");
-      card.className = "comp-world-card";
-      card.style.borderColor = `${w.accentColor}55`;
-
-      card.innerHTML = `
-        <div class="comp-world-card-top">
-          <div class="comp-world-emoji" style="border: 1px solid ${w.accentColor}66;">${w.iconEmoji}</div>
-          <div class="comp-world-titles">
-            <div class="comp-world-name">${w.title}</div>
-            <div class="comp-world-sub">${w.subtitle}</div>
-          </div>
+    compWorldsGrid.innerHTML = VISIBLE_WORLDS.map((w, i) => `
+      <article class="comp2-world comp2-acc-${i % 4}">
+        <div class="comp2-world-num">${w.num}</div>
+        <div class="comp2-world-body">
+          <small>${w.genre || ""}</small>
+          <h3>${w.name}</h3>
+          <div class="comp2-world-sub">${w.subtitle || ""}</div>
+          <p>${w.desc}</p>
+          <div class="comp2-tags">${(w.chips || []).map((c) => `<span>${c}</span>`).join("")}</div>
         </div>
-        <p class="comp-world-desc">${w.desc}</p>
-        <div class="comp-world-tags">
-          <div class="comp-world-badge boss">👾 JEFE: ${w.bossName}</div>
-          <div class="comp-world-badge fragment">💎 ${w.fragmentName}</div>
-        </div>
-      `;
-
-      compWorldsGrid.appendChild(card);
-    });
+      </article>`).join("");
   }
-
-  function renderCompendiumEnemies() {
-    if (!compEnemiesGrid) return;
-    compEnemiesGrid.innerHTML = "";
-
-    ENEMIES_DATA.forEach((e) => {
-      const card = document.createElement("div");
-      card.className = `comp-enemy-card ${e.isBoss ? "is-boss" : ""}`;
-
-      card.innerHTML = `
-        <div class="comp-enemy-top">
-          <div class="comp-enemy-icon">${e.icon}</div>
-          <div class="comp-enemy-info">
-            <div class="comp-enemy-name">${e.name}</div>
-            <div class="comp-enemy-danger">${e.danger}</div>
-          </div>
-        </div>
-        <p class="comp-enemy-desc">${e.desc}</p>
-        <div class="comp-enemy-tip">💡 <b>Estrategia:</b> ${e.tip}</div>
-      `;
-
-      compEnemiesGrid.appendChild(card);
-    });
-  }
-
-  function renderCompendiumItems() {
-    if (!compItemsGrid) return;
-    compItemsGrid.innerHTML = "";
-
-    ITEMS_DATA.forEach((item) => {
-      const card = document.createElement("div");
-      card.className = "comp-item-card";
-
-      card.innerHTML = `
-        <div class="comp-item-top">
-          <div class="comp-item-icon">${item.icon}</div>
-          <div class="comp-item-info">
-            <div class="comp-item-name">${item.name}</div>
-            <div class="comp-item-type">${item.type}</div>
-          </div>
-        </div>
-        <p class="comp-item-desc">${item.desc}</p>
-        <div class="comp-item-effect">⚡ ${item.effect}</div>
-      `;
-
-      compItemsGrid.appendChild(card);
-    });
-  }
+  const miniCard = (e) => `
+    <article class="comp2-card${e.boss ? " boss" : ""}">
+      <div class="comp2-card-icon">${e.icon}</div>
+      <div class="comp2-card-txt">
+        <small>${e.where}</small>
+        <h3>${e.name}</h3>
+        <p>${e.desc}</p>
+        ${e.tip ? `<div class="comp2-tip">💡 ${e.tip}</div>` : ""}
+      </div>
+    </article>`;
+  function renderCompendiumEnemies() { if (compEnemiesGrid) compEnemiesGrid.innerHTML = ENEMIES_DATA.map(miniCard).join(""); }
+  function renderCompendiumItems() { if (compItemsGrid) compItemsGrid.innerHTML = ITEMS_DATA.map(miniCard).join(""); }
 
   function openCompendium() {
     if (!compendiumOv) return;
     compSelectedCharIdx = GameState.charIdx;
     renderCompendiumChars();
-    renderCompendiumDossier();
     renderCompendiumWorlds();
     renderCompendiumEnemies();
     renderCompendiumItems();
-
     compendiumOv.classList.remove("hidden");
+    const sc = document.getElementById("compScroll");
+    if (sc) sc.scrollTop = 0;
     sfx(600, 0.08);
   }
 
@@ -978,20 +785,24 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     sfx(400, 0.06);
   }
 
-  // Tabs switching
+  // índice: salta a cada capítulo y marca el que estás leyendo
   if (compendiumOv) {
+    const sc = document.getElementById("compScroll");
     const tabBtns = compendiumOv.querySelectorAll(".comp-tab-btn");
-    tabBtns.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const targetTab = btn.dataset.tab;
-        tabBtns.forEach((b) => b.classList.toggle("active", b === btn));
-        const panels = compendiumOv.querySelectorAll(".comp-panel");
-        panels.forEach((p) => {
-          p.classList.toggle("hidden", p.id !== `compTab-${targetTab}`);
-        });
-        sfx(600, 0.04);
-      });
-    });
+    tabBtns.forEach((btn) => btn.addEventListener("click", () => {
+      const sec = document.getElementById(`compTab-${btn.dataset.tab}`);
+      if (sec && sc) sc.scrollTo({ top: sec.offsetTop - 6, behavior: "smooth" });
+      sfx(600, 0.04);
+    }));
+    sc?.addEventListener("scroll", () => {
+      let cur = "characters";
+      for (const id of ["characters", "worlds", "enemies", "items"]) {
+        const sec = document.getElementById(`compTab-${id}`);
+        if (sec && sec.offsetTop - 40 <= sc.scrollTop) cur = id;
+      }
+      if (sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 4) cur = "items";
+      tabBtns.forEach((b) => b.classList.toggle("on", b.dataset.tab === cur));
+    }, { passive: true });
   }
 
   if (btnOpenCompendium) btnOpenCompendium.addEventListener("click", openCompendium);
@@ -1123,7 +934,7 @@ export function initOverlays({ onStartGame, onOpenMap, onNextWorld }) {
     onBriefingPlayCallback = onPlay;
 
     const reqs = {
-      1: { icon: "🧗", txt: "ESCALAR PAREDES (ANA / JOSU)", desc: "Supera los bugs 404, escala las paredes de contención y alcanza el servidor central." },
+      1: { icon: "🖨️", txt: "CADA HÉROE CON SU PODER", desc: "José Luis imprime plataformas, Paloma vuela, Ana trepa, Manu da el super step… Sube la torre del Campus y gana el Demo Day." },
       2: { icon: "🥊", txt: "ROMPER OBSTÁCULOS (ALEJANDRO / JESÚS)", desc: "Abrete paso entre la jungla de APIs y corta las conexiones bloqueadas." },
       3: { icon: "🏃", txt: "VELOCIDAD Y VUELO (SILVIA / PALOMA)", desc: "Circuito contra reloj para entregar el sprint antes del cierre de Q4." },
       4: { icon: "⚡", txt: "ESCUDO Y REFLEJOS (BELTRÁN / JUAN)", desc: "Resiste los ataques de la All-Hands eterna y esquiva los micrófonos abiertos." },

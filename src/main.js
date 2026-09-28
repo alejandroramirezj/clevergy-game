@@ -11,6 +11,9 @@ import { initOverlays } from "./ui/overlays.js";
 import { initWorldMap } from "./ui/worldMap.js";
 import { loadWorld } from "./game/levelLoader.js";
 import { WORLDS, saveWorldProgress } from "./config/worlds.js";
+import { submitScore } from "./game/leaderboard.js";
+import { consumeCharInvite } from "./game/charRoute.js";
+import { initAuth } from "./game/auth.js";
 import { updateProjectiles, updateMinions, updateEnemies, updateBoss, winGame } from "./game/enemies.js";
 import { startFight, updateFight, drawFight, FightState } from "./game/fighting.js";
 import { showFightLobby, hideFightLobby, drawFightLobby, updateFightLobby } from "./ui/fightLobby.js";
@@ -185,7 +188,7 @@ async function startFight3D() {
     doodle = startDoodleFight({
       charId: (CHARS[GameState.charIdx] || CHARS[0]).id,
       onPickChar: (id) => { const i = CHARS.findIndex((c) => c.id === id); if (i >= 0) GameState.charIdx = i; },
-      onVictory: (score, rank) => saveWorldProgress(6, score, rank),
+      onVictory: (score, rank) => recordWorld(6, score, rank),
       onExit: () => { doodle = null; back(); }
     });
   } catch (err) {
@@ -194,7 +197,7 @@ async function startFight3D() {
   }
 }
 
-// Mundo 1: The Office, plataformas 2.5D con el render de boli (sustituye al canvas 2D)
+// Mundo 1: Campus Madrid, plataformas 2.5D con el render de boli (sustituye al canvas 2D)
 async function startPlatform3D() {
   GameState.gameMode = "doodle";
   stopMusic();
@@ -212,11 +215,11 @@ async function startPlatform3D() {
       getChar: () => CHARS[GameState.charIdx],
       onSwitchChar: () => { switchChar(1); updateSpotlight(); },
       onPickChar: (id) => { const i = CHARS.findIndex((c) => c.id === id); if (i >= 0) GameState.charIdx = i; },
-      onVictory: (score, rank) => saveWorldProgress(1, score, rank),
+      onVictory: (score, rank) => recordWorld(1, score, rank),
       onExit: () => { doodle = null; back(); }
     });
   } catch (err) {
-    console.error("No se pudo cargar The Office", err);
+    console.error("No se pudo cargar Campus Madrid", err);
     back();
   }
 }
@@ -237,13 +240,20 @@ async function startRace3D() {
     doodle = startDoodleRace({
       charId: (CHARS[GameState.charIdx] || CHARS[0]).id,
       onPickChar: (id) => { const i = CHARS.findIndex((c) => c.id === id); if (i >= 0) GameState.charIdx = i; },
-      onVictory: (score, rank) => saveWorldProgress(8, score, rank),
+      onVictory: (score, rank) => recordWorld(8, score, rank),
       onExit: () => { doodle = null; back(); }
     });
   } catch (err) {
     console.error("No se pudo cargar Pantano Kart", err);
     back();
   }
+}
+
+// guarda el progreso local y manda la puntuación al ranking (general y por mundo)
+function recordWorld(worldId, score, rank) {
+  saveWorldProgress(worldId, score, rank);
+  const c = CHARS[GameState.charIdx] || CHARS[0];
+  if (score > 0) submitScore({ name: GameState.playerName, score: Math.round(score), character: c.id, char_name: c.name, time_seconds: 0, rank: rank || "", deaths: 0, world: worldId });
 }
 
 let doodle = null;
@@ -258,7 +268,7 @@ async function startDoodle() {
       // cualquier cambio de compañero (TAB, CAMBIAR, barra del deck) se refleja en el personaje
       getChar: () => CHARS[GameState.charIdx],
       onSwitchChar: () => { switchChar(1); updateSpotlight(); },
-      onVictory: (score, rank) => saveWorldProgress(7, score, rank),
+      onVictory: (score, rank) => recordWorld(7, score, rank),
       onExit: () => {
         doodle = null;
         GameState.gameMode = "platformer";
@@ -574,6 +584,12 @@ function update(dt) {
   }
 }
 
+// ¿Viene de un enlace/QR de personaje (/jose-luis)? Empieza con ese personaje
+{
+  const invited = consumeCharInvite();
+  if (invited >= 0) GameState.charIdx = invited;
+}
+
 // Initialize components
 initLevelGrid();
 initSprites();
@@ -602,6 +618,8 @@ const { toggleTeam, tryStart, updateSpotlight, togglePause, showLevelBriefing } 
   onNextWorld: () => worldMap.showWorldMap()
 });
 toggleTeamFn = toggleTeam;
+// cuenta de Google (opcional): guarda progreso y ranking y fija "tu" personaje
+initAuth({ onCharChosen: (idx) => { switchToChar(idx); updateSpotlight(); worldMap.renderMap(); } });
 document.getElementById("btnWinNextWorld")?.classList.add("hidden");
 showBriefingFn = showLevelBriefing;
 

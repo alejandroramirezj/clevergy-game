@@ -1,11 +1,12 @@
 // =============================================================================
-// doodlePlatform.js — MUNDO 1 · THE OFFICE (plataformas 2.5D dibujadas a boli)
+// doodlePlatform.js — MUNDO 1 · CAMPUS MADRID (plataformas 2.5D dibujadas a boli)
 // Mismo motor visual que el resto de mundos 3D: render de boli, pegatinas y el
 // mando común. Mecánicas: salto variable, "coyote time", búfer de salto, salto en
 // pared, pisotón, bloques ? y ladrillos, muelles, plataformas móviles, puntos de
-// control, 3 disquetes secretos, el jefe EMAIL CHAIN y la bandera de INBOX ZERO.
-// Cada personaje usa su especial de la pelea como poder (embestida, proyectil,
-// golpe al suelo, supersalto o escudo).
+// control, sillas plegables que se hunden, rejillas de ventilación que te suben,
+// pufs que rebotan, 3 disquetes secretos, el jefe EMAIL CHAIN en el escenario del
+// Demo Day y la bandera de INBOX ZERO. Cada personaje recupera su poder original
+// del plataformas clásico (José Luis imprime plataformas, Paloma vuela, Ana trepa…).
 // =============================================================================
 
 import * as THREE from "three";
@@ -15,11 +16,11 @@ import { GEO } from "../doodleLevel.js";
 import { createSticker } from "../doodleSticker.js";
 import { createTouchPad, ICON } from "../touchPad.js";
 import { makeEmail, makeMeeting, makeClock, makeBoss } from "../doodleActors.js";
-import { specialFor, rollMulti, specialCooldown } from "../fight/fightMoves.js";
+import { inkText } from "../inkText.js";
 import { touch as mando } from "../../engine/input.js";
 import { CHARS } from "../../config/characters.js";
 import { getCharacterAvatar } from "../../engine/sprites.js";
-import { makeLevel, LEVEL_W } from "./platformLevel.js";
+import { makeLevel, LEVEL_W, LEVEL_H } from "./platformLevel.js";
 import "../doodle.css";
 import "../fight/fight.css";
 import "./platform.css";
@@ -57,9 +58,9 @@ const TEMPLATE = `
 <div class="dd-ov pf-start">
   <div class="dd-card pf-card">
     <div class="pf-col">
-      <div class="dd-kicker">MUNDO 1 · PLATAFORMAS</div>
-      <h1 class="pf-title">The Office</h1>
-      <p class="pf-lead">Cruza la oficina de Clevergy, recoge monedas y los 3 disquetes con el código, y tumba a <b>EMAIL CHAIN</b> para llegar a <b>INBOX ZERO</b>.</p>
+      <div class="dd-kicker">MUNDO 1 · GOOGLE FOR STARTUPS</div>
+      <h1 class="pf-title">Campus Madrid</h1>
+      <p class="pf-lead">De la terraza de Moreno Nieto al escenario del <b>Demo Day</b>: cruza el café, sube la torre de coworking, salta las salas de cristal y tumba a <b>EMAIL CHAIN</b> con el Palacio Real al fondo.</p>
       <div class="pf-picker">
         <button class="cf-arrow pf-arrow" data-d="-1" aria-label="Anterior">◀</button>
         <div class="pf-preview"><img class="cf-sticker pf-sticker" alt=""><div class="cf-pname pf-pname"></div><div class="cf-pspecial pf-pspecial"></div></div>
@@ -70,7 +71,8 @@ const TEMPLATE = `
       <div class="pf-howto">
         <div><b>Salta</b> más alto si mantienes el botón · <b>rebota</b> en las paredes</div>
         <div><b>Pisa</b> a los enemigos · rompe <b>ladrillos</b> y abre bloques <b>?</b> con la cabeza</div>
-        <div><b>Poder</b>: el especial de tu personaje (cámbialo en cualquier momento con EQUIPO)</div>
+        <div><b>Poder</b>: el de siempre de cada uno — José Luis imprime plataformas, Paloma vuela, Ana trepa…</div>
+        <div>Ojo con las <b>sillas plegables</b>; las <b>rejillas</b> te suben y los <b>pufs</b> rebotan</div>
       </div>
       <div class="pf-help dd-desktop-only">A/D mover · Espacio/W saltar · J poder · S bajar · Tab compañero · Esc pausa · 🎮 mando</div>
       <div class="dd-btns">
@@ -126,17 +128,17 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
   // ── estado ──
   let screen = "start"; // start | play | pause | end
   let char = charById(charId);
-  let sp = specialFor(char.id);
-  let cdMax = specialCooldown(char) * 0.8;
+  let cdMax = Math.max(0.3, char.cd || 0.6);
   let L = null; // nivel (se regenera al reiniciar)
   const levelRoot = new THREE.Group();
   scene.add(levelRoot);
   const P = {
     x: 3, y: 2, vx: 0, vy: 0, g: false, facing: 1, coyote: 0, buf: 0, wall: 0, wallT: 0, jumpHeld: false,
-    hearts: HEARTS, inv: 0, dead: 0, cd: 0, dashT: 0, slam: 0, shieldT: 0, riseT: 0, squash: 1, flash: 0, onMover: null,
+    hearts: HEARTS, inv: 0, dead: 0, cd: 0, dashT: 0, dashV: 0, dashFloat: false, slam: 0, shieldT: 0, riseT: 0, squash: 1, flash: 0, onMover: null,
+    lockT: 0, fly: 1, energy: 1, ball: false, mega: 0, zenT: 0, buffT: 0, climb: false, prevY: 2, onPrint: null,
     coins: 0, frags: new Set(), cp: 3, score: 0, time: 0, won: false, stomps: 0, pose: "idle", poseT: 0
   };
-  let enemies = [], shots = [], powers = [], pickups = [], pops = [];
+  let enemies = [], shots = [], powers = [], pickups = [], pops = [], minions = [], prints = [], rings = [];
   let boss = null, bossDone = false, bossWalls = [];
   const sticker = createSticker(overlay, { height: 1.95 });
   const shadow = new THREE.Mesh(GEO.disc, mat(INK.BLACK, { fill: true }));
@@ -145,14 +147,14 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
 
   function setChar(c) {
     char = c;
-    sp = specialFor(c.id);
-    cdMax = specialCooldown(c) * 0.8;
+    cdMax = Math.max(0.3, c.cd || 0.6);
     P.cd = Math.min(P.cd, 0.5);
+    P.ball = false; P.climb = false;
     sticker.setChar(c.id);
-    $(".pf-power-name").textContent = `★ ${sp.name}`;
+    $(".pf-power-name").textContent = `★ ${c.ab}`;
   }
   setChar(char);
-  const speedMax = () => 7.6 + ((char.spd || 3.5) - 3.5) * 0.9;
+  const speedMax = () => (7.6 + ((char.spd || 3.5) - 3.5) * 0.9) * (P.buffT > 0 ? 1.4 : 1) * (P.ball ? 1.35 : 1);
   const jumpV = () => 15.4 + ((char.jump || 9.5) - 9.5) * 0.45;
 
   // ── sonido ──
@@ -173,7 +175,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
   // ── construcción del nivel ──
   const tileMesh = new Map(); // "x,y" → mesh (ladrillos y bloques ? que cambian)
   const T = (x, y) => (L ? L.tiles.get(`${x},${y}`) : null);
-  const solidT = (t) => t && (t.t === "g" || t.t === "s" || t.t === "b" || t.t === "q" || t.t === "u" || t.t === "w");
+  const solidT = (t) => t && !t.down && (t.t === "g" || t.t === "s" || t.t === "k" || t.t === "b" || t.t === "q" || t.t === "u" || t.t === "w" || t.t === "c");
   function box(parent, x, y, z, w, h, d, ink, o = {}) {
     const m = new THREE.Mesh(GEO.box, mat(ink, o));
     m.scale.set(w, h, d);
@@ -205,42 +207,165 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     levelRoot.add(g);
     return g;
   }
+  function chairMesh(x, y) {
+    // silla plegable del coworking: asiento, respaldo y patas en tijera
+    const g = new THREE.Group();
+    g.position.set(x + 0.5, y, 0);
+    box(g, 0, 0.9, 0, 0.96, 0.18, 1.3, INK.ORANGE, { tone: -0.12 });
+    box(g, 0, 1.45, -0.62, 0.9, 0.7, 0.1, INK.ORANGE, { tone: -0.18 });
+    for (const s of [-1, 1]) { const l = box(g, 0, 0.42, s * 0.45, 0.07, 0.95, 0.07, INK.BLACK, { fill: true }); l.rotation.z = s * 0.35; const l2 = box(g, 0, 0.42, s * 0.45, 0.07, 0.95, 0.07, INK.BLACK, { fill: true }); l2.rotation.z = -s * 0.35; }
+    levelRoot.add(g);
+    return g;
+  }
+  // altura del suelo más alto en la columna x (para reaparecer y colocar cosas)
+  function surfaceAt(x) {
+    const tx = Math.floor(x);
+    for (let y = LEVEL_H + 2; y >= 0; y--) { const t = T(tx, y); if (solidT(t) || (t && t.t === "p")) return y + 1; }
+    return 2;
+  }
+  // palabra con los colores de Google, letra a letra
+  const GCOLS = [INK.BLUE, INK.RED, INK.ORANGE, INK.BLUE, INK.GREEN, INK.RED];
+  function gword(text, size) {
+    const g = new THREE.Group();
+    const u = size / 6, adv = 5.6 * u, width = text.length * adv - 1.6 * u;
+    [...text].forEach((ch, i) => {
+      if (ch === " ") return;
+      const t = inkText(ch, { size, ink: GCOLS[i % GCOLS.length], weight: 1.25 });
+      t.position.x = -width / 2 + i * adv + 2 * u;
+      g.add(t);
+    });
+    return g;
+  }
+  function disc(parent, x, y, z, r, ink, o = {}) {
+    const m = new THREE.Mesh(GEO.cyl, mat(ink, o));
+    m.scale.set(r * 2, 0.06, r * 2);
+    m.rotation.x = Math.PI / 2;
+    m.position.set(x, y, z);
+    parent.add(m);
+    return m;
+  }
   function buildDecor(d) {
     const g = new THREE.Group();
-    g.position.set(d.x, 2, -3.2);
+    g.position.set(d.x, d.y ?? 2, -3.2);
     levelRoot.add(g);
-    if (d.type === "desk") {
-      box(g, 0, 0.8, 0, 3, 0.1, 1.4, INK.ORANGE, { tone: 0.1 });
-      box(g, -1.3, 0.4, 0, 0.1, 0.8, 1.2, INK.BLACK, {});
-      box(g, 1.3, 0.4, 0, 0.1, 0.8, 1.2, INK.BLACK, {});
-      box(g, 0, 1.35, -0.4, 1.2, 0.8, 0.06, INK.BLACK, { tone: -0.2 });
-      box(g, 0.9, 0.95, 0, 0.15, 0.2, 0.15, INK.RED, { tone: 0.1 });
-    } else if (d.type === "plant") {
+    const t = d.type;
+    if (t === "skyline") {
+      // Madrid al fondo: tejados, la Almudena y el Palacio Real (se ven desde la calle y la salida)
+      g.position.set(0, 0, -46);
+      for (let x = -30; x < LEVEL_W + 40; x += rnd(5, 9)) {
+        const h = rnd(8, 18);
+        box(g, x, h / 2, rnd(-6, 0), rnd(5, 8), h, 3, INK.BLACK, { tone: 0.44 });
+        box(g, x, h + 0.6, 0, rnd(4, 6), 1.2, 3.4, INK.RED, { tone: 0.32 }); // tejado
+      }
+      const pal = new THREE.Group(); pal.position.set(232, 0, 6); g.add(pal);
+      box(pal, 0, 9, 0, 56, 18, 8, INK.BLACK, { tone: 0.5 });
+      box(pal, 0, 18.6, 0, 58, 1.2, 8.6, INK.BLACK, { tone: 0.3 }); // cornisa con balaustrada
+      for (let x = -27; x <= 27; x += 2.2) box(pal, x, 11, 4.1, 0.5, 11, 0.4, INK.BLACK, { tone: 0.38 }); // columnas
+      for (let x = -26; x <= 26; x += 4.4) for (const y of [4, 9, 14]) box(pal, x, y, 4.05, 1.4, 2.4, 0.1, INK.BLUE, { tone: 0.2 });
+      box(pal, 0, 21, 0, 12, 4, 6, INK.BLACK, { tone: 0.45 });
+      const flagP = box(pal, 0, 25, 0, 0.2, 4, 0.2, INK.BLACK, { fill: true });
+      box(pal, 1, 26, 0, 2, 1.2, 0.05, INK.RED, { tone: 0.1 });
+      const alm = new THREE.Group(); alm.position.set(180, 0, 2); g.add(alm);
+      box(alm, 0, 8, 0, 16, 16, 10, INK.BLACK, { tone: 0.48 });
+      const dome = new THREE.Mesh(GEO.sph, mat(INK.BLUE, { tone: 0.12 })); dome.scale.set(8, 8, 8); dome.position.y = 19; alm.add(dome);
+      box(alm, 0, 24, 0, 0.3, 2.4, 0.3, INK.BLACK, { fill: true }); box(alm, 0, 24.4, 0, 1.2, 0.3, 0.3, INK.BLACK, { fill: true });
+      for (const s of [-6, 6]) { box(alm, s, 12, 5, 3, 24, 3, INK.BLACK, { tone: 0.42 }); const c = new THREE.Mesh(GEO.cone, mat(INK.BLUE, { tone: 0.15 })); c.scale.set(2.2, 3, 2.2); c.position.set(s, 25.5, 5); alm.add(c); }
+      void flagP;
+    } else if (t === "gsign") {
+      g.position.z = -6.05;
+      const w = gword("GOOGLE", 1.5); w.position.set(0, 8.9, 0); g.add(w);
+      const f = inkText("FOR STARTUPS", { size: 0.62, ink: INK.BLACK, weight: 1.1 }); f.position.set(0, 7.5, 0); g.add(f);
+      const c = inkText("CAMPUS MADRID", { size: 0.45, ink: INK.BLACK }); c.position.set(0, 6.6, 0); g.add(c);
+    } else if (t === "umbrella") {
+      box(g, 0.5, 1.4, 2.4, 0.12, 2.9, 0.12, INK.BLACK, { fill: true });
+      box(g, 0.5, 0.45, 2.4, 1.2, 0.08, 1.2, INK.BLACK, { tone: 0.1 }); // mesa
+      for (const s of [-0.9, 1.9]) box(g, s, 0.35, 2.4, 0.5, 0.7, 0.5, INK.GREEN, { tone: 0.05 }); // sillas
+      box(g, 0.5, 2.95, 3.2, 3.4, 0.14, 2.2, INK.RED, { tone: -0.05 }); // la lona (la plataforma)
+      for (let k = 0; k < 4; k++) box(g, -1.05 + k * 1.03, 2.84, 4.31, 0.5, 0.22, 0.02, INK.RED, { fill: true });
+    } else if (t === "bikes") {
+      for (let k = 0; k < 3; k++) {
+        const b = new THREE.Group(); b.position.set(k * 1.6, 0, 0.5); g.add(b);
+        for (const s of [-0.5, 0.5]) { const w = new THREE.Mesh(GEO.torus, mat(INK.BLACK, { fill: true })); w.scale.setScalar(0.42); w.position.set(s, 0.42, 0); b.add(w); }
+        const fr = box(b, 0, 0.7, 0, 1.1, 0.08, 0.08, INK.RED, { fill: true }); fr.rotation.z = 0.2;
+        box(b, 0.45, 0.95, 0, 0.08, 0.5, 0.08, INK.BLACK, { fill: true });
+        box(b, 0.45, 1.25, 0.12, 0.5, 0.3, 0.3, INK.RED, { tone: 0 }); // cesta BiciMAD
+      }
+      box(g, 1.6, 0.6, -0.4, 5, 1.2, 0.3, INK.BLACK, { tone: 0.2 }); // anclaje
+    } else if (t === "door") {
+      g.position.z = -6.1;
+      box(g, 0, 1.6, 0, 2.6, 3.2, 0.06, INK.BLACK, { tone: 0.05 });
+      disc(g, 0, 3.2, 0, 1.3, INK.BLACK, { tone: 0.05 });
+      box(g, 0, 1.6, 0.06, 0.08, 3.2, 0.04, INK.BLACK, { fill: true });
+      box(g, 0, -0.1, 0.1, 3.4, 0.2, 0.3, INK.RED, { tone: -0.05 });
+    } else if (t === "tiles") {
+      // baldosa hidráulica del café, a cuadros
+      for (let k = 0; k < (d.w || 20); k += 2) box(g, k + 0.5, -0.94, 3.2, 1, 0.03, 3.6, k % 4 ? INK.BLACK : INK.ORANGE, { tone: 0.3 });
+    } else if (t === "espresso") {
+      g.position.z = 0;
+      box(g, 0, 1.45, -0.3, 1.8, 0.9, 0.9, INK.BLACK, { tone: -0.1 });
+      box(g, 0, 1.95, -0.3, 1.9, 0.12, 1, INK.ORANGE, { fill: true });
+      for (const s of [-0.5, 0.5]) box(g, s, 1.12, 0.1, 0.14, 0.2, 0.14, INK.BLACK, { fill: true });
+      for (let k = 0; k < 4; k++) box(g, -1.2 + k * 0.8, 1.14, 0.55, 0.22, 0.26, 0.22, INK.GREEN, { tone: 0.2 });
+      const cs = inkText("CAMPUS CAFE", { size: 0.5, ink: INK.GREEN }); cs.position.set(0, 4.3, -2.8); g.add(cs);
+      box(g, 0, 4.3, -2.9, 4.4, 1.1, 0.05, INK.BLACK, { tone: 0.35 });
+    } else if (t === "sofa") {
+      box(g, 0, 0.35, 0, 2.8, 0.7, 1.2, INK.BLUE, { tone: -0.05 });
+      box(g, 0, 0.9, -0.5, 2.8, 0.9, 0.3, INK.BLUE, { tone: -0.1 });
+      for (const s of [-1.4, 1.4]) box(g, s, 0.6, 0, 0.3, 0.7, 1.2, INK.BLUE, { tone: -0.15 });
+      box(g, 0.6, 0.85, -0.2, 0.6, 0.5, 0.2, INK.ORANGE, { tone: 0.1 }); // cojín
+    } else if (t === "lamp") {
+      box(g, 0, 1.4, 0, 0.08, 2.8, 0.08, INK.BLACK, { fill: true });
+      const c = new THREE.Mesh(GEO.cone, mat(INK.ORANGE, { tone: 0.1 })); c.scale.set(0.9, 0.7, 0.9); c.position.y = 2.9; g.add(c);
+      box(g, 0, 0.05, 0, 0.7, 0.1, 0.7, INK.BLACK, { fill: true });
+    } else if (t === "beam") {
+      // viga de hierro roblonada de la fábrica, bajo el forjado
+      g.position.z = 0;
+      box(g, 0, -0.35, -0.2, d.w || 26, 0.3, 0.5, INK.BLACK, { tone: -0.1 });
+      for (let k = -12; k <= 12; k += 3) box(g, k, -0.35, 0.06, 0.1, 0.1, 0.02, INK.BLACK, { fill: true });
+    } else if (t === "vent") {
+      g.position.z = 0;
+      box(g, 3, 0.08, 0, 7, 0.16, 1.8, INK.BLACK, { tone: 0.05 });
+      for (let k = 0; k < 7; k++) box(g, k + 0.5, 0.18, 0, 0.1, 0.06, 1.7, INK.BLACK, { fill: true });
+      L.ventFans = L.ventFans || [];
+      const fan = new THREE.Group(); fan.position.set(3, 0.3, -1.2); g.add(fan);
+      for (let k = 0; k < 3; k++) { const b = box(fan, 0, 0, 0, 0.3, 1.4, 0.05, INK.BLUE, { tone: 0.05 }); b.rotation.z = k * Math.PI / 3; }
+      L.ventFans.push(fan);
+    } else if (t === "pipes") {
+      g.position.z = -5.8;
+      for (const [s, ink] of [[0, INK.RED], [0.9, INK.BLUE], [1.8, INK.GREEN]]) {
+        const p = new THREE.Mesh(GEO.cyl, mat(ink, { tone: 0.05 })); p.scale.set(0.35, 28, 0.35); p.position.set(s, 12, 0); g.add(p);
+      }
+    } else if (t === "glassroom") {
+      // sala de reuniones acristalada (con su nombre en el cristal)
+      box(g, 0, 1.6, 0, 6, 3.2, 3, INK.BLUE, { tone: 0.38 });
+      for (const s of [-3, 0, 3]) box(g, s, 1.6, 1.52, 0.1, 3.2, 0.06, INK.BLACK, { fill: true });
+      box(g, 0, 3.2, 1.52, 6.1, 0.1, 0.06, INK.BLACK, { fill: true });
+      box(g, 0, 0.75, 0, 3, 0.1, 1.2, INK.BLACK, { tone: 0.15 });
+      const n = inkText(d.x < 160 ? "SALA SOL" : "SALA LATINA", { size: 0.32, ink: INK.BLUE }); n.position.set(0, 2.6, 1.56); g.add(n);
+    } else if (t === "seats") {
+      g.position.z = 0;
+      box(g, 0.5, 0.3, 0.8, 1.6, 0.6, 0.7, INK.RED, { tone: -0.05 });
+      box(g, 0.5, 0.75, 0.45, 1.6, 0.6, 0.12, INK.RED, { tone: -0.12 });
+    } else if (t === "screen") {
+      g.position.z = -6;
+      box(g, 0, 7, 0, 14, 7, 0.1, INK.BLACK, { tone: 0.1 });
+      box(g, 0, 7, 0.06, 13, 6.2, 0.02, INK.BLUE, { tone: 0.35 });
+      const w = gword("DEMO DAY", 1.3); w.position.set(0, 8, 0.1); g.add(w);
+      const s = inkText("CAMPUS MADRID", { size: 0.5, ink: INK.BLACK }); s.position.set(0, 6.3, 0.1); g.add(s);
+      box(g, 0, 0.5, 5, 9, 1, 1.4, INK.BLACK, { tone: 0.05 }); // atril y tarima
+    } else if (t === "spot") {
+      g.position.z = -1.5;
+      box(g, 0, 11, 0, 0.1, 2, 0.1, INK.BLACK, { fill: true });
+      const c = new THREE.Mesh(GEO.cone, mat(INK.ORANGE, { tone: 0.3 })); c.scale.set(1.4, 9, 1.4); c.position.y = 5.5; g.add(c);
+    } else if (t === "campus") {
+      box(g, 0, 2.6, 0, 0.16, 5.2, 0.16, INK.BLACK, { fill: true });
+      box(g, 0, 5.2, 0, 5.4, 2.2, 0.12, INK.BLACK, { tone: 0.35 });
+      const w = gword("CAMPUS", 0.8); w.position.set(0, 5.6, 0.1); g.add(w);
+      const m = inkText("MADRID", { size: 0.5, ink: INK.BLACK }); m.position.set(0, 4.6, 0.1); g.add(m);
+    } else if (t === "plant") {
       box(g, 0, 0.35, 0, 0.7, 0.7, 0.7, INK.ORANGE, { tone: 0.05 });
       const s = new THREE.Mesh(GEO.sph, mat(INK.GREEN, { tone: -0.05 }));
       s.scale.setScalar(1.3); s.position.y = 1.3; g.add(s);
-    } else if (d.type === "window") {
-      g.position.z = -5.6;
-      box(g, 0, 4.2, 0, 5, 3.6, 0.05, INK.BLUE, { tone: 0.3 });
-      box(g, 0, 4.2, 0.05, 5.2, 0.14, 0.1, INK.BLACK, {});
-      box(g, 0, 2.4, 0.05, 5.2, 0.14, 0.1, INK.BLACK, {});
-      box(g, 0, 4.2, 0.05, 0.14, 3.6, 0.1, INK.BLACK, {});
-    } else if (d.type === "board") {
-      g.position.z = -5.6;
-      box(g, 0, 3.6, 0, 4, 2.4, 0.08, INK.BLACK, { tone: 0.45 });
-      for (let k = 0; k < 4; k++) { const m = box(g, rnd(-1.2, 1.2), 3.2 + k * 0.4, 0.06, rnd(0.8, 1.8), 0.08, 0.02, k % 2 ? INK.RED : INK.BLUE, { fill: true }); m.rotation.z = rnd(-0.3, 0.3); }
-    } else if (d.type === "meeting") {
-      box(g, 0, 0.75, 0, 5, 0.1, 2, INK.BLACK, { tone: 0.15 });
-      for (let k = -2; k <= 2; k += 2) box(g, k, 0.4, 1.3, 0.6, 0.8, 0.6, INK.PURPLE, { tone: -0.1 });
-    } else if (d.type === "rack") {
-      box(g, 0, 1.6, 0, 1.6, 3.2, 1.2, INK.BLACK, { tone: -0.15 });
-      for (let k = 0; k < 5; k++) box(g, 0, 0.5 + k * 0.55, 0.62, 1.2, 0.06, 0.02, INK.GREEN, { fill: true });
-    } else if (d.type === "hq") {
-      g.position.set(d.x, 2, -2.5);
-      box(g, 0, 4, 0, 7, 8, 3, INK.BLUE, { tone: 0.12 });
-      for (let r = 0; r < 3; r++) for (let c = -1; c <= 1; c++) box(g, c * 2, 2 + r * 2.2, 1.52, 1.2, 1.2, 0.05, INK.BLUE, { tone: 0.35 });
-      box(g, 0, 8.4, 0, 7.6, 0.8, 3.4, INK.GREEN, { tone: 0 });
-      box(g, 0, 0.9, 1.52, 1.4, 1.8, 0.06, INK.BLACK, { fill: true }); // puerta
     }
   }
   function buildLevel() {
@@ -248,20 +373,32 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     while (levelRoot.children.length) levelRoot.remove(levelRoot.children[0]);
     tileMesh.clear();
     L = makeLevel();
-    // fondo: pared, suelo trasero y ciudad a lo lejos
-    box(levelRoot, LEVEL_W / 2, 8, -6.2, LEVEL_W + 60, 16, 0.4, INK.BLUE, { tone: 0.12 });
+    // fondo: la fachada de ladrillo neomudéjar (baja en la calle, entera por dentro y
+    // abierta en la salida para ver el Palacio Real), con ventanales en arco e impostas
+    const IN0 = 38, IN1 = 215;
+    box(levelRoot, IN0 / 2 - 15, 6, -6.4, IN0 + 30, 12, 0.4, INK.RED, { tone: 0.3 });
+    box(levelRoot, (IN0 + IN1) / 2, LEVEL_H / 2, -6.4, IN1 - IN0, LEVEL_H + 4, 0.4, INK.RED, { tone: 0.14 });
     box(levelRoot, LEVEL_W / 2, 1, -4, LEVEL_W + 60, 2, 4, INK.BLACK, { tone: 0.35 });
-    for (let x = -20; x < LEVEL_W + 30; x += rnd(6, 11)) {
-      const h = rnd(10, 30);
-      box(levelRoot, x, h / 2 - 2, -40, rnd(5, 9), h, 3, INK.BLACK, { tone: 0.42 });
+    for (let x = -8; x < IN1; x += 7) {
+      const rows = x < IN0 ? [4.4] : [4.4, 12, 19.6, 27.2];
+      for (const wy of rows) {
+        box(levelRoot, x, wy, -6.15, 2.2, 3.2, 0.05, INK.BLUE, { tone: 0.34 });
+        disc(levelRoot, x, wy + 1.6, -6.15, 1.1, INK.BLUE, { tone: 0.34 });
+        box(levelRoot, x, wy - 1.75, -6.1, 2.8, 0.22, 0.12, INK.RED, { tone: 0.02 });
+        box(levelRoot, x, wy + 1.6, -6.13, 0.08, 2.2, 0.03, INK.BLACK, { fill: true });
+      }
     }
+    for (const y of [8.2, 15.8, 23.4, 31]) box(levelRoot, (IN0 + IN1) / 2, y, -6.12, IN1 - IN0, 0.3, 0.1, INK.RED, { tone: -0.02 });
+    box(levelRoot, IN0 / 2 - 15, 11.9, -6.1, IN0 + 30, 0.4, 0.3, INK.RED, { tone: -0.05 }); // cornisa de la calle
     // casillas: agrupa tramos iguales por fila (menos objetos que dibujar)
     const done = new Set();
-    for (let y = 0; y < 20; y++) {
+    L.crumbles = [];
+    for (let y = 0; y < LEVEL_H; y++) {
       for (let x = -2; x < LEVEL_W + 2; x++) {
         const t = T(x, y);
         if (!t || done.has(`${x},${y}`)) continue;
         if (t.t === "b") { tileMesh.set(`${x},${y}`, brickMesh(x, y)); continue; }
+        if (t.t === "c") { L.crumbles.push({ t, x, y, g: chairMesh(x, y) }); continue; }
         if (t.t === "q") { tileMesh.set(`${x},${y}`, qBlockMesh(x, y, false)); continue; }
         if (t.t === "x") {
           for (let k = 0; k < 3; k++) {
@@ -281,20 +418,23 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
           box(levelRoot, cx, y + 0.5, 0, w, 1, 4, INK.BLACK, { tone: -0.22 });
         } else if (t.t === "s") {
           box(levelRoot, cx, y + 0.5, 0, w, 1, 2.4, INK.BLUE, { tone: -0.32 });
+        } else if (t.t === "k") {
+          box(levelRoot, cx, y + 0.5, 0, w, 1, 3, INK.RED, { tone: -0.2 });
+          if (y % 2 === 0) box(levelRoot, cx, y + 0.02, 1.51, w, 0.05, 0.02, INK.RED, { fill: true }); // llaga del ladrillo
         } else if (t.t === "p") {
           box(levelRoot, cx, y + 0.82, 0, w, 0.36, 2, INK.GREEN, { tone: -0.25 });
         }
       }
     }
     // borde superior de los suelos y sólidos (el canto de la mesa / moqueta)
-    for (let y = 0; y < 20; y++) {
+    for (let y = 0; y < LEVEL_H; y++) {
       let run = null;
       for (let x = -2; x <= LEVEL_W + 2; x++) {
-        const t = T(x, y), top = t && (t.t === "g" || t.t === "s") && !solidT(T(x, y + 1));
+        const t = T(x, y), top = t && (t.t === "g" || t.t === "s" || t.t === "k") && !solidT(T(x, y + 1));
         if (top && !run) run = { x0: x, t: t.t };
         if ((!top || (run && t && t.t !== run.t)) && run) {
           const w = x - run.x0;
-          box(levelRoot, run.x0 + w / 2, y + 0.95, 0, w, 0.12, run.t === "g" ? 4.02 : 2.42, run.t === "g" ? INK.ORANGE : INK.GREEN, { tone: 0.05 });
+          box(levelRoot, run.x0 + w / 2, y + 0.95, 0, w, 0.12, run.t === "g" ? 4.02 : run.t === "k" ? 3.02 : 2.42, run.t === "s" ? INK.GREEN : INK.ORANGE, { tone: 0.05 });
           run = top ? { x0: x, t: t.t } : null;
         }
       }
@@ -303,7 +443,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     // cafeteras de control
     L.checkpoints.forEach((c) => {
       const g = new THREE.Group();
-      g.position.set(c.x, 2, -0.8);
+      g.position.set(c.x, surfaceAt(c.x), -0.8);
       box(g, 0, 0.9, 0, 1.2, 1.8, 1, INK.ORANGE, { tone: -0.05 });
       box(g, 0, 1.3, 0.52, 0.7, 0.4, 0.04, INK.BLACK, { fill: true });
       box(g, 0, 0.35, 0.3, 0.3, 0.3, 0.3, INK.GREEN, { tone: 0.05 });
@@ -311,19 +451,25 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
       c.g = g;
       c.on = false;
     });
-    // muelles
-    L.springs.forEach((s) => {
+    // pufs de colores Google (hacen de muelle)
+    L.springs.forEach((s, i) => {
       const g = new THREE.Group();
       g.position.set(s.x + 0.5, s.y, 0);
-      box(g, 0, 0.1, 0, 1, 0.2, 1, INK.BLACK, {});
-      const coil = new THREE.Mesh(GEO.torus, mat(INK.RED, { fill: true }));
-      coil.scale.set(0.8, 0.8, 1.6);
-      coil.rotation.x = Math.PI / 2;
-      coil.position.y = 0.35;
-      g.add(coil);
-      s.top = box(g, 0, 0.6, 0, 1.1, 0.16, 1.1, INK.RED, { tone: 0.05 });
+      s.top = new THREE.Mesh(GEO.sph, mat(GCOLS[i % 4 === 3 ? 4 : i % 4], { tone: -0.05 }));
+      s.top.scale.set(1.5, 0.8, 1.5);
+      s.top.position.y = 0.4;
+      g.add(s.top);
+      box(g, 0, 0.78, 0.2, 0.5, 0.05, 0.5, INK.BLACK, { fill: true }); // botón del puf
       levelRoot.add(g);
       s.g = g; s.k = 0;
+    });
+    // corriente de las rejillas de ventilación
+    L.ventLines = [];
+    L.vents.forEach((v) => {
+      for (let k = 0; k < 9; k++) {
+        const m = box(levelRoot, rnd(v.x0 + 0.3, v.x1 + 0.7), rnd(v.y0, v.y1), rnd(-0.5, 0.6), 0.06, rnd(0.8, 1.6), 0.06, INK.BLUE, { fill: true });
+        L.ventLines.push({ m, v, sp: rnd(5, 9) });
+      }
     });
     // plataformas móviles
     L.movers.forEach((m) => {
@@ -492,7 +638,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     const jumpHeld = !!(keys.Space || keys.KeyW || keys.ArrowUp || mando.A || mando.Up || gp.jump || tp.jump);
     const powerHeld = !!(keys.KeyJ || keys.KeyX || keys.KeyK || mando.B || gp.power || tp.power);
     const down = !!(keys.KeyS || keys.ArrowDown || mando.Down || gp.down || joy.y < -0.6);
-    const inp = { x: clamp(x, -1, 1), jumpHeld, jump: jumpHeld && !prev.jump, power: powerHeld && !prev.power, down };
+    const inp = { x: clamp(x, -1, 1), jumpHeld, jump: jumpHeld && !prev.jump, power: powerHeld && !prev.power, powerHeld, down };
     prev.jump = jumpHeld; prev.power = powerHeld;
     return inp;
   }
@@ -512,13 +658,28 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     P.buf = inp.jump ? BUFFER : Math.max(0, P.buf - dt);
     P.coyote = P.g ? COYOTE : Math.max(0, P.coyote - dt);
     P.poseT -= dt;
+    P.lockT = Math.max(0, P.lockT - dt);
+    P.buffT = Math.max(0, P.buffT - dt);
+    P.zenT = Math.max(0, P.zenT - dt);
+    if (P.g) { P.fly = Math.min(1, P.fly + dt * 0.9); P.mega = P.mega && P.vy > 0 ? P.mega : 0; }
+    P.prevY = P.y;
+
+    // escudo de Beltrán: mantén ▼ en el suelo (gasta energía)
+    const shielding = char.id === "beltran" && inp.down && P.g && !inp.jumpHeld && P.energy > 0.05;
+    if (shielding) { P.energy = Math.max(0, P.energy - dt * 0.55); P.shieldT = Math.max(P.shieldT, 0.08); }
+    else P.energy = Math.min(1, P.energy + dt * 0.3);
 
     // horizontal: aceleración con inercia (más agarre en el suelo)
     if (P.dashT > 0) {
       P.dashT -= dt;
-      P.vx = P.facing * sp.speed * 1.15;
-      P.vy = Math.max(P.vy, 0);
+      P.vx = P.facing * P.dashV;
+      if (P.dashFloat) P.vy = Math.max(P.vy, 0);
       if (P.dashT <= 0) P.vx *= 0.5;
+    } else if (P.lockT > 0) {
+      // bote diagonal de Josu: mantiene la inercia
+    } else if (shielding) {
+      P.vx *= 0.8;
+      if (Math.abs(inp.x) > 0.2) P.facing = Math.sign(inp.x);
     } else {
       const max = speedMax();
       const target = inp.x * max;
@@ -541,7 +702,8 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
       P.vy = jumpV(); P.g = false; P.coyote = 0; P.buf = 0; P.squash = 1.25; sfx.jump(); P.jumpHeld = true;
     } else if (P.buf > 0 && P.wall && !P.g) {
       // salto en pared: impulso hacia fuera y arriba
-      P.vy = jumpV() * 0.92; P.vx = -P.wall * 9.5; P.facing = -P.wall; P.buf = 0; P.wallT = 0.16; sfx.jump(); P.jumpHeld = true;
+      const jb = char.id === "josu" ? 1.15 : 1; // Josu rebota en las paredes como nadie
+      P.vy = jumpV() * 0.92 * jb; P.vx = -P.wall * 9.5 * jb; P.facing = -P.wall; P.buf = 0; P.wallT = 0.16; sfx.jump(); P.jumpHeld = true;
       spawnInk(P.x + P.wall * PW / 2, P.y + 1, INK.BLUE, 5, 3);
     }
     if (P.wallT > 0) { P.wallT -= dt; } // durante el rebote no se "pega" a la pared
@@ -550,11 +712,23 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     if (!inp.jumpHeld) P.jumpHeld = false;
 
     // poder del personaje
-    if (inp.power && P.cd <= 0) usePower();
+    if (inp.power && P.cd <= 0) usePower(inp);
 
     // gravedad (deslizarse por la pared cae despacio)
     P.vy -= GRAV * dt * (P.slam ? 1.6 : 1);
     if (P.wall && P.vy < -4 && P.wallT <= 0 && Math.sign(inp.x) === P.wall) P.vy = -4;
+    // pasivas de movimiento: planear (Alejandro), volar (Paloma) y trepar (Ana)
+    P.climb = false;
+    if (!P.g && P.dead <= 0) {
+      if (char.id === "alejandro" && inp.jumpHeld && P.vy < -2 && P.fly > 0) { P.vy = -2.2; P.fly = Math.max(0, P.fly - dt * 0.45); }
+      if (char.id === "paloma" && inp.jumpHeld && P.vy < 4 && P.fly > 0 && P.riseT <= 0) {
+        P.vy = Math.min(P.vy + 70 * dt, 6.5); P.fly = Math.max(0, P.fly - dt * 0.6);
+        if (Math.random() < dt * 12) spawnInk(P.x - P.facing * 0.4, P.y + 0.9, INK.BLUE, 1, 2);
+      }
+      if (char.id === "ana" && P.wall && inp.powerHeld) { P.vy = inp.down ? -4 : 6.5; P.climb = true; P.facing = P.wall; }
+    }
+    // rejillas de ventilación: la corriente te sube
+    for (const v of L.vents) if (P.x > v.x0 && P.x < v.x1 + 1 && P.y >= v.y0 - 0.5 && P.y < v.y1) { P.vy = Math.min(P.vy + 80 * dt, 10); P.g = false; }
     P.vy = Math.max(P.vy, P.slam ? -34 : -MAX_FALL);
     P.riseT = Math.max(0, P.riseT - dt);
 
@@ -569,6 +743,14 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
         P.y = m.y + 1; P.vy = 0; P.g = true; P.onMover = m;
       }
     }
+    // plataformas impresas por José Luis (atravesables desde abajo)
+    for (const pr of prints) {
+      if (P.vy <= 0 && P.x + PW / 2 > pr.x && P.x - PW / 2 < pr.x + pr.w && P.y <= pr.top + 0.05 && P.prevY >= pr.top - 0.05 && !P.drop) {
+        P.y = pr.top; P.vy = 0; P.g = true;
+      }
+    }
+    // sillas plegables: al pisarlas empiezan a temblar
+    if (P.g) for (const c of L.crumbles) if (!c.t.down && !c.t.shake && Math.abs(P.y - (c.y + 1)) < 0.05 && P.x + PW / 2 > c.x && P.x - PW / 2 < c.x + 1) c.t.shake = 0.45;
     if (res.head) {
       // cabezazo al bloque que tienes encima (el más centrado)
       const tx = Math.floor(P.x);
@@ -578,6 +760,9 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     if (P.g && !wasG) {
       P.squash = 0.72;
       if (P.slam) { P.slam = 0; slamImpact(); }
+      if (P.mega) { P.mega = 0; slamImpact(3.8); big("¡SUPER STEP!", "", 0.8); }
+      // Maca en modo pelota bota sin parar (▼ para frenar el bote)
+      if (P.ball && !inp.down) { P.vy = 12; P.g = false; P.squash = 0.6; sfx.wall(); }
     }
     // la embestida y el supersalto rompen ladrillos a su paso
     if (P.dashT > 0) {
@@ -589,13 +774,13 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     }
     // muelles
     for (const s of L.springs) {
-      if (P.vy <= 0 && Math.abs(P.x - (s.x + 0.5)) < 0.8 && P.y <= s.y + 0.75 && P.y >= s.y - 0.1) {
+      if (P.vy <= 0 && Math.abs(P.x - (s.x + 0.5)) < 0.9 && P.y <= s.y + 0.85 && P.y >= s.y - 0.1) {
         P.vy = 29; P.g = false; s.k = 1; sfx.spring(); P.jumpHeld = false; P.squash = 1.4;
       }
     }
     // pinchos
     const under = T(Math.floor(P.x), Math.floor(P.y + 0.1));
-    if (under && under.t === "x") hurt(P.x - P.facing);
+    if (under && under.t === "x") { if (under.pit) die(); else hurt(P.x - P.facing); }
     // caída al vacío
     if (P.y < -5) die();
     P.x = clamp(P.x, 0.5, LEVEL_W - 0.5);
@@ -622,40 +807,160 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     if (!P.won && P.x > L.flagX - 0.2 && P.x < L.flagX + 1.2) finish();
   }
 
-  function usePower() {
-    const d = sp.kind === "multi" ? rollMulti() : sp;
+  // ── poderes originales de cada personaje (los del plataformas clásico) ──
+  const PINK = {
+    alejandro: INK.BLACK, ale: INK.GREEN, alvaroM: INK.BLUE, alvaroP: INK.PURPLE, ana: INK.ORANGE, beltran: INK.BLUE,
+    bruno: INK.PURPLE, gonzalo: INK.GREEN, javi: INK.RED, jesus: INK.ORANGE, joseluis: INK.BLUE, josu: INK.ORANGE,
+    juan: INK.PURPLE, maca: INK.ORANGE, manu: INK.RED, pablo: INK.ORANGE, paloma: INK.BLUE, silvia: INK.RED
+  };
+  const pInk = () => PINK[char.id] || INK.BLUE;
+  const attacking = () => P.dashT > 0 || P.riseT > 0 || P.slam || P.ball || P.zenT > 0 || P.shieldT > 0 || P.mega;
+
+  function usePower(inp) {
+    const id = char.id;
+    if (id === "ana" && P.wall && !P.g) return; // en la pared, el botón es para trepar
     P.cd = cdMax;
     sfx.power();
-    P.pose = "attack"; P.poseT = 0.35;
-    if (d.kind === "dash") { P.dashT = 0.24; spawnInk(P.x, P.y + 0.8, d.ink, 6, 3); }
-    else if (d.kind === "proj") {
-      powers.push({
-        x: P.x + P.facing * 0.6, y: P.y + (d.ground ? 0.3 : 1.0), vx: P.facing * (d.speed + 3), vy: d.arc ? (d.vy || 6) : 0,
-        arc: !!d.arc, ground: !!d.ground, life: 2.2, ink: d.ink, mesh: powerMesh(d.ink, d.shape)
-      });
-    } else if (d.kind === "slam") {
-      if (P.g) { P.vy = 10; P.g = false; }
-      P.slam = 1;
-      setTimeout(() => { if (P.slam) P.vy = -30; }, 160);
-    } else if (d.kind === "rise") {
-      P.vy = jumpV() * 1.35; P.g = false; P.riseT = 0.5; P.vx = P.facing * 3; spawnInk(P.x, P.y, d.ink, 10, 4);
-    } else if (d.kind === "shield") {
-      P.shieldT = 1.6; P.inv = Math.max(P.inv, 1.6);
+    P.pose = "attack"; P.poseT = 0.3;
+    const f = P.facing;
+    if (id === "alejandro") { melee(1.8); P.vx += f * 3; }
+    else if (id === "paloma") { melee(1.5, 1.9); if (!P.g) P.vy = Math.max(P.vy, 5); }
+    else if (id === "ana") melee(1.4, 1.7);
+    else if (id === "ale") dash(0.65, 1.75, false, INK.GREEN);
+    else if (id === "pablo") dash(0.9, 1.85, false, INK.ORANGE);
+    else if (id === "silvia") { dash(0.3, 2.3, true, INK.RED); P.inv = Math.max(P.inv, 0.4); }
+    else if (id === "beltran") { dash(0.16, 2.8, true, INK.BLUE); melee(1.6, 1.4); }
+    else if (id === "alvaroM") shoot({ x: P.x + f * 0.6, y: P.y + 1.2, vx: f * 9, vy: 7, arc: true, bounce: 2, boom: 2.3, life: 2.2, ink: INK.BLUE, shape: "404" });
+    else if (id === "alvaroP") shoot({ x: P.x + f * 0.7, y: P.y + 1, vx: f * 15, pierce: true, life: 0.95, ink: INK.PURPLE, shape: "wave", grow: true });
+    else if (id === "juan") blast(P.x, P.y + 0.8, 3.3, INK.PURPLE);
+    else if (id === "jesus") {
+      if (P.g) blast(P.x, P.y + 0.4, 2.7, INK.ORANGE);
+      else { P.slam = 1; P.vy = -30; }
+    } else if (id === "manu") { P.vy = jumpV() * 1.55; P.g = false; P.mega = 1; P.riseT = 0.35; P.squash = 1.5; spawnInk(P.x, P.y, INK.RED, 10, 4); }
+    else if (id === "josu") { P.vy = jumpV() * 1.05; P.vx = f * 13; P.lockT = 0.42; P.riseT = 0.42; P.g = false; spawnInk(P.x, P.y, INK.ORANGE, 8, 4); }
+    else if (id === "maca") { P.ball = !P.ball; P.cd = 0.4; msg(P.ball ? "🏐 Modo pelota: ¡arrollas todo!" : "🏐 Modo normal", 1.1); if (P.ball && P.g) P.vy = 10; }
+    else if (id === "gonzalo") { for (let i = 0; i < 3; i++) spawnMinion("broc", i); msg("🥦 ¡Mini-brócolis!", 1); }
+    else if (id === "javi") { for (let i = 0; i < 2; i++) spawnMinion("worker", i); msg("☭ ¡Trabajadores del mundo!", 1); }
+    else if (id === "joseluis") printPlatform();
+    else if (id === "bruno") {
+      const face = Math.floor(Math.random() * 4);
+      if (face === 0) { if (P.hearts < HEARTS) P.hearts++; else P.score += 300; msg("🙂 Cara feliz: +1 ♥", 1.4); sfx.item(); }
+      else if (face === 1) { blast(P.x, P.y + 0.8, 3.4, INK.RED); msg("😡 Cara furiosa", 1.2); }
+      else if (face === 2) { P.buffT = 4; msg("😎 Cara veloz: +velocidad", 1.4); }
+      else { P.zenT = 3; P.inv = Math.max(P.inv, 3); msg("😌 Cara zen: invencible", 1.4); }
     }
   }
+  function dash(t, mult, float, ink) {
+    P.dashT = t; P.dashV = speedMax() * mult; P.dashFloat = float;
+    spawnInk(P.x, P.y + 0.6, ink, 8, 3);
+  }
+  // golpe cuerpo a cuerpo delante del personaje
+  function melee(range, h = 1.6) {
+    const x0 = P.facing > 0 ? P.x - 0.2 : P.x - range, x1 = P.facing > 0 ? P.x + range : P.x + 0.2;
+    let hit = false;
+    for (const e of enemies) if (e.alive && e.x + e.w / 2 > x0 && e.x - e.w / 2 < x1 && e.y < P.y + h && e.y + e.h > P.y - 0.3) { killEnemy(e, true); hit = true; }
+    if (boss && boss.state === "tired" && boss.x + 1.6 > x0 && boss.x - 1.6 < x1 && P.y < boss.y + 3.2 && P.y + h > boss.y) { hitBoss(); hit = true; }
+    for (const dy of [0.5, 1.3]) {
+      const tx = Math.floor(P.x + P.facing * Math.min(range, 1.1)), ty = Math.floor(P.y + dy);
+      const t = T(tx, ty);
+      if (t && (t.t === "b" || t.t === "q")) bumpTile(tx, ty, true);
+    }
+    spawnInk(P.x + P.facing * range * 0.7, P.y + 1, pInk(), hit ? 10 : 5, 4);
+    if (hit) shake(0.35);
+  }
+  // onda expansiva (microondas, smash de Cruzcampo, cara furiosa, bomba 404)
+  function blast(x, y, r, ink) {
+    for (const e of enemies) if (e.alive && Math.hypot(e.x - x, e.y + e.h / 2 - y) < r) killEnemy(e, true);
+    if (boss && boss.state === "tired" && Math.abs(boss.x - x) < r + 1.2 && Math.abs(boss.y + 1.5 - y) < r + 1.5) hitBoss();
+    const R = Math.ceil(r);
+    for (let dx = -R; dx <= R; dx++) for (let dy = -R; dy <= R; dy++) {
+      if (dx * dx + dy * dy > r * r) continue;
+      const tx = Math.floor(x + dx), ty = Math.floor(y + dy), t = T(tx, ty);
+      if (t && (t.t === "b" || t.t === "q")) bumpTile(tx, ty, true);
+    }
+    const ring = new THREE.Mesh(GEO.torus, mat(ink, { fill: true }));
+    ring.position.set(x, y, 0.4);
+    scene.add(ring);
+    rings.push({ m: ring, t: 0, r });
+    spawnInk(x, y, ink, 18, 7);
+    shake(0.6);
+    sfx.brick();
+  }
+  function shoot(o) { powers.push({ vy: 0, bounce: 0, ...o, mesh: powerMesh(o.ink, o.shape) }); }
   function powerMesh(ink, shape) {
     const g = new THREE.Group();
-    if (shape === "wave" || shape === "micro") { const r = new THREE.Mesh(GEO.torus, mat(ink, { fill: true })); r.scale.setScalar(0.6); r.rotation.y = Math.PI / 2; g.add(r); }
-    else box(g, 0, 0, 0, 0.5, 0.5, 0.5, ink, { tone: 0.05 });
+    if (shape === "wave") {
+      for (let k = 0; k < 3; k++) { const r = new THREE.Mesh(GEO.torus, mat(ink, { fill: true })); r.scale.setScalar(0.35 + k * 0.2); r.position.x = -k * 0.25; r.rotation.y = Math.PI / 2; g.add(r); }
+    } else if (shape === "404") {
+      box(g, 0, 0, 0, 0.7, 0.5, 0.2, INK.BLUE, { tone: 0.05 });
+      const t = inkText("404", { size: 0.28, ink: INK.RED, weight: 1.3 }); t.position.z = 0.12; g.add(t);
+    } else box(g, 0, 0, 0, 0.5, 0.5, 0.5, ink, { tone: 0.05 });
     scene.add(g);
     return g;
   }
-  function slamImpact() {
-    spawnInk(P.x, P.y + 0.2, sp.ink, 18, 7);
-    shake(0.8);
+  // minions: mini-brócolis que saltan y trabajadores que marchan
+  function spawnMinion(kind, i) {
+    const g = new THREE.Group();
+    if (kind === "broc") {
+      const h = new THREE.Mesh(GEO.sph, mat(INK.GREEN, { tone: -0.05 })); h.scale.setScalar(0.7); h.position.y = 0.75; g.add(h);
+      box(g, 0, 0.25, 0, 0.26, 0.5, 0.26, INK.GREEN, { tone: 0.2 });
+    } else {
+      box(g, 0, 0.45, 0, 0.5, 0.6, 0.4, INK.RED, { tone: -0.05 });
+      const h = new THREE.Mesh(GEO.sph, mat(INK.ORANGE, { tone: 0.15 })); h.scale.setScalar(0.4); h.position.y = 0.95; g.add(h);
+      box(g, 0.28, 0.9, 0, 0.08, 0.7, 0.08, INK.BLACK, { fill: true }); // el martillo
+      box(g, 0.28, 1.25, 0, 0.3, 0.14, 0.14, INK.BLACK, { fill: true });
+    }
+    scene.add(g);
+    const sp2 = kind === "broc" ? 5.2 : 3.6;
+    minions.push({ kind, x: P.x + P.facing * (0.8 + i * 0.6), y: P.y + 0.3, vx: P.facing * sp2, vy: kind === "broc" ? 5 + i * 2 : 0, dir: P.facing, speed: sp2, life: kind === "broc" ? 5 : 7, g, t: rnd(0, 3) });
+  }
+  function updateMinions(dt) {
+    for (const m of minions) {
+      m.life -= dt; m.t += dt;
+      m.vx = m.dir * m.speed;
+      m.vy -= GRAV * dt;
+      const res = moveBody(m, 0.6, 0.9, dt);
+      if (res.wall) m.dir = -m.dir;
+      if (m.kind === "broc" && res.ground) m.vy = 6;
+      m.g.position.set(m.x, m.y, 0.25);
+      m.g.rotation.y = m.dir > 0 ? 0 : Math.PI;
+      m.g.rotation.z = m.kind === "worker" ? Math.sin(m.t * 12) * 0.12 : 0;
+      for (const e of enemies) if (e.alive && Math.abs(e.x - m.x) < (e.w + 0.6) / 2 && m.y < e.y + e.h && m.y + 0.9 > e.y) { killEnemy(e, true); if (m.kind === "broc") m.life = 0; }
+      if (boss && boss.state === "tired" && Math.abs(boss.x - m.x) < 1.8 && m.y < boss.y + 3.2) { hitBoss(); m.life = 0; }
+      if (m.y < -5) m.life = 0;
+      if (m.life <= 0) { scene.remove(m.g); spawnInk(m.x, m.y + 0.5, m.kind === "broc" ? INK.GREEN : INK.RED, 6, 3); }
+    }
+    minions = minions.filter((m) => m.life > 0);
+  }
+  // José Luis: imprime plataformas en 3D (máx. 3, duran 9 s)
+  function printPlatform() {
+    if (prints.length >= 3) { const o = prints.shift(); levelRoot.remove(o.g); }
+    const x = P.g ? P.x + P.facing * 1.8 : P.x;
+    const top = P.g ? P.y + 2.2 : P.y - 0.05;
+    const g = new THREE.Group();
+    g.position.set(x, top, 0);
+    box(g, 0, -0.2, 0, 3, 0.4, 2, INK.BLUE, { tone: 0.02 });
+    for (let k = -1; k <= 1; k++) box(g, k, -0.2, 1.01, 0.05, 0.36, 0.02, INK.BLUE, { fill: true }); // capas impresas
+    box(g, 0, -0.02, 1.01, 3, 0.05, 0.02, INK.BLUE, { fill: true });
+    levelRoot.add(g);
+    prints.push({ x: x - 1.5, w: 3, top, life: 9, g });
+    spawnInk(x, top, INK.BLUE, 10, 3);
+    audio.tone({ freq: 520, to: 880, dur: 0.18, type: "square", gain: 0.06 });
+  }
+  function updatePrints(dt) {
+    for (const p of prints) {
+      p.life -= dt;
+      p.g.visible = p.life > 1.6 || Math.floor(p.life * 8) % 2 === 0;
+      if (p.life <= 0) { levelRoot.remove(p.g); spawnInk(p.x + 1.5, p.top, INK.BLUE, 6, 2); if (P.onPrint === p) P.onPrint = null; }
+    }
+    prints = prints.filter((p) => p.life > 0);
+  }
+  function slamImpact(r = 3) {
+    spawnInk(P.x, P.y + 0.2, pInk(), 18, 7);
+    shake(r > 3 ? 1.1 : 0.8);
     sfx.brick();
-    for (const e of enemies) if (e.alive && Math.abs(e.x - P.x) < 3 && Math.abs(e.y - P.y) < 1.6) killEnemy(e, true);
-    if (boss && boss.state === "tired" && Math.abs(boss.x - P.x) < 3) hitBoss();
+    for (const e of enemies) if (e.alive && Math.abs(e.x - P.x) < r && Math.abs(e.y - P.y) < 1.8) killEnemy(e, true);
+    if (boss && boss.state === "tired" && Math.abs(boss.x - P.x) < r) hitBoss();
     // rompe los ladrillos de debajo
     for (let dx = -1; dx <= 1; dx++) {
       const tx = Math.floor(P.x + dx * 0.5), ty = Math.floor(P.y - 0.5);
@@ -688,7 +993,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
   }
   function respawn() {
     if (P.hearts <= 0) { gameOver(); return; }
-    P.x = P.cp + 0.5; P.y = 6; P.vx = 0; P.vy = 0; P.inv = 1.6; P.slam = 0; P.dashT = 0;
+    P.x = P.cp + 0.5; P.y = surfaceAt(P.cp + 0.5) + 0.5; P.vx = 0; P.vy = 0; P.inv = 1.6; P.slam = 0; P.dashT = 0; P.mega = 0; P.ball = false; P.lockT = 0;
     if (boss && !bossDone) { resetBoss(); }
   }
 
@@ -740,7 +1045,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
       // contacto con el jugador: pisotón o daño
       if (P.dead <= 0 && Math.abs(e.x - P.x) < (e.w + PW) / 2 && P.y < e.y + e.h && P.y + PH > e.y) {
         const stomp = P.vy < 0 && P.y > e.y + e.h * 0.45;
-        if (stomp || P.shieldT > 0 || P.dashT > 0 || P.riseT > 0 || P.slam) {
+        if (stomp || attacking()) {
           killEnemy(e, false);
           if (stomp) { P.vy = prev.jump ? 17 : 12; P.g = false; P.stomps++; sfx.stomp(); }
         } else hurt(e.x);
@@ -764,7 +1069,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
       if (solidAt(s.x, s.y)) s.life = 0;
       if (P.dead <= 0 && Math.abs(s.x - P.x) < 0.6 && s.y > P.y && s.y < P.y + PH) {
         s.life = 0;
-        if (P.shieldT <= 0) hurt(s.x);
+        if (P.shieldT <= 0 && P.zenT <= 0) hurt(s.x);
       }
       if (s.life <= 0) { scene.remove(s.mesh); spawnInk(s.x, s.y, INK.ORANGE, 4, 2); }
     }
@@ -774,17 +1079,19 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
       if (p.arc) p.vy -= 20 * dt;
       p.x += p.vx * dt;
       p.y += p.vy * dt;
-      if (p.arc && solidAt(p.x, p.y - 0.25) && p.vy < 0) { p.y = Math.floor(p.y - 0.25) + 1.25; p.vy = 7; }
-      if (p.ground) { p.y = Math.max(p.y, 0); if (!solidAt(p.x, p.y - 0.4)) p.vy -= 20 * dt; else { p.vy = 0; p.y = Math.floor(p.y - 0.4) + 1.3; } }
+      if (p.arc && solidAt(p.x, p.y - 0.25) && p.vy < 0) {
+        if (p.bounce-- > 0) { p.y = Math.floor(p.y - 0.25) + 1.25; p.vy = 6; } else p.life = 0;
+      }
       p.mesh.position.set(p.x, p.y, 0.3);
-      p.mesh.rotation.z -= dt * 10 * Math.sign(p.vx);
+      if (p.grow) p.mesh.scale.setScalar(1 + (0.95 - p.life) * 1.6);
+      else p.mesh.rotation.z -= dt * 10 * Math.sign(p.vx);
       const tx = Math.floor(p.x), ty = Math.floor(p.y);
       const t = T(tx, ty);
-      if (t && (t.t === "b" || t.t === "q")) { bumpTile(tx, ty, true); p.life = 0; }
+      if (t && (t.t === "b" || t.t === "q")) { bumpTile(tx, ty, true); if (!p.pierce) p.life = 0; }
       else if (solidT(t)) p.life = 0;
-      for (const e of enemies) if (e.alive && Math.abs(e.x - p.x) < 0.8 && p.y > e.y - 0.2 && p.y < e.y + e.h + 0.2) { killEnemy(e, true); p.life = 0; }
+      for (const e of enemies) if (e.alive && Math.abs(e.x - p.x) < 0.9 && p.y > e.y - 0.4 && p.y < e.y + e.h + 0.4) { killEnemy(e, true); if (!p.pierce) p.life = 0; }
       if (boss && boss.state === "tired" && Math.abs(boss.x - p.x) < 1.6 && p.y < boss.y + 3.2) { hitBoss(); p.life = 0; }
-      if (p.life <= 0) { scene.remove(p.mesh); spawnInk(p.x, p.y, p.ink, 6, 3); }
+      if (p.life <= 0) { scene.remove(p.mesh); if (p.boom) blast(p.x, p.y, p.boom, p.ink); else spawnInk(p.x, p.y, p.ink, 6, 3); }
     }
     powers = powers.filter((p) => p.life > 0);
     for (const k of pickups) {
@@ -905,13 +1212,13 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
   }
   function rankFor() {
     const coinRatio = P.coins / Math.max(1, L.coins.length);
-    let pts = P.frags.size + (coinRatio > 0.6 ? 1 : 0) + (P.time < 240 ? 1 : 0) + (P.hearts === HEARTS ? 1 : 0);
+    let pts = P.frags.size + (coinRatio > 0.6 ? 1 : 0) + (P.time < 300 ? 1 : 0) + (P.hearts === HEARTS ? 1 : 0);
     return pts >= 5 ? "S" : pts >= 3 ? "A" : pts >= 2 ? "B" : "C";
   }
   function endScreen(win) {
     screen = "end";
     const rank = win ? rankFor() : "";
-    $(".pf-end-kicker").textContent = win ? "MUNDO 1 · THE OFFICE" : "GAME OVER";
+    $(".pf-end-kicker").textContent = win ? "MUNDO 1 · CAMPUS MADRID" : "GAME OVER";
     $(".pf-end-title").textContent = win ? "¡Inbox Zero!" : "Te han enterrado en emails";
     $(".pf-end-stats").innerHTML = `
       <div><span>Puntos</span><b>${P.score.toLocaleString("es-ES")}</b></div>
@@ -949,7 +1256,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
   }
   function spawnDecal(x, ink) {
     let gy = 2;
-    for (let y = 12; y >= 0; y--) if (solidAt(x, y)) { gy = y + 1; break; }
+    for (let y = Math.floor(P.y + 3); y >= 0; y--) if (solidAt(x, y)) { gy = y + 1; break; }
     const d = decals.length >= 40 ? decals.shift() : (() => { const m = new THREE.Mesh(GEO.disc, mat(ink, { fill: true })); m.rotation.x = -Math.PI / 2; scene.add(m); return m; })();
     d.material = mat(ink, { fill: true });
     d.position.set(x + rnd(-0.3, 0.3), gy + 0.02, rnd(-0.8, 0.8));
@@ -972,6 +1279,13 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
       else { p.g.position.y = Math.floor(p.g.position.y) + 0.5 + Math.max(0, Math.sin(Math.min(1, p.t / 0.18) * Math.PI) * 0.3); if (p.t > 0.2) p.done = true; }
     }
     pops = pops.filter((p) => !p.done);
+    for (const r of rings) {
+      r.t += dt;
+      const k = Math.min(1, r.t / 0.3);
+      r.m.scale.setScalar(0.5 + k * r.r * 1.6);
+      if (r.t > 0.35) { scene.remove(r.m); r.done = true; }
+    }
+    rings = rings.filter((r) => !r.done);
   }
 
   // ── cámara lateral ──
@@ -980,7 +1294,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     const portrait = root.clientWidth < root.clientHeight;
     const dist = portrait ? 18 : 13.5;
     let tx = P.x + P.facing * 2.5 + P.vx * 0.2;
-    let ty = clamp(P.y + 1.6, 4.2, 13);
+    let ty = clamp(P.y + 1.6, 4.2, LEVEL_H - 4);
     if (boss && !bossDone) { tx = (L.boss.x0 + L.boss.x1 + 1) / 2; ty = 6.5; }
     tx = clamp(tx, portrait ? 6 : 10, LEVEL_W - (portrait ? 6 : 10));
     camT.x += (tx - camT.x) * Math.min(1, dt * 4);
@@ -1012,8 +1326,10 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     hud.frags.textContent = `💾 ${P.frags.size}/3`;
     hud.time.textContent = fmt(P.time);
     hud.score.textContent = P.score.toLocaleString("es-ES");
-    hud.power.style.width = `${(1 - P.cd / cdMax) * 100}%`;
-    hud.power.parentElement.classList.toggle("ready", P.cd <= 0);
+    const meter = char.id === "paloma" || char.id === "alejandro" ? P.fly : char.id === "beltran" ? P.energy : null;
+    const useMeter = meter !== null && meter < 0.995 && P.cd <= 0;
+    hud.power.style.width = `${(useMeter ? meter : 1 - P.cd / cdMax) * 100}%`;
+    hud.power.parentElement.classList.toggle("ready", P.cd <= 0 && !useMeter);
     bigT -= dt; msgT -= dt;
     if (bigT <= 0) hud.big.classList.remove("show");
     hud.msg.style.opacity = msgT > 0 ? "1" : "0";
@@ -1060,10 +1376,33 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     updatePlayer(dt, inp);
     updateEnemies(dt);
     updateShots(dt);
+    updateMinions(dt);
+    updatePrints(dt);
     updateBoss(dt);
+    // sillas plegables: tiemblan, se caen y vuelven a su sitio
+    for (const c of L.crumbles) {
+      const t = c.t;
+      if (t.shake > 0 && !t.down) {
+        t.shake -= dt;
+        c.g.position.x = c.x + 0.5 + Math.sin(playT * 60) * 0.06;
+        if (t.shake <= 0) { t.down = true; t.back = 4; c.vy = 0; audio.noise({ dur: 0.12, gain: 0.12, filter: "lowpass", freq: 900 }); }
+      } else if (t.down) {
+        c.vy -= GRAV * dt;
+        c.g.position.y += c.vy * dt;
+        c.g.rotation.z += dt * 3;
+        t.back -= dt;
+        const inside = Math.abs(P.x - (c.x + 0.5)) < 0.9 && P.y < c.y + 1.2 && P.y + PH > c.y;
+        if (t.back <= 0 && !inside) { t.down = false; t.shake = 0; c.g.position.set(c.x + 0.5, c.y, 0); c.g.rotation.z = 0; spawnInk(c.x + 0.5, c.y + 1, INK.ORANGE, 4, 2); }
+      }
+    }
+    for (const l of L.ventLines) {
+      l.m.position.y += l.sp * dt;
+      if (l.m.position.y > l.v.y1 + 0.5) l.m.position.y = l.v.y0;
+    }
+    (L.ventFans || []).forEach((f) => (f.rotation.z += dt * 14));
     for (const c of L.coins) if (!c.got) c.g.rotation.y += dt * 3;
     for (const f of L.fragments) if (!f.got) { f.g.rotation.y += dt * 2; f.g.position.y = f.y + Math.sin(playT * 3 + f.i) * 0.15; }
-    for (const s of L.springs) { s.k = Math.max(0, s.k - dt * 4); s.top.position.y = 0.6 + s.k * 0.5; }
+    for (const s of L.springs) { s.k = Math.max(0, s.k - dt * 4); s.top.scale.set(1.5 + s.k * 0.4, 0.8 - s.k * 0.35, 1.5 + s.k * 0.4); }
     if (P.won && L.flag.position.y > 1.5) L.flag.position.y -= dt * 6;
   }
 
@@ -1079,16 +1418,19 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     buildLevel();
     Object.assign(P, {
       x: cp + 0.5, y: 2, vx: 0, vy: 0, g: true, facing: 1, coyote: 0, buf: 0, wall: 0, wallT: 0, hearts: HEARTS, inv: 1, dead: 0,
-      cd: 0, dashT: 0, slam: 0, shieldT: 0, riseT: 0, squash: 1, onMover: null, coins: 0, frags: new Set(), cp, score: 0, time: 0, won: false, stomps: 0
+      cd: 0, dashT: 0, slam: 0, shieldT: 0, riseT: 0, squash: 1, onMover: null, coins: 0, frags: new Set(), cp, score: 0, time: 0, won: false, stomps: 0,
+      lockT: 0, fly: 1, energy: 1, ball: false, mega: 0, zenT: 0, buffT: 0
     });
+    P.y = surfaceAt(P.x) + 0.02; P.prevY = P.y;
     shots.forEach((s) => scene.remove(s.mesh)); powers.forEach((p) => scene.remove(p.mesh)); pickups.forEach((k) => scene.remove(k.g));
-    shots = []; powers = []; pickups = [];
+    minions.forEach((m) => scene.remove(m.g)); rings.forEach((r) => scene.remove(r.m));
+    shots = []; powers = []; pickups = []; minions = []; prints = []; rings = [];
     if (boss) scene.remove(boss.model.group);
     boss = null; bossDone = false; bossWalls = [];
     $(".pf-boss").classList.add("hidden");
     // si se retoma desde un café, los puntos de control anteriores ya están activos
     L.checkpoints.forEach((c) => { if (c.x <= cp) c.on = true; });
-    camT.set(P.x, 5, 0);
+    camT.set(P.x, P.y + 3, 0);
   }
   function play() {
     audio.init();
@@ -1097,7 +1439,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     showOv(null);
     syncPad();
   }
-  $(".pf-go").addEventListener("click", () => { resetRun(false); play(); big("THE OFFICE", "¡A por el Inbox Zero!", 1.6); });
+  $(".pf-go").addEventListener("click", () => { resetRun(false); play(); big("CAMPUS MADRID", "Google for Startups · ¡a por el Demo Day!", 1.8); });
   $(".pf-resume").addEventListener("click", () => play());
   $(".pf-restart").addEventListener("click", () => { resetRun(false); play(); });
   $(".pf-retry").addEventListener("click", () => { const won = P.won; resetRun(!won); play(); });
@@ -1117,7 +1459,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     if (av) img.src = av;
     img.classList.toggle("px", !!(av && av.startsWith("data:")));
     $(".pf-pname").textContent = `${c.emoji} ${c.name}`;
-    $(".pf-pspecial").textContent = `★ Poder: ${specialFor(c.id).name}`;
+    $(".pf-pspecial").textContent = `★ ${c.ab} · ${c.tip || ""}`;
   }
   root.querySelectorAll(".pf-arrow").forEach((b) => b.addEventListener("click", () => {
     pickIdx = (pickIdx + Number(b.dataset.d) + CHARS.length) % CHARS.length;
@@ -1192,14 +1534,14 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
   resize();
   resetRun(false);
 
-  let raf = 0, prevT = performance.now(), acc = 0, wall = 0;
+  let raf = 0, prevT = performance.now(), acc = 0, wall = 0, camY = 5, devChar = false;
   function frame(now) {
     raf = requestAnimationFrame(frame);
     const dt = Math.min(0.1, (now - prevT) / 1000);
     prevT = now;
     wall += dt;
     pollGamepad();
-    if (getChar) { const c = getChar(); if (c && c.id !== char.id) { setChar(c); msg(`${c.emoji} ${c.name} · ★ ${sp.name}`, 1.6); } }
+    if (getChar && !devChar) { const c = getChar(); if (c && c.id !== char.id) { setChar(c); msg(`${c.emoji} ${c.name} · ★ ${c.ab}`, 1.6); } }
     if (screen === "play") {
       acc += dt;
       while (acc >= STEP) { stepSim(STEP); acc -= STEP; }
@@ -1207,9 +1549,11 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     } else acc = 0;
     if (screen === "start") {
       // presentación: la cámara recorre el nivel despacio
-      const x = 12 + (Math.sin(wall * 0.08) * 0.5 + 0.5) * 150;
-      camera.position.set(x, 7, 22);
-      camera.lookAt(x, 5, 0);
+      const x = 12 + (Math.sin(wall * 0.06) * 0.5 + 0.5) * 220;
+      const y = surfaceAt(x) + 3;
+      camY += (y - camY) * 0.02;
+      camera.position.set(x, camY + 2, 22);
+      camera.lookAt(x, camY, 0);
     } else updateCamera(dt);
     drawPlayer(screen === "play" ? dt : 0);
     updateHud(dt);
@@ -1237,7 +1581,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     if (window.__plat) delete window.__plat;
   }
   function exit() { destroy(); if (onExit) onExit(); }
-  if (import.meta.env && import.meta.env.DEV) window.__plat = { P, get L() { return L; }, get boss() { return boss; }, get enemies() { return enemies; }, get screen() { return screen; } };
+  if (import.meta.env && import.meta.env.DEV) window.__plat = { P, setChar: (id) => { devChar = true; setChar(charById(id)); }, get prints() { return prints; }, get minions() { return minions; }, get L() { return L; }, get boss() { return boss; }, get enemies() { return enemies; }, get screen() { return screen; } };
 
   showOv("start");
   return { destroy, exit };
