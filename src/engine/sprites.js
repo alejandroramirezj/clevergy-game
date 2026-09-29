@@ -212,22 +212,20 @@ export function initSprites() {
     targetH: 60
   });
 
-  // Load Beltrán (dedal azul y aguja) custom high-res pose sprites
+  // Load Beltrán (dedal azul) custom high-res pose sprites
   loadPoses("beltran", {
     idle: "/sprites/beltran/idle.png",
     walk: "/sprites/beltran/walk.png",
-    run: "/sprites/beltran/run.png",
+    run: "/sprites/beltran/walk.png",
     jump: "/sprites/beltran/jump.png",
     attack: "/sprites/beltran/attack.png",
-    shield: "/sprites/beltran/shield.png",
-    block: "/sprites/beltran/block.png",
     death: "/sprites/beltran/death.png"
   }, {
     faceRight: true,
-    anchorX: 180,
-    canvW: 420,
-    canvH: 360,
-    targetH: 60
+    anchorX: 140,
+    canvW: 360,
+    canvH: 280,
+    targetH: 58
   });
 
   // Load Javi custom high-res pose sprites
@@ -259,6 +257,70 @@ export function initSprites() {
     anchorX: 190,
     canvW: 380,
     canvH: 280,
+    targetH: 60
+  });
+
+  // Load Jesús (Cruzcampo bottle) custom high-res pose sprites
+  loadPoses("jesus", {
+    idle: "/sprites/jesus/idle.png",
+    walk: "/sprites/jesus/walk.png",
+    run: "/sprites/jesus/walk.png",
+    jump: "/sprites/jesus/jump.png",
+    attack: "/sprites/jesus/attack.png",
+    death: "/sprites/jesus/death.png"
+  }, {
+    faceRight: true,
+    anchorX: 160,
+    canvW: 420,
+    canvH: 280,
+    targetH: 58
+  });
+
+  // Load Pablo (naranja) custom high-res pose sprites
+  loadPoses("pablo", {
+    idle: "/sprites/pablo/idle.png",
+    walk: "/sprites/pablo/walk.png",
+    run: "/sprites/pablo/walk.png",
+    jump: "/sprites/pablo/jump.png",
+    attack: "/sprites/pablo/attack.png",
+    death: "/sprites/pablo/death.png"
+  }, {
+    faceRight: true,
+    anchorX: 120,
+    canvW: 320,
+    canvH: 240,
+    targetH: 58
+  });
+
+  // Load Juan (microondas) custom high-res pose sprites
+  loadPoses("juan", {
+    idle: "/sprites/juan/idle.png",
+    walk: "/sprites/juan/walk.png",
+    run: "/sprites/juan/walk.png",
+    jump: "/sprites/juan/jump.png",
+    attack: "/sprites/juan/attack.png",
+    death: "/sprites/juan/death.png"
+  }, {
+    faceRight: true,
+    anchorX: 140,
+    canvW: 380,
+    canvH: 260,
+    targetH: 58
+  });
+
+  // Load José Luis (impresora 3D Bambu Lab) custom high-res pose sprites
+  loadPoses("joseluis", {
+    idle: "/sprites/joseluis/idle.png",
+    walk: "/sprites/joseluis/walk.png",
+    run: "/sprites/joseluis/walk.png",
+    jump: "/sprites/joseluis/jump.png",
+    attack: "/sprites/joseluis/attack.png",
+    death: "/sprites/joseluis/death.png"
+  }, {
+    faceRight: true,
+    anchorX: 140,
+    canvW: 380,
+    canvH: 360,
     targetH: 60
   });
 }
@@ -328,6 +390,10 @@ export function getCharacterAvatar(charId) {
   if (charId === "beltran") return "/sprites/beltran/idle.png";
   if (charId === "javi") return "/sprites/javi/avatar.png";
   if (charId === "maca") return "/sprites/maca/idle.png";
+  if (charId === "jesus") return "/sprites/jesus/idle.png";
+  if (charId === "pablo") return "/sprites/pablo/idle.png";
+  if (charId === "juan") return "/sprites/juan/idle.png";
+  if (charId === "joseluis") return "/sprites/joseluis/idle.png";
   const s = SPR[charId];
   if (s && s.img) {
     try {
