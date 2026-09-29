@@ -221,25 +221,77 @@
     </div>
   </div>
 
-  <!-- ELECCIÓN DE MUNDO: 3 COLUMNAS, CADA UNA CON LA ESTÉTICA DE SU MUNDO -->
+  <!-- ELECCIÓN DE MUNDO: SELECTOR DE VIDEOJUEGO GAMIFICADO -->
   <div id="worldMapOv" class="overlay hidden world-map-overlay">
     <div class="ws-header">
-      <button id="btnCloseMap" class="ws-back" aria-label="Volver al menú" title="Volver">↩</button>
+      <button id="btnCloseMap" class="ws-back" aria-label="Volver al menú" title="Volver">
+        <span class="ws-back-arrow">↩</span>
+        <span class="ws-back-ticks" aria-hidden="true"><i></i><i></i><i></i></span>
+      </button>
+
       <div class="ws-heading">
-        <div class="ws-heading-kicker">THE RETREAT · CLEVERGY</div>
-        <h1 class="ws-heading-title">ELIGE MUNDO</h1>
+        <h1 class="ws-heading-title">
+          <span class="ws-star-icon ws-star-l">⭐</span>
+          <span class="ws-title-text">ELIGE <span class="ws-hl">TU MUNDO</span></span>
+          <span class="ws-star-icon ws-star-r">⭐</span>
+          <span class="ws-sparkle-icon" aria-hidden="true">✦</span>
+        </h1>
       </div>
+
       <div class="ws-header-right">
-        <div class="ws-progress"><span>⭐</span><span id="mapProgressTxt">0/3 MUNDOS</span></div>
+        <div class="ws-progress-card">
+          <span class="ws-card-star">⭐</span>
+          <div class="ws-progress-text">
+            <span class="ws-prog-num" id="mapProgressTxt">0/4 MUNDOS</span>
+            <span class="ws-prog-sub">CONQUISTADOS</span>
+          </div>
+        </div>
+
         <div class="ws-hero-pill">
-          <img id="mapHeroImg" src="/sprites/alejandro/avatar.png" alt="Héroe">
+          <div class="ws-hero-thumb">
+            <img id="mapHeroImg" src="/sprites/alejandro/avatar.png" alt="Héroe">
+          </div>
           <span id="mapHeroName">ALEJANDRO R.</span>
         </div>
       </div>
     </div>
+
+    <!-- Rejilla de 4 mundos en fila horizontal -->
     <div id="wsGrid" class="ws-grid"></div>
+
+    <!-- Camino de progresión inferior (➔ ── ① ━━━━ ② ━━━━ ③ ━━━━ ④ ── ⭐ 🏁) -->
+    <nav class="ws-trail-bar" id="wsTrailBar" aria-label="Camino de mundos">
+      <div class="ws-trail-arrow" aria-hidden="true">➔</div>
+      <div class="ws-trail-track" id="wsTrailTrack"></div>
+      <div class="ws-trail-end" aria-hidden="true">
+        <span class="ws-trail-star">⭐</span>
+        <span class="ws-trail-flag">🏁</span>
+      </div>
+    </nav>
+
     <div id="wsDots" class="ws-dots"></div>
+
+    <!-- Colinas de cuaderno en esquinas inferiores -->
+    <div class="ws-decor-hills ws-hills-left" aria-hidden="true">
+      <svg viewBox="0 0 160 90" preserveAspectRatio="none">
+        <path d="M -10 90 C 25 45 55 30 100 52 C 125 64 145 60 170 90 Z" fill="#65bf46" stroke="#232738" stroke-width="2.5"/>
+        <path d="M -10 90 C 18 60 40 52 75 90 Z" fill="#4ea536" opacity="0.6"/>
+        <circle cx="32" cy="60" r="5" fill="#4ea536" stroke="#232738" stroke-width="1.8"/>
+        <circle cx="60" cy="52" r="4.5" fill="#ffd23f" stroke="#232738" stroke-width="1.5"/>
+        <circle cx="106" cy="68" r="4" fill="#ff6b8b" stroke="#232738" stroke-width="1.5"/>
+      </svg>
+    </div>
+    <div class="ws-decor-hills ws-hills-right" aria-hidden="true">
+      <svg viewBox="0 0 160 90" preserveAspectRatio="none">
+        <path d="M -10 90 C 25 65 55 70 85 56 C 118 32 145 45 170 90 Z" fill="#65bf46" stroke="#232738" stroke-width="2.5"/>
+        <path d="M 70 90 C 105 54 132 60 170 90 Z" fill="#4ea536" opacity="0.6"/>
+        <circle cx="125" cy="58" r="5" fill="#4ea536" stroke="#232738" stroke-width="1.8"/>
+        <circle cx="98" cy="54" r="4.5" fill="#ffd23f" stroke="#232738" stroke-width="1.5"/>
+        <circle cx="55" cy="70" r="4" fill="#ff6b8b" stroke="#232738" stroke-width="1.5"/>
+      </svg>
+    </div>
   </div>
+
 
 
 

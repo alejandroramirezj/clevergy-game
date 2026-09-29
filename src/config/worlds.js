@@ -8,7 +8,13 @@ export const WORLDS = [
     id: 1,
     num: 1,
     theme: "mario",
+    color: "#e5283b",
+    tapeColor: "#fae88a",
+    kickerBg: "#fde8ea",
+    genreBg: "#fedfe8",
+    genreColor: "#d6204c",
     genre: "PLATAFORMAS",
+    defaultRetos: 2,
     blurb: "La vieja fábrica de ladrillo de Google for Startups junto al Palacio Real: café, torre de coworking y el escenario del Demo Day.",
     chips: ["👤 1 jugador", "🦸 18 poderes", "👾 Email Chain"],
     name: "La Oficina",
@@ -19,7 +25,13 @@ export const WORLDS = [
     id: 6,
     num: 2,
     theme: "arena",
+    color: "#6b2bd4",
+    tapeColor: "#c8b7f8",
+    kickerBg: "#f0ebfb",
+    genreBg: "#ede4fb",
+    genreColor: "#6b2bd4",
     genre: "PELEA · HASTA 4",
+    defaultRetos: 1,
     blurb: "Pelea estilo Smash en la terraza del CINK: hasta 4 a la vez, porcentaje de daño, vidas y objetos que coger del suelo.",
     chips: ["🥊 Hasta 4", "🎁 Objetos", "📱 Online"],
     name: "Coworking Fight",
@@ -30,7 +42,13 @@ export const WORLDS = [
     id: 7,
     num: 3,
     theme: "doodle",
+    color: "#166ae6",
+    tapeColor: "#9ed4fb",
+    kickerBg: "#e7f1fe",
+    genreBg: "#def0ff",
+    genreColor: "#166ae6",
     genre: "LASER TAG",
+    defaultRetos: 0,
     blurb: "Laser tag a boli por el CINK Coworking: oleadas de emails en cooperativo o todos contra todos con tus compañeros.",
     chips: ["👥 Hasta 6", "⚔️ PvP", "🤝 Coop"],
     name: "BoliBic Tag",
@@ -41,7 +59,13 @@ export const WORLDS = [
     id: 8,
     num: 4,
     theme: "kart",
+    color: "#f08518",
+    tapeColor: "#fbd89a",
+    kickerBg: "#fff2e4",
+    genreBg: "#fdf1d1",
+    genreColor: "#996808",
     genre: "CARRERAS",
+    defaultRetos: 0,
     blurb: "Carreras de motos de agua por el Pantano de San Juan: derrapes, rampas, turbos y objetos de oficina contra 5 rivales u online.",
     chips: ["🚤 6 pilotos", "🎁 Objetos", "📱 Online"],
     name: "Pantano de San Juan",
@@ -52,6 +76,28 @@ export const WORLDS = [
 
 // en pantalla, por su número
 export const VISIBLE_WORLDS = WORLDS.slice().sort((a, b) => a.num - b.num);
+
+export function getWorldChallenges(worldId, progress) {
+  if (progress && progress.challenges && progress.challenges[worldId] !== undefined) {
+    return Math.min(3, Math.max(0, Number(progress.challenges[worldId])));
+  }
+  if (progress && progress.completed && progress.completed.includes(worldId)) {
+    return 3;
+  }
+  const w = WORLDS.find((x) => x.id === worldId);
+  return w ? (w.defaultRetos ?? 0) : 0;
+}
+
+export function isWorldLocked(world, progress) {
+  if (world.num === 4 || world.id === 8) {
+    if (progress && progress.completed && progress.completed.includes(7)) {
+      return false;
+    }
+    return true;
+  }
+  return false;
+}
+
 
 const STORAGE_KEY = "clevergy_worlds_progress_v1";
 

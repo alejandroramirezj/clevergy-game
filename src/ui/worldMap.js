@@ -1,103 +1,288 @@
 // =============================================================================
-// worldMap.js — Elección de mundo: 3 columnas, cada una ambientada en su mundo
-//   1 · Plataformas (pixel art clásico) · 2 · Arena 1v1 (videojuego de lucha)
-//   3 · Doodle District (cuaderno dibujado a boli)
-// En horizontal se ven las tres a la vez; en vertical son un carrusel deslizable.
+// worldMap.js — Selector de Mundos Gamificado (Inspirado en maqueta doodle)
+//   Mundo 1: La Oficina (Plataformas)
+//   Mundo 2: Coworking Fight (Pelea hasta 4)
+//   Mundo 3: BoliBic Tag (Laser Tag)
+//   Mundo 4: Pantano de San Juan (Carreras)
 // =============================================================================
 
-import { VISIBLE_WORLDS, loadWorldProgress } from "../config/worlds.js";
+import { VISIBLE_WORLDS, loadWorldProgress, getWorldChallenges, isWorldLocked } from "../config/worlds.js";
 import { getCharacterAvatar } from "../engine/sprites.js";
 import { CHARS } from "../config/characters.js";
 import { GameState } from "../game/state.js";
 import { sfx } from "../engine/audio.js";
 
-// los sprites pixel art llegan como data: URL y se escalan sin suavizar
 const px = (src) => (src && src.startsWith("data:") ? " px" : "");
 
-// ── Ilustración de cada mundo: todas a boli sobre el mismo cuaderno ─────────
-// cada foto tiene su propio "paisaje" a color (cielo, estadio, oficina, pantano)
-const scene = (t) => `<div class="ws-scene ws-scene-${t}"><i></i><i></i><i></i></div>`;
-const heroImg = (hero, cls) => (hero ? `<img class="ws-hero ws-ink-hero ${cls}${px(hero)}" src="${hero}" alt="">` : "");
+// Die-cut sticker avatar con contorno blanco y sombra de tinta
+const heroImg = (hero, cls) =>
+  hero ? `<img class="ws-hero ws-sticker-hero ${cls}${px(hero)}" src="${hero}" alt="Personaje">` : "";
+
+// ── Ilustraciones ricas y coloridas para cada mundo ─────────────────────────
 
 function artMario(hero) {
-  return `${scene("mario")}
-    <svg class="ws-ink-svg" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid meet" fill="none" stroke-linecap="round" stroke-linejoin="round">
-      <g class="ws-boil"><path d="M4 84 L156 84" stroke="#272a36" stroke-width="2.4"/><path d="M4 84 L4 98 M156 84 L156 98" stroke="#272a36" stroke-width="2"/>
-      <g stroke="#1f38b8" stroke-width="1.2" opacity=".55">${[10, 22, 34, 46, 58, 70, 82, 94, 106, 118, 130, 142].map((x) => `<path d="M${x} 86 l8 10"/>`).join("")}</g></g>
-      <g class="ws-boil2" stroke="#d6243a" stroke-width="2"><rect x="62" y="30" width="12" height="12"/><rect x="86" y="30" width="12" height="12"/><path d="M62 36 h12 M68 30 v6 M86 36 h12 M92 36 v6"/></g>
-      <g class="ws-qblock2" stroke="#ec7f19" stroke-width="2.2"><rect x="74" y="30" width="12" height="12" fill="#fde8c8"/><path d="M77.5 34 q2.5 -3 5 0 q0 2 -2.5 3 v1.5 M80 40.5 v.5" stroke="#272a36"/></g>
-      <g stroke="#1a8c52" stroke-width="2"><path d="M18 64 h26 v4 h-26 z"/><path d="M114 56 h28 v4 h-28 z"/></g>
-      <g stroke="#ec7f19" stroke-width="1.8">${[[24, 56], [32, 52], [40, 56], [120, 48], [128, 44], [136, 48]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="3"/>`).join("")}</g>
-      <g stroke="#272a36" stroke-width="2"><path d="M138 84 v-38"/><path d="M138 46 l-14 5 l14 5" stroke="#d6243a" fill="#f7c9cf"/></g>
-      <g stroke="#52307c" stroke-width="1.8"><rect x="96" y="70" width="11" height="12" rx="2"/><circle cx="99.5" cy="75" r="1" fill="#52307c"/><circle cx="103.5" cy="75" r="1" fill="#52307c"/></g>
-      <path d="M36 80 q10 -26 22 -6" stroke="#1f38b8" stroke-width="1.4" stroke-dasharray="3 3"/>
-    </svg>
-    ${heroImg(hero, "ws-ink-hero-jump")}`;
+  return `
+    <div class="ws-scene-wrap">
+      <svg class="ws-scene-svg" viewBox="0 0 200 130" preserveAspectRatio="xMidYMid slice" fill="none">
+        <!-- Cielo azul brillante -->
+        <rect width="200" height="96" fill="#62b5fc"/>
+        <!-- Nubes blancas estilo doodle -->
+        <path d="M 20 28 Q 28 18 40 22 Q 52 14 64 24 Q 72 26 70 34 Q 45 38 20 34 Z" fill="#ffffff" opacity="0.95"/>
+        <path d="M 130 20 Q 140 10 152 14 Q 164 8 174 18 Q 182 22 178 28 Q 155 32 130 28 Z" fill="#ffffff" opacity="0.95"/>
+        
+        <!-- Bloques de ladrillo y bloque interrogación [ ? ] -->
+        <g id="mario-blocks">
+          <!-- Bloque ladrillo izq -->
+          <rect x="76" y="28" width="16" height="16" fill="#e85d26" stroke="#232738" stroke-width="1.8"/>
+          <line x1="76" y1="36" x2="92" y2="36" stroke="#232738" stroke-width="1.2"/>
+          <line x1="84" y1="28" x2="84" y2="36" stroke="#232738" stroke-width="1.2"/>
+          <!-- Bloque con interrogación central -->
+          <rect x="92" y="28" width="16" height="16" fill="#fcb316" stroke="#232738" stroke-width="1.8"/>
+          <circle cx="94" cy="30" r="1" fill="#232738"/>
+          <circle cx="106" cy="30" r="1" fill="#232738"/>
+          <circle cx="94" cy="42" r="1" fill="#232738"/>
+          <circle cx="106" cy="42" r="1" fill="#232738"/>
+          <text x="100" y="41" font-family="'Caveat', cursive, sans-serif" font-weight="900" font-size="14" fill="#232738" text-anchor="middle">?</text>
+          <!-- Bloque ladrillo der -->
+          <rect x="108" y="28" width="16" height="16" fill="#e85d26" stroke="#232738" stroke-width="1.8"/>
+          <line x1="108" y1="36" x2="124" y2="36" stroke="#232738" stroke-width="1.2"/>
+          <line x1="116" y1="36" x2="116" y2="44" stroke="#232738" stroke-width="1.2"/>
+        </g>
+
+        <!-- Fondo de oficina: escritorios con monitor y planta -->
+        <g stroke="#232738" stroke-width="1.6" stroke-linejoin="round">
+          <!-- Mesa izq -->
+          <rect x="6" y="52" width="28" height="2" fill="#d8e3ed"/>
+          <line x1="10" y1="54" x2="10" y2="96"/>
+          <line x1="30" y1="54" x2="30" y2="96"/>
+          <!-- Monitor izq -->
+          <rect x="12" y="38" width="16" height="12" rx="1.5" fill="#232738"/>
+          <rect x="14" y="40" width="12" height="8" fill="#7be1ec"/>
+          <path d="M 18 50 L 22 50 M 20 50 L 20 52"/>
+          <!-- Planta -->
+          <path d="M 28 46 Q 26 40 30 36 Q 34 40 32 46" fill="#4caf50"/>
+          
+          <!-- Mesa y monitor der -->
+          <rect x="166" y="52" width="28" height="2" fill="#d8e3ed"/>
+          <line x1="170" y1="54" x2="170" y2="96"/>
+          <line x1="190" y1="54" x2="190" y2="96"/>
+          <rect x="172" y="38" width="16" height="12" rx="1.5" fill="#232738"/>
+          <rect x="174" y="40" width="12" height="8" fill="#7be1ec"/>
+          <path d="M 178 50 L 182 50 M 180 50 L 180 52"/>
+        </g>
+
+        <!-- Suelo de hierba verde y tierra -->
+        <rect x="0" y="94" width="200" height="36" fill="#58b332" stroke="#232738" stroke-width="2"/>
+        <line x1="0" y1="94" x2="200" y2="94" stroke="#232738" stroke-width="2"/>
+        <path d="M 0 94 Q 10 99 20 94 Q 30 99 40 94 Q 50 99 60 94 Q 70 99 80 94 Q 90 99 100 94 Q 110 99 120 94 Q 130 99 140 94 Q 150 99 160 94 Q 170 99 180 94 Q 190 99 200 94" fill="#479e27"/>
+      </svg>
+      ${heroImg(hero, "ws-hero-mario")}
+    </div>
+  `;
 }
 
 function artArena(hero, rival) {
-  return `${scene("arena")}
-    <svg class="ws-ink-svg" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid meet" fill="none" stroke-linecap="round" stroke-linejoin="round">
-      <g class="ws-boil"><path d="M8 88 L152 88" stroke="#272a36" stroke-width="2.4"/>
-      <g stroke="#d6243a" stroke-width="2"><rect x="10" y="10" width="54" height="7" rx="2"/><rect x="96" y="10" width="54" height="7" rx="2"/></g>
-      <g stroke="#1a8c52" stroke-width="1.3" opacity=".8">${[14, 20, 26, 32, 38, 44, 50, 56].map((x) => `<path d="M${x} 11 l3 5"/>`).join("")}${[100, 106, 112, 118, 124, 130, 136].map((x) => `<path d="M${x} 11 l3 5"/>`).join("")}</g>
-      <circle cx="80" cy="14" r="8" stroke="#272a36" stroke-width="2" fill="#f6f3e6"/></g>
-      <text x="80" y="17.5" text-anchor="middle" font-family="Caveat, cursive" font-size="10" fill="#1f38b8">60</text>
-      <path class="ws-boil2" d="M86 28 L70 56 L80 56 L72 82 L94 48 L83 48 Z" stroke="#ec7f19" stroke-width="2.2" fill="#fde8c8"/>
-      <g stroke="#1f38b8" stroke-width="1.4" opacity=".6"><path d="M20 40 l18 0 M16 48 l22 0 M22 56 l14 0 M122 40 l18 0 M122 48 l22 0 M124 56 l14 0"/></g>
-    </svg>
-    <div class="ws-ink-vs">VS</div>
-    ${heroImg(hero, "ws-ink-p1")}${heroImg(rival, "ws-ink-p2")}`;
+  return `
+    <div class="ws-scene-wrap">
+      <svg class="ws-scene-svg" viewBox="0 0 200 130" preserveAspectRatio="xMidYMid slice" fill="none">
+        <defs>
+          <radialGradient id="arenaSpotlight" cx="50%" cy="40%" r="65%">
+            <stop offset="0%" stop-color="#4a2ba3" stop-opacity="0.8"/>
+            <stop offset="100%" stop-color="#14142b" stop-opacity="1"/>
+          </radialGradient>
+        </defs>
+        <!-- Escenario oscuro con foco -->
+        <rect width="200" height="130" fill="url(#arenaSpotlight)"/>
+        
+        <!-- Focos de luz púrpura y magenta -->
+        <polygon points="100,0 20,130 70,130" fill="#a455f5" opacity="0.18"/>
+        <polygon points="100,0 130,130 180,130" fill="#f05988" opacity="0.18"/>
+
+        <!-- Barras de vida superiores estilo Smash / Fighting -->
+        <g stroke="#232738" stroke-width="1.8">
+          <!-- P1 Barra roja -->
+          <rect x="14" y="10" width="65" height="10" rx="3" fill="#e5283b"/>
+          <g fill="#ffffff" opacity="0.6">
+            ${[20, 28, 36, 44, 52, 60, 68].map(x => `<rect x="${x}" y="11" width="3" height="8" rx="1"/>`).join("")}
+          </g>
+          <!-- P2 Barra roja -->
+          <rect x="121" y="10" width="65" height="10" rx="3" fill="#e5283b"/>
+          <g fill="#ffffff" opacity="0.6">
+            ${[127, 135, 143, 151, 159, 167, 175].map(x => `<rect x="${x}" y="11" width="3" height="8" rx="1"/>`).join("")}
+          </g>
+          <!-- Círculo timer "60" -->
+          <circle cx="100" cy="15" r="10" fill="#ffffff" stroke="#232738" stroke-width="2"/>
+        </g>
+        <text x="100" y="19" font-family="'Caveat', cursive, sans-serif" font-weight="900" font-size="12" fill="#232738" text-anchor="middle">60</text>
+
+        <!-- Suelo de la plataforma de combate -->
+        <rect x="10" y="104" width="180" height="26" rx="4" fill="#28224d" stroke="#232738" stroke-width="2.2"/>
+        <line x1="10" y1="108" x2="190" y2="108" stroke="#a455f5" stroke-width="2"/>
+
+        <!-- Rayo o brillo central de impacto -->
+        <path d="M 98 42 L 94 62 L 104 62 L 96 90 L 106 60 L 98 60 Z" fill="#ffd23f" opacity="0.7"/>
+      </svg>
+      <div class="ws-vs-badge">VS</div>
+      ${heroImg(hero, "ws-hero-arena-p1")}
+      ${heroImg(rival, "ws-hero-arena-p2")}
+    </div>
+  `;
 }
 
 function artDoodle(hero) {
-  return `${scene("doodle")}
-    <svg class="ws-ink-svg" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid meet" fill="none" stroke-linecap="round" stroke-linejoin="round">
-      <g class="ws-boil" stroke="#d6243a" stroke-width="2.2">
-        <path d="M104 18 L140 20 L138 44 L102 42 Z"/><path d="M104 19 L121 33 L139 21"/>
-        <path d="M112 30 l3 -2 M128 29 l-3 -2"/><circle cx="114" cy="32" r="1.2" fill="#d6243a"/><circle cx="127" cy="32" r="1.2" fill="#d6243a"/>
-      </g>
-      <g class="ws-boil2">
-        <rect x="6" y="8" width="60" height="30" rx="3" fill="#fff" stroke="#272a36" stroke-width="2"/>
-        <g transform="translate(10 12) scale(2.2)" stroke="#272a36" stroke-width="0.75" fill="none">
-          <path d="M9 2.5 L6 0 L1 3.8 L1 6.2 L6 10 L9 7.5"/><path d="M6 2.5 L3.4 4.4 L3.4 5.6 L6 7.5 L8.6 5.6 L8.6 4.4 L6.6 3"/><path d="M6.6 3 L5.4 4.5 L6.6 5.4"/>
+  return `
+    <div class="ws-scene-wrap">
+      <svg class="ws-scene-svg" viewBox="0 0 200 130" preserveAspectRatio="xMidYMid slice" fill="none">
+        <!-- Fondo de oficina CINK Coworking -->
+        <rect width="200" height="130" fill="#edf3f9"/>
+        
+        <!-- Tabique / Ventanal al fondo con luz cálida -->
+        <rect x="110" y="12" width="80" height="74" fill="#ffeebb" opacity="0.7" stroke="#232738" stroke-width="1.6"/>
+        <line x1="150" y1="12" x2="150" y2="86" stroke="#232738" stroke-width="1.6"/>
+        <line x1="110" y1="48" x2="190" y2="48" stroke="#232738" stroke-width="1.6"/>
+
+        <!-- Placa oficial "CINK COWORKING" en la pared -->
+        <g stroke="#232738" stroke-width="1.8">
+          <rect x="8" y="12" width="70" height="32" rx="3" fill="#ffffff"/>
+          <!-- Logo geométrico CINK -->
+          <g transform="translate(12, 16) scale(0.65)" fill="none" stroke="#232738" stroke-width="2.5">
+            <path d="M 12 2 L 2 9 L 2 21 L 12 28 L 22 21 L 22 9 Z"/>
+            <path d="M 12 8 L 7 12 L 7 18 L 12 22 L 17 18 L 17 12 Z"/>
+          </g>
+          <text x="36" y="27" font-family="'Caveat', cursive, sans-serif" font-weight="900" font-size="14" fill="#232738">CINK</text>
+          <text x="36" y="38" font-family="'Patrick Hand', cursive, sans-serif" font-weight="700" font-size="6.5" letter-spacing="1" fill="#232738">COWORKING</text>
         </g>
-        <text x="34" y="27" font-family="Caveat, cursive" font-weight="700" font-size="15" fill="#272a36">CINK</text>
-        <text x="34" y="34" font-family="Patrick Hand, cursive" font-size="5.2" letter-spacing=".6" fill="#272a36">COWORKING</text>
-        <path d="M12 38 L12 50 M60 38 L60 50" stroke="#272a36" stroke-width="1.6"/>
-      </g>
-      <g stroke="#ec7f19" stroke-width="2"><circle cx="146" cy="78" r="9"/><path d="M146 72 L146 78 L150 80"/></g>
-      <g stroke="#1f38b8" stroke-width="1.8"><path d="M10 88 c10 -6 18 6 28 0 s18 6 28 0 s18 6 28 0"/></g>
-      <g stroke="#1f38b8" stroke-width="2.2"><path d="M60 70 L118 64"/><path d="M118 64 l8 -1"/><circle cx="122" cy="63.5" r="2.6" fill="#ec7f19"/></g>
-      <text x="100" y="58" font-family="Caveat, cursive" font-size="11" fill="#d6243a">9.999 sin leer</text>
-    </svg>
-    ${heroImg(hero, "ws-ink-hero-doodle")}`;
+
+        <!-- Notificación correo electrónico con sobre en pared -->
+        <g transform="translate(150, 18)" stroke="#e5283b" stroke-width="1.8" fill="#ffffff">
+          <rect width="24" height="16" rx="2"/>
+          <path d="M 0 0 L 12 9 L 24 0"/>
+        </g>
+
+        <!-- Rayos láser rojos cruzando toda la habitación -->
+        <g stroke="#ff203c" stroke-width="2.4" stroke-linecap="round" opacity="0.95">
+          <line x1="0" y1="64" x2="200" y2="84"/>
+          <line x1="0" y1="92" x2="200" y2="60"/>
+          <line x1="60" y1="12" x2="160" y2="120" stroke-dasharray="8 4"/>
+        </g>
+
+        <!-- Archivador azul en la esquina derecha -->
+        <g stroke="#232738" stroke-width="1.8">
+          <rect x="146" y="66" width="46" height="54" rx="2" fill="#1b68e3"/>
+          <line x1="146" y1="84" x2="192" y2="84"/>
+          <line x1="146" y1="102" x2="192" y2="102"/>
+          <rect x="164" y="72" width="10" height="4" rx="1" fill="#ffffff"/>
+          <rect x="164" y="90" width="10" height="4" rx="1" fill="#ffffff"/>
+          <rect x="164" y="108" width="10" height="4" rx="1" fill="#ffffff"/>
+        </g>
+
+        <!-- Suelo con perspectiva -->
+        <line x1="0" y1="110" x2="200" y2="110" stroke="#232738" stroke-width="2"/>
+      </svg>
+      ${heroImg(hero, "ws-hero-doodle")}
+    </div>
+  `;
 }
 
 function artKart(hero) {
-  return `${scene("kart")}
-    <svg class="ws-ink-svg" viewBox="0 0 160 100" preserveAspectRatio="xMidYMid meet" fill="none" stroke-linecap="round" stroke-linejoin="round">
-      <g class="ws-boil" stroke="#1a8c52" stroke-width="2"><path d="M0 50 L20 34 L36 44 L56 30 L78 44 L96 32 L112 42"/>
-        ${[10, 24, 44, 62, 84, 100].map((x, i) => `<path d="M${x} ${46 - (i % 2) * 5} l4 -10 l4 10 z"/>`).join("")}</g>
-      <g class="ws-boil2" stroke="#272a36" stroke-width="2"><path d="M118 52 L118 32 L156 32 L156 52"/><path d="M122 36 v10 M130 36 v10 M138 36 v10 M146 36 v10"/></g>
-      <g stroke="#1f38b8" stroke-width="1.8" class="ws-waves2"><path d="M4 60 q6 -3 12 0 t12 0 t12 0"/><path d="M60 68 q6 -3 12 0 t12 0"/><path d="M110 62 q6 -3 12 0 t12 0 t12 0"/><path d="M26 82 q6 -3 12 0 t12 0"/><path d="M96 88 q6 -3 12 0 t12 0"/></g>
-      <g stroke="#272a36" stroke-width="1.4">${[0, 1, 2, 3, 4, 5, 6].map((i) => `<circle cx="${10 + i * 24}" cy="${56 + (i % 2) * 2}" r="2.6" fill="${i % 2 ? "#fbd3a8" : "#f7c9cf"}"/>`).join("")}</g>
-      <g class="ws-bob2"><path d="M52 84 L96 84 L104 78 L60 78 Z" stroke="#d6243a" stroke-width="2.2" fill="#f7c9cf"/><path d="M60 78 L74 78 L72 74 L64 74 Z" stroke="#272a36" stroke-width="1.8"/>
-      <path d="M46 86 q-8 -2 -16 2 M48 82 q-10 -1 -18 -6" stroke="#1f38b8" stroke-width="1.8"/></g>
-      <g stroke="#272a36" stroke-width="1.6"><path d="M8 8 h144"/>${Array.from({ length: 12 }, (_, i) => `<rect x="${8 + i * 12}" y="8" width="6" height="5" fill="#272a36"/>`).join("")}</g>
-    </svg>
-    ${heroImg(hero, "ws-ink-hero-kart")}`;
+  return `
+    <div class="ws-scene-wrap">
+      <svg class="ws-scene-svg" viewBox="0 0 200 130" preserveAspectRatio="xMidYMid slice" fill="none">
+        <!-- Cielo soleado del pantano -->
+        <rect width="200" height="66" fill="#71c7fb"/>
+        
+        <!-- Sol radiante con rayos -->
+        <g transform="translate(170, 20)">
+          <circle cx="0" cy="0" r="10" fill="#ffd426" stroke="#232738" stroke-width="1.8"/>
+          ${[0, 45, 90, 135, 180, 225, 270, 315].map(a => {
+            const rad = (a * Math.PI) / 180;
+            const x1 = Math.cos(rad) * 13;
+            const y1 = Math.sin(rad) * 13;
+            const x2 = Math.cos(rad) * 17;
+            const y2 = Math.sin(rad) * 17;
+            return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#ffd426" stroke-width="2" stroke-linecap="round"/>`;
+          }).join("")}
+        </g>
+
+        <!-- Orilla verde con pinos / árboles al fondo -->
+        <path d="M 0 56 Q 30 46 60 52 Q 100 44 140 50 Q 170 46 200 54 L 200 66 L 0 66 Z" fill="#3b9643" stroke="#232738" stroke-width="1.8"/>
+        <!-- Pinos en la orilla -->
+        <g fill="#256b2c">
+          <polygon points="12,50 8,56 16,56"/>
+          <polygon points="28,46 22,54 34,54"/>
+          <polygon points="46,48 40,56 52,56"/>
+          <polygon points="80,44 74,52 86,52"/>
+          <polygon points="98,46 92,54 104,54"/>
+        </g>
+
+        <!-- Pantalán de madera a la derecha -->
+        <g stroke="#232738" stroke-width="1.8" fill="#4a5568">
+          <rect x="145" y="44" width="50" height="8" rx="1" fill="#718096"/>
+          <line x1="152" y1="52" x2="152" y2="70"/>
+          <line x1="172" y1="52" x2="172" y2="70"/>
+          <line x1="190" y1="52" x2="190" y2="70"/>
+        </g>
+
+        <!-- Agua azul del pantano -->
+        <rect x="0" y="64" width="200" height="66" fill="#248ed8"/>
+        <!-- Ondas de agua en azul más claro y blanco -->
+        <g stroke="#ffffff" stroke-width="2" stroke-linecap="round" opacity="0.85">
+          <path d="M 10 74 Q 20 70 30 74 M 70 78 Q 80 74 90 78 M 120 72 Q 130 68 140 72"/>
+          <path d="M 30 90 Q 40 86 50 90 M 90 98 Q 100 94 110 98 M 150 94 Q 160 90 170 94"/>
+          <path d="M 15 112 Q 25 108 35 112 M 75 118 Q 85 114 95 118 M 135 114 Q 145 110 155 114"/>
+        </g>
+
+        <!-- Boya con bandera de cuadros 🏁 -->
+        <g transform="translate(180, 84)">
+          <path d="M 0 6 C -6 6 -8 14 0 16 C 8 14 6 6 0 6 Z" fill="#e5283b" stroke="#232738" stroke-width="1.8"/>
+          <line x1="0" y1="6" x2="0" y2="-12" stroke="#232738" stroke-width="1.8"/>
+          <!-- Bandera ajedrezada -->
+          <rect x="0" y="-12" width="12" height="8" fill="#ffffff" stroke="#232738" stroke-width="1.2"/>
+          <rect x="0" y="-12" width="6" height="4" fill="#232738"/>
+          <rect x="6" y="-8" width="6" height="4" fill="#232738"/>
+        </g>
+
+        <!-- Lancha motora roja con estela de agua -->
+        <g transform="translate(70, 78)">
+          <!-- Estela de espuma blanca -->
+          <path d="M -24 16 Q -12 6 0 12 Q -12 24 -24 16 Z" fill="#ffffff" opacity="0.95"/>
+          <path d="M -36 18 Q -20 10 -10 16 Q -22 26 -36 18 Z" fill="#ffffff" opacity="0.7"/>
+          <!-- Casco de la barca -->
+          <path d="M -10 12 L 40 12 L 52 4 L 16 4 Z" fill="#e5283b" stroke="#232738" stroke-width="2"/>
+          <path d="M -6 12 L 34 12 L 30 16 L -2 16 Z" fill="#ffffff" stroke="#232738" stroke-width="1.6"/>
+          <!-- Parabrisas -->
+          <polygon points="12,4 22,-4 32,4" fill="#a0d8ef" stroke="#232738" stroke-width="1.6"/>
+        </g>
+      </svg>
+      ${heroImg(hero, "ws-hero-kart")}
+    </div>
+  `;
 }
+
+// ── Inicializador y controlador del selector de mundos ─────────────────────
 
 export function initWorldMap({ onSelectWorld }) {
   const mapOv = document.getElementById("worldMapOv");
   const grid = document.getElementById("wsGrid");
   const dots = document.getElementById("wsDots");
+  const trailTrack = document.getElementById("wsTrailTrack");
   const btnCloseMap = document.getElementById("btnCloseMap");
 
-  let selectedId = null;
+  let selectedId = 1;
 
   function play(id) {
+    const progress = loadWorldProgress();
+    const w = VISIBLE_WORLDS.find((x) => x.id === id);
+    if (w && isWorldLocked(w, progress)) {
+      try { sfx(200, 0.15, "sawtooth"); } catch (e) {}
+      const card = grid?.querySelector(`.ws-card[data-id="${id}"]`);
+      if (card) {
+        card.classList.remove("ws-shake");
+        void card.offsetWidth;
+        card.classList.add("ws-shake");
+      }
+      return;
+    }
     hideWorldMap();
     try { sfx(880, 0.12, "triangle"); } catch (e) {}
     if (onSelectWorld) onSelectWorld(id);
@@ -105,9 +290,21 @@ export function initWorldMap({ onSelectWorld }) {
 
   function select(id, scroll) {
     selectedId = id;
-    grid.querySelectorAll(".ws-card").forEach((c) => c.classList.toggle("selected", Number(c.dataset.id) === id));
-    dots.querySelectorAll("i").forEach((d) => d.classList.toggle("on", Number(d.dataset.id) === id));
-    if (scroll) {
+    if (grid) {
+      grid.querySelectorAll(".ws-card").forEach((c) => {
+        const isSel = Number(c.dataset.id) === id;
+        c.classList.toggle("selected", isSel);
+      });
+    }
+    if (trailTrack) {
+      trailTrack.querySelectorAll(".ws-node").forEach((n) => {
+        n.classList.toggle("active", Number(n.dataset.id) === id);
+      });
+    }
+    if (dots) {
+      dots.querySelectorAll("i").forEach((d) => d.classList.toggle("on", Number(d.dataset.id) === id));
+    }
+    if (scroll && grid) {
       const card = grid.querySelector(`.ws-card[data-id="${id}"]`);
       if (card && grid.scrollWidth > grid.clientWidth + 4) {
         grid.scrollTo({ left: card.offsetLeft - (grid.clientWidth - card.clientWidth) / 2, behavior: "smooth" });
@@ -118,65 +315,187 @@ export function initWorldMap({ onSelectWorld }) {
   function renderMap() {
     if (!grid) return;
     const progress = loadWorldProgress();
-    const done = VISIBLE_WORLDS.filter((w) => progress.completed.includes(w.id)).length;
+    const conquered = VISIBLE_WORLDS.filter((w) => getWorldChallenges(w.id, progress) >= 3 || progress.completed.includes(w.id)).length;
     const progTxt = document.getElementById("mapProgressTxt");
-    if (progTxt) progTxt.textContent = `${done}/${VISIBLE_WORLDS.length} MUNDOS`;
+    if (progTxt) progTxt.textContent = `${conquered}/${VISIBLE_WORLDS.length} MUNDOS`;
 
     const curChar = CHARS[GameState.charIdx] || CHARS[0];
     const hero = getCharacterAvatar(curChar.id);
     const rivalChar = CHARS[(GameState.charIdx + 5) % CHARS.length];
     const rival = getCharacterAvatar(rivalChar.id);
-    const heroImg = document.getElementById("mapHeroImg");
+    const heroImgEl = document.getElementById("mapHeroImg");
     const heroName = document.getElementById("mapHeroName");
-    if (heroImg && hero) heroImg.src = hero;
+    if (heroImgEl && hero) heroImgEl.src = hero;
     if (heroName) heroName.textContent = curChar.name;
 
+    // Render Cards
     grid.innerHTML = VISIBLE_WORLDS.map((w) => {
-      const completed = progress.completed.includes(w.id);
-      const score = (progress.highScores && progress.highScores[w.id]) || 0;
-      const rank = (progress.ranks && progress.ranks[w.id]) || "";
+      const retos = getWorldChallenges(w.id, progress);
+      const locked = isWorldLocked(w, progress);
+      const isSel = (selectedId === w.id);
       const art = w.theme === "mario" ? artMario(hero) : w.theme === "arena" ? artArena(hero, rival) : w.theme === "kart" ? artKart(hero) : artDoodle(hero);
-      const record = completed
-        ? `<span class="ws-done">★ Dominado</span>${score ? ` · Récord <b>${score.toLocaleString("es-ES")}</b>` : ""}${rank ? ` · Rango <b>${rank}</b>` : ""}`
-        : `<span class="ws-pending">○ Por dominar</span>`;
+
       return `
-        <article class="ws-card ws-${w.theme}" data-id="${w.id}" tabindex="0">
-          <div class="ws-polaroid">
-            <span class="ws-tape"></span>
-            <div class="ws-art">${art}</div>
-            <div class="ws-num">${w.num}</div>
-            <div class="ws-label">${w.genre}</div>
+        <article class="ws-card ws-${w.theme} ${isSel ? "selected" : ""} ${locked ? "locked" : ""}" data-id="${w.id}" data-num="${w.num}" tabindex="0" style="--card-acc: ${w.color};">
+          <!-- Marco de rotulador rojo exterior (solo cuando está seleccionado) con trazos de énfasis -->
+          <div class="ws-sketch-frame" aria-hidden="true">
+            <span class="ws-corner-tick ws-tick-tl"></span>
+            <span class="ws-corner-tick ws-tick-tr"></span>
+            <span class="ws-corner-tick ws-tick-bl"></span>
+            <span class="ws-corner-tick ws-tick-br"></span>
+            <span class="ws-side-tick ws-tick-l1"></span>
+            <span class="ws-side-tick ws-tick-l2"></span>
+            <span class="ws-side-tick ws-tick-r1"></span>
+            <span class="ws-side-tick ws-tick-r2"></span>
           </div>
-          <div class="ws-body">
-            <h2 class="ws-title">${w.name}</h2>
-            <p class="ws-desc">${w.blurb || w.desc}</p>
-            <div class="ws-chips">${(w.chips || []).map((c) => `<span>${c}</span>`).join("")}</div>
-            <div class="ws-record">${record}</div>
-            <button class="ws-play" data-id="${w.id}">▶ JUGAR</button>
+
+          <!-- Hoja blanca unificada con esquinas redondeadas -->
+          <div class="ws-card-sheet">
+            <!-- Washi tape pegada arriba en el centro -->
+            <div class="ws-washi-tape" style="background: ${w.tapeColor};"></div>
+
+            <!-- Círculo con número de mundo arriba a la izquierda -->
+            <div class="ws-num-badge" style="background: ${w.color};">
+              <span class="ws-num-val">${w.num}</span>
+              ${isSel ? `
+                <div class="ws-num-burst" aria-hidden="true">
+                  <span></span><span></span><span></span>
+                </div>
+              ` : ""}
+            </div>
+
+            <!-- Ventana de ilustración con marco -->
+            <div class="ws-art-window">
+              ${art}
+            </div>
+
+            <!-- Cuerpo de información -->
+            <div class="ws-card-body">
+              <div class="ws-kicker" style="background: ${w.kickerBg}; color: ${w.color};">MUNDO ${w.num}</div>
+              <h2 class="ws-title" style="color: ${w.color};">${w.name}</h2>
+              <div class="ws-genre-pill" style="background: ${w.genreBg}; color: ${w.genreColor};">${w.genre}</div>
+
+              <!-- Fila de retos con 3 estrellas y contador -->
+              <div class="ws-retos-row">
+                <div class="ws-stars">
+                  ${[1, 2, 3].map(i => `
+                    <svg class="ws-star ${i <= retos ? "filled" : "empty"}" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                        fill="${i <= retos ? "#ffc233" : "#d8dfeb"}"
+                        stroke="${i <= retos ? "#232738" : "#98a5bb"}"
+                        stroke-width="1.8"
+                        stroke-linejoin="round"/>
+                    </svg>
+                  `).join("")}
+                </div>
+                <span class="ws-retos-txt">${retos}/3 RETOS</span>
+              </div>
+
+              <!-- Botón JUGAR o Caja bloqueada -->
+              ${locked ? `
+                <div class="ws-locked-box" data-id="${w.id}">
+                  <div class="ws-lock-icon">
+                    <svg viewBox="0 0 24 24" width="22" height="22" fill="#5c677d">
+                      <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                    </svg>
+                  </div>
+                  <div class="ws-lock-txt">
+                    COMPLETA EL MUNDO 3<br>PARA DESBLOQUEAR
+                  </div>
+                </div>
+              ` : `
+                <button class="ws-play ${isSel ? "is-selected" : ""}" data-id="${w.id}">
+                  <span class="ws-play-icon">▶</span>
+                  <span>JUGAR</span>
+                </button>
+              `}
+            </div>
           </div>
         </article>`;
     }).join("");
 
-    dots.innerHTML = VISIBLE_WORLDS.map((w) => `<i data-id="${w.id}"></i>`).join("");
+    // Render Adventure Trail Bar
+    if (trailTrack) {
+      trailTrack.innerHTML = `
+        <div class="ws-trail-line-bg">
+          <svg viewBox="0 0 800 20" preserveAspectRatio="none">
+            <line x1="20" y1="10" x2="780" y2="10" stroke="#166ae6" stroke-width="2.6" stroke-dasharray="8 6" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="ws-trail-nodes">
+          ${VISIBLE_WORLDS.map((w) => {
+            const isSel = (selectedId === w.id);
+            return `
+              <button class="ws-node ${isSel ? "active" : ""}" data-id="${w.id}" title="${w.name}">
+                <span class="ws-node-circle" style="background: ${w.color};">
+                  <span class="ws-node-num">${w.num}</span>
+                  ${isSel ? '<span class="ws-node-ring"></span>' : ""}
+                </span>
+                <span class="ws-node-title">${w.name}</span>
+              </button>
+            `;
+          }).join("")}
+        </div>
+      `;
 
+      trailTrack.querySelectorAll(".ws-node").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = Number(btn.dataset.id);
+          select(id, true);
+          try { sfx(660, 0.06, "sine"); } catch (err) {}
+        });
+      });
+    }
+
+    if (dots) {
+      dots.innerHTML = VISIBLE_WORLDS.map((w) => `<i data-id="${w.id}"></i>`).join("");
+      dots.querySelectorAll("i").forEach((d) => d.addEventListener("click", () => select(Number(d.dataset.id), true)));
+    }
+
+    // Interacciones en tarjetas
     grid.querySelectorAll(".ws-card").forEach((card) => {
       const id = Number(card.dataset.id);
-      card.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse" && selectedId !== id) { select(id); try { sfx(660, 0.05, "sine"); } catch (err) {} } });
+      card.addEventListener("pointerenter", (e) => {
+        if (e.pointerType === "mouse" && selectedId !== id) {
+          select(id);
+          try { sfx(660, 0.05, "sine"); } catch (err) {}
+        }
+      });
       card.addEventListener("click", (e) => {
         if (e.target.closest(".ws-play")) return;
         if (selectedId === id) play(id);
-        else { select(id, true); try { sfx(660, 0.06, "sine"); } catch (err) {} }
+        else {
+          select(id, true);
+          try { sfx(660, 0.06, "sine"); } catch (err) {}
+        }
       });
-      card.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.stopPropagation(); play(id); } });
+      card.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.stopPropagation();
+          play(id);
+        }
+      });
     });
-    grid.querySelectorAll(".ws-play").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); play(Number(b.dataset.id)); }));
-    dots.querySelectorAll("i").forEach((d) => d.addEventListener("click", () => select(Number(d.dataset.id), true)));
+
+    grid.querySelectorAll(".ws-play").forEach((b) =>
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        play(Number(b.dataset.id));
+      })
+    );
+
+    grid.querySelectorAll(".ws-locked-box").forEach((b) =>
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        play(Number(b.dataset.id));
+      })
+    );
 
     const def = VISIBLE_WORLDS.find((w) => w.id === (selectedId || GameState.currentWorld)) || VISIBLE_WORLDS[0];
     select(def.id, false);
   }
 
-  // en el carrusel vertical, la tarjeta centrada queda seleccionada
+  // Desplazamiento en carrusel móvil
   let scrollT = 0;
   grid?.addEventListener("scroll", () => {
     clearTimeout(scrollT);
