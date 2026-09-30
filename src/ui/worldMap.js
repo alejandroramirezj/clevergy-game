@@ -6,7 +6,7 @@
 //   Mundo 4: Pantano de San Juan (Carreras)
 // =============================================================================
 
-import { VISIBLE_WORLDS, loadWorldProgress, getWorldChallenges, isWorldLocked, worldRetos, dailyChallenge } from "../config/worlds.js";
+import { VISIBLE_WORLDS, loadWorldProgress, getWorldChallenges, isWorldLocked, worldRetos } from "../config/worlds.js";
 import { getCharacterAvatar } from "../engine/sprites.js";
 import { CHARS } from "../config/characters.js";
 import { GameState } from "../game/state.js";
@@ -492,16 +492,6 @@ export function initWorldMap({ onSelectWorld }) {
     }));
 
 
-    // reto del día (igual para todo el equipo)
-    {
-      const d = dailyChallenge(new Date(), loadWorldProgress());
-      let el = mapOv.querySelector(".ws-daily");
-      if (!el) { el = document.createElement("button"); el.className = "ws-daily"; mapOv.appendChild(el); }
-      el.style.setProperty("--card-acc", d.world.color);
-      el.classList.toggle("done", d.done);
-      el.innerHTML = `<b>${d.done ? "✅" : "🎯"} Reto del día</b><span>${d.world.name}: Reto ${d.idx + 1} · ${d.txt}</span><i>${d.done ? "¡Hecho!" : "▶ Jugar"}</i>`;
-      el.onclick = () => { if (!d.done) play(d.world.id); };
-    }
     const def = VISIBLE_WORLDS.find((w) => w.id === (selectedId || GameState.currentWorld)) || VISIBLE_WORLDS[0];
     select(def.id, false);
   }

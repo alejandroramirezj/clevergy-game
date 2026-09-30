@@ -1159,7 +1159,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory } = {})
     $(".cf-hud").classList.remove("hidden");
     setupHud();
     audio.init();
-    audio.startMusic();
+    audio.startMusic("pelea");
     phase = "intro";
     M.fightAt = at + 2400;
     schedule(at, () => { big("3", "", 0.7); sfx.beep(false); });

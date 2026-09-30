@@ -771,7 +771,7 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory } = {}) 
     showOv(null);
     $(".rk-hud").classList.remove("hidden");
     audio.init();
-    audio.startMusic();
+    audio.startMusic("pantano");
     startEngine();
     ["3", "2", "1"].forEach((n, i) => schedule(at + 200 + i * 1000, () => { flash(n, i === 0 ? "Pantano de San Juan" : "", 0.9); sfx.beep(false); }));
     schedule(RC.goAt, () => { phase = "race"; flash("¡YA!", "", 0.9); sfx.beep(true); });

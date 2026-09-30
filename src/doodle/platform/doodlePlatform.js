@@ -1532,7 +1532,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
   }
   function play() {
     audio.init();
-    audio.startMusic();
+    audio.startMusic("oficina");
     screen = "play";
     showOv(null);
     syncPad();

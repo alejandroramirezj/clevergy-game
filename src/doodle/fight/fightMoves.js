@@ -46,4 +46,8 @@ export function rollMulti() {
 }
 
 // enfriamiento del especial según el personaje (los rápidos recargan antes)
-export const specialCooldown = (cfg) => Math.max(1.6, Math.min(4, 1.4 + ((cfg && cfg.cd) || 1) * 1.1));
+// (los especiales a distancia recargan un 35 % más lento: desde lejos dominaban a las CPUs)
+export const specialCooldown = (cfg) => {
+  const base = Math.max(1.6, Math.min(4, 1.4 + ((cfg && cfg.cd) || 1) * 1.1));
+  return specialFor(cfg && cfg.id).kind === "proj" ? base * 1.35 : base;
+};

@@ -146,14 +146,3 @@ export function mergeWorldProgress(remote) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(prog)); } catch (e) {}
   return prog;
 }
-
-/** Reto del día: el mismo para todos ese día (sale de la fecha). Siempre un reto 2 o 3. */
-export function dailyChallenge(date = new Date(), progress) {
-  const key = `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
-  let h = 2166136261;
-  for (const ch of key) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
-  const w = VISIBLE_WORLDS[h % VISIBLE_WORLDS.length];
-  const idx = 1 + ((h >>> 8) % 2);
-  const reto = worldRetos(w.id, progress || { completed: [], ranks: {} })[idx];
-  return { key, world: w, idx, txt: reto.txt, done: reto.done };
-}

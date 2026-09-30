@@ -69,7 +69,6 @@ const TEMPLATE = `
   <div class="dd-ammo"><b>30</b><span>/${MAG}</span><small>BOLI BIC</small></div>
   <div class="dd-dash"><i></i><small>DASH</small></div>
   <div class="dd-hudbtns">
-    <button class="dd-hb dd-swapbtn" aria-label="Cambiar de compañero">${ICON.swap}<small>EQUIPO</small></button>
     <button class="dd-hb dd-cambtn" aria-label="Cambiar cámara">👁<small>3ª</small></button>
     <button class="dd-hb dd-dashbtn" aria-label="Dash">»<small>DASH</small></button>
     <button class="dd-hb dd-pausebtn" aria-label="Pausa">❚❚</button>
@@ -368,7 +367,6 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
   };
   tapBtn(".dd-cambtn", () => toggleCam());
   tapBtn(".dd-dashbtn", () => { input.dash = true; });
-  tapBtn(".dd-swapbtn", () => { if (onSwitchChar) onSwitchChar(); });
   tapBtn(".dd-pausebtn", () => pause());
 
   // etiquetas del mando mientras estás en este mundo (se restauran al salir)
@@ -760,7 +758,6 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
     // en horizontal el dash ya está junto al pulgar; en vertical va en la barra de arriba
     $(".dd-dashbtn").classList.toggle("hidden", !isTouch || !portrait);
     // en vertical el deck ya trae la barra de compañeros
-    $(".dd-swapbtn").classList.toggle("hidden", !onSwitchChar || portrait);
   }
   syncCamUi();
   renderLobby();

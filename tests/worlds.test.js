@@ -20,14 +20,3 @@ describe("mundos y retos", () => {
     expect(worldRetos(8, { completed: [], ranks: { 8: "S" } }).every((r) => !r.done)).toBe(true); // sin ganar no cuenta el rango
   });
 });
-
-import { dailyChallenge } from "../src/config/worlds.js";
-describe("reto del día", () => {
-  it("es el mismo durante todo el día y cambia entre días", () => {
-    const a = dailyChallenge(new Date(2026, 9, 1, 8)), b = dailyChallenge(new Date(2026, 9, 1, 22));
-    expect(a.world.id).toBe(b.world.id);
-    expect(a.idx).toBe(b.idx);
-    const days = new Set(Array.from({ length: 14 }, (_, i) => { const d = dailyChallenge(new Date(2026, 9, 1 + i)); return `${d.world.id}-${d.idx}`; }));
-    expect(days.size).toBeGreaterThan(2);
-  });
-});
