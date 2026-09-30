@@ -64,29 +64,36 @@ const TEMPLATE = `
 
 <div class="dd-ov pf-start">
   <div class="dd-card pf-card">
-    <div class="pf-col">
-      <div class="dd-kicker">MUNDO 1 · GOOGLE FOR STARTUPS CAMPUS</div>
+    <div class="pf-col pf-info">
+      <div class="dd-kicker">MUNDO 1 · PLATAFORMAS</div>
       <h1 class="pf-title">La Oficina</h1>
-      <p class="pf-lead">El viaje de Clevergy: de <b>Google for Startups Campus</b> a <b>Wayra</b> (Edificio Telefónica, Gran Vía) y al <b>CINK</b> de Infanta Mercedes, donde espera <b>EMAIL CHAIN</b> antes de llegar a la oficina.</p>
+      <p class="pf-lead">El viaje de Clevergy por sus oficinas hasta derrotar a <b>EMAIL CHAIN</b>.</p>
+      <ol class="pf-route">
+        <li><b>1</b><span>Google for Startups<small>Campus Madrid</small></span></li>
+        <li><b>2</b><span>Wayra<small>Edificio Telefónica</small></span></li>
+        <li><b>3</b><span>CINK Coworking<small>Infanta Mercedes</small></span></li>
+      </ol>
+      <details class="pf-help-box">
+        <summary>🕹️ Cómo se juega</summary>
+        <div class="pf-howto">
+          <div><b>Salta</b> más alto si mantienes el botón · <b>rebota</b> en las paredes</div>
+          <div><b>Pisa</b> a los enemigos · rompe <b>ladrillos</b> y abre bloques <b>?</b> con la cabeza</div>
+          <div>Ojo con las <b>sillas plegables</b>; las <b>rejillas</b> te suben y los <b>pufs</b> rebotan</div>
+          <div class="dd-desktop-only">A/D mover · Espacio saltar · J poder · S bajar · Tab compañero · Esc pausa</div>
+        </div>
+      </details>
+    </div>
+    <div class="pf-col pf-playcol">
       <div class="pf-picker">
         <button class="cf-arrow pf-arrow" data-d="-1" aria-label="Anterior">◀</button>
         <div class="pf-preview"><img class="cf-sticker pf-sticker" alt=""><div class="cf-pname pf-pname"></div><div class="cf-pspecial pf-pspecial"></div></div>
         <button class="cf-arrow pf-arrow" data-d="1" aria-label="Siguiente">▶</button>
       </div>
-    </div>
-    <div class="pf-col">
-      <div class="pf-howto">
-        <div><b>Salta</b> más alto si mantienes el botón · <b>rebota</b> en las paredes</div>
-        <div><b>Pisa</b> a los enemigos · rompe <b>ladrillos</b> y abre bloques <b>?</b> con la cabeza</div>
-        <div><b>Poder</b>: el de siempre de cada uno — José Luis imprime plataformas, Paloma vuela, Ana trepa…</div>
-        <div>Ojo con las <b>sillas plegables</b>; las <b>rejillas</b> te suben y los <b>pufs</b> rebotan</div>
-      </div>
-      <div class="pf-help dd-desktop-only">A/D mover · Espacio/W saltar · J poder · S bajar · Tab compañero · Esc pausa · 🎮 mando</div>
-      <div class="dd-btns">
-        <button class="dd-btn pf-go">¡A jugar!</button>
+      <div class="pf-actions">
         <button class="dd-btn pf-continue hidden"></button>
-        <button class="dd-btn dd-ghost pf-exit">Volver al mapa</button>
+        <button class="dd-btn pf-go">¡A jugar!</button>
       </div>
+      <button class="dd-btn dd-ghost dd-mini pf-exit">↩ Volver al mapa</button>
     </div>
   </div>
 </div>
@@ -1569,7 +1576,8 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     if (av) img.src = av;
     img.classList.toggle("px", !!(av && av.startsWith("data:")));
     $(".pf-pname").textContent = `${c.emoji} ${c.name}`;
-    $(".pf-pspecial").textContent = `★ ${c.ab} · ${c.tip || ""}`;
+    const pi = POWER_INFO[c.id];
+    $(".pf-pspecial").textContent = `${pi ? pi.icon : "★"} ${c.ab}${pi ? ` · ${pi.desc}` : ""}`;
   }
   root.querySelectorAll(".pf-arrow").forEach((b) => b.addEventListener("click", () => {
     pickIdx = (pickIdx + Number(b.dataset.d) + CHARS.length) % CHARS.length;

@@ -1,4 +1,4 @@
-import{A as jo,S as vr}from"./index-CZBk2xar.js";/**
+import{A as jo,S as vr}from"./index-DQsJU_qC.js";/**
  * @license
  * Copyright 2010-2024 Three.js Authors
  * SPDX-License-Identifier: MIT
