@@ -1412,3 +1412,44 @@ html body #menuOv .lobby-brand-title .lobby-brand-the { display: inline-block; v
 .ctrl2 b { color: var(--nb-red); font-weight: 400; }
 @media (orientation: portrait) { .ctrl2 { grid-template-columns: 1fr; } }
 @media (orientation: landscape) and (max-height: 500px) { .ctrl2 h3 { font-size: 19px; } .ctrl2 p { font-size: 13.5px; } }
+
+/* ════════ Logo THE RETREAT (letras gordas verde agua, borde de rotulador, nube y montaña) ════════ */
+html body #menuOv .tr-logo {
+  position: relative; display: inline-flex; flex-direction: column; align-items: center; margin: 0; padding: 4px 26px 6px;
+  font-family: "Luckiest Guy", "Caveat", cursive; line-height: 0.82; transform: rotate(-3deg);
+}
+html body #menuOv .tr-deco { position: absolute; left: 50%; top: 50%; width: 138%; height: 150%; transform: translate(-50%, -46%); z-index: 0; overflow: visible; }
+html body #menuOv .tr-the, html body #menuOv .tr-main {
+  position: relative; z-index: 1; display: block;
+  background: linear-gradient(180deg, #9ff5e6 0%, #54dcc9 45%, #1fae9e 100%);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: transparent;
+  -webkit-text-stroke: 0; paint-order: stroke fill;
+  filter: drop-shadow(0 0 0 #173a52) drop-shadow(2.5px 0 0 #173a52) drop-shadow(-2.5px 0 0 #173a52) drop-shadow(0 2.5px 0 #173a52) drop-shadow(0 -2.5px 0 #173a52) drop-shadow(3px 4px 0 #173a52);
+}
+html body #menuOv .tr-the { font-size: clamp(22px, 3.4vw, 34px); letter-spacing: 1px; align-self: flex-start; margin-left: 4px; transform: rotate(-4deg); }
+html body #menuOv .tr-main { font-size: clamp(40px, 6.2vw, 64px); letter-spacing: 1px; }
+html body #menuOv .lobby-brand-crest { overflow: visible; }
+@media (orientation: landscape) and (max-height: 420px) {
+  html body #menuOv .tr-logo { padding: 2px 18px 2px; margin-top: 2px; }
+  html body #menuOv .tr-the { font-size: 17px; }
+  html body #menuOv .tr-main { font-size: 34px; }
+  html body #menuOv .lobby-header-row { height: 58px !important; }
+}
+@media (orientation: portrait) {
+  html body #menuOv .tr-the { font-size: 24px; }
+  html body #menuOv .tr-main { font-size: 46px; }
+}
+/* logo de Clevergy abajo a la izquierda */
+html body #menuOv .lobby-footer-watermark { display: flex; align-items: center; opacity: 1 !important; }
+html body #menuOv .cg-brand { height: 30px; width: auto; display: block; }
+@media (orientation: landscape) and (max-height: 420px) { html body #menuOv .cg-brand { height: 24px; } }
+@media (orientation: portrait) { html body #menuOv .cg-brand { height: 22px; margin: 0 auto; } }
+/* botones de pose: icono arriba y texto entero, con aire */
+html body #menuOv .action-dock-item { display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 3px !important; min-width: 68px !important; height: 58px !important; padding: 4px 10px 6px !important; box-sizing: border-box !important; overflow: visible !important; }
+html body #menuOv .action-dock-item .action-icon { font-size: 18px !important; line-height: 1 !important; }
+html body #menuOv .action-dock-item .action-label { font-size: 14px !important; line-height: 1.1 !important; white-space: nowrap; }
+html body #menuOv .active-indicator { display: none !important; }
+@media (orientation: landscape) and (max-height: 420px) {
+  html body #menuOv .action-dock-item { height: 52px !important; min-width: 62px !important; padding: 3px 8px 5px !important; }
+  html body #menuOv .action-dock-item .action-label { font-size: 13px !important; }
+}

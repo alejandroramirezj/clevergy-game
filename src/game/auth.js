@@ -137,7 +137,7 @@ export function initAuth({ onCharChosen } = {}) {
     pushProgress();
     const invite = invitedCharId();
     if (!user.character) showClaim(invite || (CHARS[GameState.charIdx] || CHARS[0]).id, true);
-    else { choose(user.character, false); close(); }
+    else { if (!invite) choose(user.character, false); close(); } // el enlace/QR manda en esta visita
   }
 
   function applyUser() {
@@ -232,7 +232,8 @@ export function initAuth({ onCharChosen } = {}) {
         auth.user = user;
         applyUser();
         mergeWorldProgress(user.progress);
-        if (user.character) choose(user.character, false);
+        // si llega por el enlace/QR de un personaje, ese manda en esta visita
+        if (user.character) { if (!invitedCharId()) choose(user.character, false); }
         else showClaim(invitedCharId() || user.character || (CHARS[GameState.charIdx] || CHARS[0]).id, true);
       }
     } catch (e) {}

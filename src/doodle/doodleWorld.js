@@ -9,7 +9,7 @@ import * as THREE from "three";
 import { createDoodleRenderer, INK, mat } from "./doodleRender.js";
 import { DoodleAudio } from "./doodleAudio.js";
 import { GEO } from "./doodleLevel.js";
-import { buildLevel, ARENA, SPAWNS, START, PLAYER_SPAWNS, BOSS_AREA, COFFEE_SPOTS, floorOf } from "./cinkLevel.js";
+import { buildLevel, ARENA, SPAWNS, START, PLAYER_SPAWNS, BOSS_AREA, COFFEE_SPOTS, floorOf, F1 as F1_Y } from "./cinkLevel.js";
 import { makeEmail, makeMeeting, makeClock, makeBoss, makeGun, makeCoffee } from "./doodleActors.js";
 import { createSticker } from "./doodleSticker.js";
 import { createTouchPad, ICON } from "./touchPad.js";
@@ -75,44 +75,55 @@ const TEMPLATE = `
   </div>
 </div>
 <div class="dd-ov dd-start">
-  <div class="dd-card">
-    <div class="dd-kicker">MUNDO 3 · LASER TAG</div>
-    <h1>BoliBic Tag</h1>
-    <p class="dd-lead">CINK Coworking (Infanta Mercedes) se ha llenado de emails urgentes, reuniones sin agenda
-      y «¿tienes 5 minutos?». Entra por la esquina, saluda a Victoria en recepción y limpia las tres plantas
-      hasta la oficina de Clevergy con tu boli Bic.</p>
-    <div class="dd-controls dd-desktop-only">
-      <span><b>WASD</b> moverse</span><span><b>Ratón</b> apuntar · <b>Clic</b> disparar</span>
-      <span><b>Espacio</b> saltar</span><span><b>Shift</b> dash</span><span><b>R</b> recargar</span>
-      <span><b>V</b> cámara 1ª/3ª</span><span><b>Tab</b> cambiar compañero</span><span><b>M</b> música · <b>Esc</b> pausa</span>
-      <span>🎮 <b>Mando</b>: sticks, RT dispara, A salta, B dash, Y cámara</span>
-    </div>
-    <div class="dd-controls dd-touch-only">
-      <span><b>Joystick</b> (pulgar izquierdo) moverse</span><span><b>Arrastra a la derecha</b> para apuntar</span>
-      <span><b>✎</b> disparar (arrástralo para apuntar a la vez)</span><span><b>Salta · Dash · Recarga</b></span>
-      <span>En vertical: cruceta ▲▼ andar, ◀▶ girar, <b>B</b> disparar, <b>A</b> saltar</span><span><b>👁</b> 1ª/3ª persona</span>
-    </div>
-    <div class="dd-mp">
-      <div class="dd-mp-head">👥 <b>Jugar en sala</b> <small>hasta ${MAX_PLAYERS} jugadores · cooperativo</small></div>
-      <div class="dd-mp-row dd-mp-lobby">
-        <button class="dd-btn dd-mini dd-mp-create">Crear sala</button>
-        <input class="dd-mp-code" maxlength="5" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters" spellcheck="false" />
-        <button class="dd-btn dd-mini dd-ghost dd-mp-join">Unirse</button>
-      </div>
-      <div class="dd-mp-room hidden">
-        <div class="dd-mp-coderow">Sala <b class="dd-mp-codebig"></b> <button class="dd-btn dd-mini dd-ghost dd-mp-copy">Copiar</button></div>
-        <div class="dd-mp-modes">
-          <button class="dd-mp-mode" data-mode="pvp">⚔️ Todos contra todos</button>
-          <button class="dd-mp-mode" data-mode="coop">🤝 Cooperativo</button>
+  <div class="dd-card dd-startcard">
+    <div class="ds-col ds-info">
+      <div class="dd-kicker">MUNDO 3 · LASER TAG</div>
+      <h1>BoliBic Tag</h1>
+      <p class="dd-lead">El CINK de Infanta Mercedes se ha llenado de emails, reuniones y «¿tienes 5 minutos?». Limpia las tres plantas hasta la oficina de Clevergy con tu boli Bic.</p>
+      <details class="ds-help">
+        <summary>🕹️ Controles</summary>
+        <div class="dd-controls dd-desktop-only">
+          <span><b>WASD</b> moverse</span><span><b>Ratón</b> apuntar · <b>Clic</b> disparar</span>
+          <span><b>Espacio</b> saltar</span><span><b>Shift</b> dash</span><span><b>R</b> recargar</span>
+          <span><b>V</b> cámara 1ª/3ª</span><span><b>Tab</b> compañero</span><span><b>M</b> música · <b>Esc</b> pausa</span>
+          <span>🎮 sticks, RT dispara, A salta, B dash, Y cámara</span>
         </div>
-        <div class="dd-mp-list"></div>
-        <button class="dd-btn dd-mini dd-ghost dd-mp-leave">Salir de la sala</button>
-      </div>
-      <div class="dd-mp-status"></div>
+        <div class="dd-controls dd-touch-only">
+          <span><b>Joystick</b> moverse</span><span><b>Arrastra a la derecha</b> para apuntar</span>
+          <span><b>✎</b> disparar</span><span><b>Salta · Dash · Recarga</b></span><span><b>👁</b> 1ª/3ª persona</span>
+          <span>En vertical: cruceta andar/girar, <b>B</b> dispara, <b>A</b> salta</span>
+        </div>
+      </details>
+      <button class="dd-btn dd-ghost dd-mini dd-exit ds-back">↩ Volver al mapa</button>
     </div>
-    <div class="dd-btns">
+    <div class="ds-col ds-play">
+      <div class="ds-tabs" role="tablist">
+        <button class="ds-tab on" data-tab="solo" role="tab">🎯 Solo</button>
+        <button class="ds-tab" data-tab="mp" role="tab">👥 Con compañeros</button>
+      </div>
+      <div class="ds-panel ds-solo">
+        <div class="ds-solo-info"><b>6 oleadas</b> y el jefe <b>INBOX INFINITO</b>. Tu compañero aporta su velocidad y su salto.</div>
+      </div>
+      <div class="ds-panel ds-mpanel hidden">
+        <div class="dd-mp">
+          <div class="dd-mp-row dd-mp-lobby">
+            <button class="dd-btn dd-mini dd-mp-create">Crear sala</button>
+            <span class="ds-or">o</span>
+            <input class="dd-mp-code" maxlength="5" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters" spellcheck="false" />
+            <button class="dd-btn dd-mini dd-ghost dd-mp-join">Unirse</button>
+          </div>
+          <div class="dd-mp-room hidden">
+            <div class="dd-mp-coderow">Sala <b class="dd-mp-codebig"></b> <button class="dd-btn dd-mini dd-ghost dd-mp-copy">Copiar</button> <button class="dd-btn dd-mini dd-ghost dd-mp-leave">Salir</button></div>
+            <div class="dd-mp-modes">
+              <button class="dd-mp-mode" data-mode="pvp">⚔️ Todos contra todos</button>
+              <button class="dd-mp-mode" data-mode="coop">🤝 Cooperativo</button>
+            </div>
+            <div class="dd-mp-list"></div>
+          </div>
+          <div class="dd-mp-status">Hasta ${MAX_PLAYERS} jugadores: crea una sala y pasa el código.</div>
+        </div>
+      </div>
       <button class="dd-btn dd-go">¡A dibujar!</button>
-      <button class="dd-btn dd-ghost dd-exit">Volver al mapa</button>
     </div>
   </div>
 </div>
@@ -161,7 +172,7 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
   camera.rotation.order = "YXZ";
   scene.add(camera);
 
-  const { colliders, updateDoors, victoria } = buildLevel(scene);
+  const { colliders, updateDoors, victoria, mariaEugenia, clevergyPhoto } = buildLevel(scene);
 
   const gun = makeGun();
   camera.add(gun.group);
@@ -172,6 +183,35 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
   // personaje en tercera persona (pegatina) + sombra de tinta en el suelo
   const overlay = new THREE.Scene(); // pegatinas (tú y tus compañeros), pintadas encima del dibujo
   const sticker = createSticker(overlay);
+
+  // la foto de la pared de la pizarra de Clevergy: una polaroid con sus colores reales
+  // (el render de boli no pinta texturas, así que va en la capa de encima y se oculta si una pared la tapa)
+  const photo = (() => {
+    const cv = document.createElement("canvas");
+    cv.width = 440; cv.height = 512;
+    const ctx = cv.getContext("2d");
+    const tex = new THREE.CanvasTexture(cv);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const img = new Image();
+    img.onload = () => {
+      ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, cv.width, cv.height);
+      const pw = 400, ph = Math.round(pw * img.height / img.width), iy = 20;
+      ctx.drawImage(img, 20, iy, pw, Math.min(ph, 420));
+      ctx.strokeStyle = "#272a36"; ctx.lineWidth = 6; ctx.strokeRect(3, 3, cv.width - 6, cv.height - 6);
+      ctx.fillStyle = "rgba(255, 226, 150, 0.85)"; ctx.save(); ctx.translate(cv.width / 2, 12); ctx.rotate(-0.05); ctx.fillRect(-70, -14, 140, 30); ctx.restore(); // cinta
+      ctx.fillStyle = "#1f38b8"; ctx.font = "34px Caveat, cursive"; ctx.textAlign = "center"; ctx.fillText("el jefe explicando el roadmap", cv.width / 2, cv.height - 24);
+      tex.needsUpdate = true;
+    };
+    img.src = "/ui/clevergy-pizarra.webp";
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(clevergyPhoto.w, clevergyPhoto.w * cv.height / cv.width),
+      new THREE.MeshBasicMaterial({ map: tex, depthTest: false, depthWrite: false, transparent: true }));
+    m.position.set(clevergyPhoto.x, clevergyPhoto.y, clevergyPhoto.z);
+    m.rotation.z = 0.04;
+    overlay.add(m);
+    return m;
+  })();
+  const _photoP = new THREE.Vector3(clevergyPhoto.x, clevergyPhoto.y, clevergyPhoto.z + 0.15);
+  let lastMaria = -99;
   const shadow = new THREE.Mesh(GEO.disc, mat(INK.BLACK, { fill: true }));
   shadow.rotation.x = -Math.PI / 2;
   shadow.scale.set(0.9, 0.55, 1);
@@ -421,6 +461,13 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
     return p ? `${p.e} ${p.n}` : "alguien";
   };
   $(".dd-go").addEventListener("click", hostStart);
+  // pestañas Solo / Con compañeros de la pantalla de inicio
+  function startTab(tab) {
+    root.querySelectorAll(".ds-tab").forEach((b) => b.classList.toggle("on", b.dataset.tab === tab));
+    $(".ds-solo").classList.toggle("hidden", tab !== "solo");
+    $(".ds-mpanel").classList.toggle("hidden", tab !== "mp");
+  }
+  root.querySelectorAll(".ds-tab").forEach((b) => b.addEventListener("click", () => startTab(b.dataset.tab)));
   $(".dd-resume").addEventListener("click", play);
   $(".dd-retry").addEventListener("click", hostStart);
 
@@ -1931,6 +1978,20 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
       lastHello = wall;
       showMsg("", "Victoria: ¡Hola! Bienvenido a CINK 👋 El comedor, a la izquierda; la terraza y las salas, al fondo; Clevergy, subiendo a la derecha.", 4.5);
     }
+    // María Eugenia teje en su balcón; si la miras desde la oficina de Clevergy, te saluda
+    mariaEugenia.update(dt);
+    const inClevergy = P.pos.x > 8.2 && P.pos.x < 20 && P.pos.z > -12 && P.pos.z < 6 && P.pos.y > F1_Y - 0.5 && P.pos.y < F1_Y + 2;
+    if (state === "play" && inClevergy && wall - lastMaria > 18) {
+      _v3.set(mariaEugenia.group.position.x - camera.position.x, mariaEugenia.group.position.y + 1.6 - camera.position.y, mariaEugenia.group.position.z - camera.position.z).normalize();
+      camera.getWorldDirection(_v2);
+      if (_v2.dot(_v3) > 0.975) {
+        lastMaria = wall;
+        mariaEugenia.greet();
+        showMsg("", "María Eugenia: ¡Hola, hijos! ¿Ya habéis comido? Que trabajáis mucho 🧶👋", 4);
+      }
+    }
+    // la foto sólo se ve si no hay una pared por medio (desde dentro de la oficina o por los cristales)
+    photo.visible = Math.abs(camera.position.y - clevergyPhoto.y) < 3.5 && camera.position.distanceTo(_photoP) < 22 && hasLOS(camera.position, _photoP);
     netTick(dt);
     updateRemotes(state === "start" ? 0 : dt);
     updateTeam(dt);

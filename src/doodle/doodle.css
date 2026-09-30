@@ -329,3 +329,46 @@ body.doodle-mode:not(.gameboy-mode) #touch { display: none !important; }
   .dd-joy-knob { width: 46px; height: 46px; margin: -23px 0 0 -23px; }
   .dd-acts { transform: scale(0.86); transform-origin: 100% 100%; }
 }
+
+/* ── pantalla de inicio de BoliBic Tag: dos columnas, sin scroll ── */
+.dd-startcard { display: grid; grid-template-columns: 1.05fr 1fr; gap: 18px; align-items: stretch; width: min(860px, calc(100vw - 32px)); max-height: calc(100dvh - 20px); overflow: auto; box-sizing: border-box; }
+.ds-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.dd-startcard h1 { margin: 0; }
+.dd-startcard .dd-lead { margin: 0; }
+.ds-help { border: 2px dashed rgba(39, 42, 54, 0.3); border-radius: 12px; padding: 4px 10px; }
+.ds-help summary { cursor: pointer; font-size: 16px; color: var(--dd-ink); list-style: none; }
+.ds-help summary::-webkit-details-marker { display: none; }
+.ds-help summary::after { content: " ▾"; }
+.ds-help[open] summary::after { content: " ▴"; }
+.ds-help .dd-controls { margin-top: 6px; font-size: 13px; }
+.ds-back { align-self: flex-start; margin-top: auto; }
+.ds-play { justify-content: flex-start; }
+.ds-tabs { display: grid; grid-template-columns: 1fr 1fr; border: 3px solid var(--dd-black); border-radius: 14px 9px 15px 10px; overflow: hidden; background: #fff; }
+.ds-tab { border: 0; background: none; padding: 8px 6px; font-family: "Caveat", cursive; font-size: 22px; color: var(--dd-black); cursor: pointer; }
+.ds-tab + .ds-tab { border-left: 3px solid var(--dd-black); }
+.ds-tab.on { background: var(--dd-ink); color: #fff; }
+.ds-panel { flex: 1; min-height: 0; }
+.ds-panel.hidden { display: none; }
+.ds-solo-info { font-size: 16px; line-height: 1.35; padding: 10px 12px; border: 2px dashed rgba(31, 56, 184, 0.35); border-radius: 12px; background: rgba(255, 255, 255, 0.6); }
+.ds-solo-info b { color: var(--dd-red); font-weight: 400; }
+.ds-mpanel .dd-mp { margin: 0; padding: 8px 10px; }
+.ds-mpanel .dd-mp-row { flex-wrap: wrap; gap: 6px; }
+.ds-mpanel .dd-mp-code { width: 108px; min-width: 0; }
+.ds-or { font-size: 14px; opacity: 0.6; }
+.ds-mpanel .dd-mp-status { font-size: 13px; margin-top: 4px; }
+.ds-mpanel .dd-mp-modes { flex-wrap: wrap; }
+.ds-play .dd-go { width: 100%; font-size: 28px; padding: 8px 12px; margin-top: auto; }
+@media (max-height: 460px) {
+  .dd-startcard { gap: 12px; padding: 10px 14px !important; }
+  .dd-startcard h1 { font-size: 38px !important; }
+  .dd-startcard .dd-lead { font-size: 14px !important; line-height: 1.3; }
+  .dd-startcard .dd-kicker { font-size: 12px; }
+  .ds-tab { font-size: 19px; padding: 5px 4px; }
+  .ds-solo-info { font-size: 14px; padding: 7px 10px; }
+  .ds-play .dd-go { font-size: 24px; padding: 5px 10px; }
+}
+@media (orientation: portrait) {
+  .dd-startcard { grid-template-columns: 1fr; }
+  .ds-back { margin-top: 0; }
+}
+.ds-mpanel .dd-mp-code { width: 124px; font-size: 20px; padding-left: 6px; padding-right: 6px; letter-spacing: 1px; }

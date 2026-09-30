@@ -131,18 +131,20 @@ export function buildLevel(scene) {
     }
   }
   // pared curva de la esquina en segmentos; `gap` = [a0, a1] en radianes
-  function arcWall(y0, y1, ink, o, gap, glass) {
+  function arcWall(y0, y1, ink, o, gap, glass, clear) {
     const N = 9;
     for (let k = 0; k < N; k++) {
       const a0 = (k / N) * Math.PI / 2, a1 = ((k + 1) / N) * Math.PI / 2, am = (a0 + a1) / 2;
       if (gap && am > gap[0] && am < gap[1]) continue;
       const px = ARC.cx + Math.cos(am) * ARC.r, pz = ARC.cz + Math.sin(am) * ARC.r;
       const chord = 2 * ARC.r * Math.sin((a1 - a0) / 2) + 0.05;
-      const m = new THREE.Mesh(GEO.box, mat(ink, o));
-      m.scale.set(0.3, y1 - y0, chord);
-      m.position.set(px, (y0 + y1) / 2, pz);
-      m.rotation.y = -am;
-      root.add(m);
+      if (!clear) {
+        const m = new THREE.Mesh(GEO.box, mat(ink, o));
+        m.scale.set(0.3, y1 - y0, chord);
+        m.position.set(px, (y0 + y1) / 2, pz);
+        m.rotation.y = -am;
+        root.add(m);
+      }
       if (glass) {
         const mull = new THREE.Mesh(GEO.box, mat(INK.BLACK, { fill: true }));
         mull.scale.set(0.12, y1 - y0, 0.1);
@@ -258,7 +260,20 @@ export function buildLevel(scene) {
   // fachadas (granito) y bandas de forjado
   wallZ(-28, -22, 20, 0, ROOF, [], STONE.ink, { tone: STONE.tone }, 0.4);
   wallX(-22, -28, 6, 0, ROOF, [], STONE.ink, { tone: STONE.tone }, 0.4);
-  wallX(20, -28, 0, 0, ROOF, [], STONE.ink, { tone: STONE.tone }, 0.4);
+  // (en la planta 1, la oficina de Clevergy tiene ventanales de cristal transparente)
+  const CLV_WIN = [[-10, -7.4], [-6.8, -4.2], [-3.6, -1]];
+  wallX(20, -28, 0, 0, F1 + 0.9, [], STONE.ink, { tone: STONE.tone }, 0.4);
+  {
+    let cur = -28;
+    for (const [a, b] of CLV_WIN) { B(19.8, F1 + 0.9, cur, 20.2, F1 + 3.4, a, STONE.ink, { tone: STONE.tone }); cur = b; }
+    B(19.8, F1 + 0.9, cur, 20.2, F1 + 3.4, 0, STONE.ink, { tone: STONE.tone });
+    for (const [a, b] of CLV_WIN) {
+      colliders.push({ x0: 19.9, x1: 20.1, y0: F1 + 0.9, y1: F1 + 3.4, z0: a, z1: b }); // el cristal (invisible)
+      B(19.85, F1 + 0.85, a, 20.15, F1 + 0.95, b, INK.BLACK, { fill: true, collide: false }); // alféizar
+      B(19.9, F1 + 0.9, (a + b) / 2 - 0.04, 20.1, F1 + 3.4, (a + b) / 2 + 0.04, INK.BLACK, { fill: true, collide: false }); // parteluz
+    }
+  }
+  wallX(20, -28, 0, F1 + 3.4, ROOF, [], STONE.ink, { tone: STONE.tone }, 0.4);
   wallZ(6, -22, 14, 0, ROOF, [], STONE.ink, { tone: STONE.tone }, 0.4);
   // ventanales: planta baja grandes, plantas altas en banda (como la foto)
   for (let x = -20; x < 12; x += 3.2) {
@@ -268,7 +283,7 @@ export function buildLevel(scene) {
   }
   for (let z = -26; z < -1; z += 3.2) {
     B(20.21, 0.9, z, 20.26, 3.4, z + 2.6, INK.BLUE, { tone: 0.32, collide: false });
-    B(20.21, 5.1, z, 20.26, 7.6, z + 2.6, INK.BLUE, { tone: 0.32, collide: false });
+    if (!CLV_WIN.some(([a]) => Math.abs(a - z) < 0.01)) B(20.21, 5.1, z, 20.26, 7.6, z + 2.6, INK.BLUE, { tone: 0.32, collide: false });
     B(20.21, 9.5, z, 20.26, 12, z + 2.6, INK.BLUE, { tone: 0.32, collide: false });
   }
   for (const y of [F1, F2, ROOF]) {
@@ -278,7 +293,7 @@ export function buildLevel(scene) {
   // esquina redonda: planta baja con la entrada, plantas altas acristaladas
   const ENTRY_GAP = [0.55, 1.02];
   arcWall(0, F1, STONE.ink, { tone: STONE.tone }, ENTRY_GAP, false);
-  arcWall(F1 - 0.4, ROOF, INK.BLUE, { tone: 0.3 }, null, true);
+  arcWall(F1 - 0.4, ROOF, INK.BLUE, { tone: 0.3 }, null, true, true); // cristal transparente: sólo se ven los montantes
   for (const y of [F1, F2]) { // barandilla curva del balcón de la esquina
     for (let k = 0; k < 12; k++) {
       const a = (k / 12) * Math.PI / 2;
@@ -470,11 +485,11 @@ export function buildLevel(scene) {
   place(inkText("CLEVERGY", { size: 0.34, ink: INK.GREEN }), 7.8, F1 + 3.2, -5.3, -1, 0);
   place(inkText("CLEVERGY", { size: 0.5, ink: INK.GREEN }), 14, F1 + 2.9, -11.8, 0, 1);
   [[14, 2.6], [16.8, 0.6], [11.2, 0.6]].forEach(([x, z]) => desk(x, z, F1, -1));
-  B(19.2, F1, -9.5, 19.8, F1 + 2.2, -3.5, WOOD.ink, { tone: 0.05 }); // estantería
-  for (const y of [0.8, 1.5]) B(19.0, F1 + y, -9.4, 19.8, F1 + y + 0.05, -3.6, WOOD.ink, { tone: 0.2, collide: false });
-  B(19.05, F1 + 0.85, -8.8, 19.6, F1 + 1.35, -8.2, INK.BLACK, { tone: -0.2, collide: false }); // cafetera
-  for (let k = 0; k < 5; k++) C(19.35, F1 + 1.55, -7.6 + k * 0.6, 0.1, 0.18, k % 2 ? INK.RED : INK.BLUE, { tone: 0.1 });
-  for (let k = 0; k < 4; k++) B(19.2, F1 + 0.85, -6.8 + k * 0.7, 19.6, F1 + 1.3, -6.3 + k * 0.7, INK.ORANGE, { tone: 0.1, collide: false }); // cajas de café
+  B(8.2, F1, -11.6, 8.8, F1 + 2.2, -7.2, WOOD.ink, { tone: 0.05 }); // estantería (junto a la puerta)
+  for (const y of [0.8, 1.5]) B(8.2, F1 + y, -11.5, 9.0, F1 + y + 0.05, -7.3, WOOD.ink, { tone: 0.2, collide: false });
+  B(8.4, F1 + 0.85, -11.2, 8.95, F1 + 1.35, -10.6, INK.BLACK, { tone: -0.2, collide: false }); // cafetera
+  for (let k = 0; k < 5; k++) C(8.65, F1 + 1.55, -10.4 + k * 0.6, 0.1, 0.18, k % 2 ? INK.RED : INK.BLUE, { tone: 0.1 });
+  for (let k = 0; k < 4; k++) B(8.4, F1 + 0.85, -10.2 + k * 0.7, 8.8, F1 + 1.3, -9.7 + k * 0.7, INK.ORANGE, { tone: 0.1, collide: false }); // cajas de café
   whiteboard(14, F1 + 1.8, -11.8, 0, 1, 3.4);
   plant(18.6, -11, F1, 0.9);
   // oficinas junto a la terraza
@@ -514,6 +529,27 @@ export function buildLevel(scene) {
   C(14.6, ROOF, -3, 0.35, 12, INK.BLACK, { tone: 0.2, collide: false });
   railing(-22, 6, 14, 6, ROOF); railing(20, -28, 20, 0, ROOF);
 
+  // ════════════════ MARÍA EUGENIA (la vecina de enfrente, siempre tejiendo) ════════════════
+  // ventana iluminada del edificio de la calle Limonero, a la izquierda de los ventanales de Clevergy
+  const MEZ = -16.5, MEY = F1 + 0.4;
+  // balcón madrileño (a lo grande para verla bien desde la oficina): puerta-ventana con luz
+  // cálida, cortinas, barandilla de forja y geranios
+  const BK = 1.7;
+  B(35.9, MEY, MEZ - 1.4 * BK, 36.02, MEY + 2.8 * BK, MEZ + 1.4 * BK, INK.ORANGE, { tone: 0.42, collide: false });
+  B(35.85, MEY + 2.8 * BK, MEZ - 1.55 * BK, 36.02, MEY + 2.95 * BK, MEZ + 1.55 * BK, INK.BLACK, { fill: true, collide: false });
+  for (const sd of [-1, 1]) {
+    B(35.85, MEY, MEZ + sd * 1.45 * BK - 0.08, 36.02, MEY + 2.95 * BK, MEZ + sd * 1.45 * BK + 0.08, INK.BLACK, { fill: true, collide: false });
+    B(35.8, MEY + 0.3, MEZ + sd * 1.1 * BK - 0.45, 35.88, MEY + 2.75 * BK, MEZ + sd * 1.1 * BK + 0.45, INK.RED, { tone: 0.2, collide: false }); // cortinas
+  }
+  B(33.6, MEY - 0.22, MEZ - 2 * BK, 36, MEY, MEZ + 2 * BK, INK.BLACK, { tone: 0.2, collide: false }); // suelo del balcón
+  B(33.55, MEY + 1.05 * BK, MEZ - 2 * BK, 33.68, MEY + 1.05 * BK + 0.1, MEZ + 2 * BK, INK.BLACK, { fill: true, collide: false }); // pasamanos
+  for (let z = MEZ - 1.95 * BK; z <= MEZ + 1.96 * BK; z += 0.35) B(33.58, MEY, z - 0.03, 33.65, MEY + 1.05 * BK, z + 0.03, INK.BLACK, { fill: true, collide: false });
+  for (const dz of [-2.8, 2.8]) { C(33.9, MEY, MEZ + dz, 0.25, 0.4, INK.RED, { tone: 0.1 }); S(33.9, MEY + 0.65, MEZ + dz, 0.4, INK.RED, { tone: -0.05 }); S(33.9, MEY + 0.45, MEZ + dz + 0.3, 0.3, INK.GREEN, { tone: -0.05 }); }
+  const mariaEugenia = makeMariaEugenia();
+  mariaEugenia.group.position.set(34.8, MEY, MEZ + 0.3);
+  mariaEugenia.group.rotation.y = -Math.PI / 2; // mira hacia la calle (hacia la oficina)
+  root.add(mariaEugenia.group);
+
   // ════════════════ VICTORIA (recepción) ════════════════
   const victoria = makeVictoria();
   victoria.group.position.set(10.3, 0, -3.5);
@@ -530,7 +566,63 @@ export function buildLevel(scene) {
   }
   updateDoors(1, []);
 
-  return { root, colliders, updateDoors, victoria };
+  // la foto de la pared de la pizarra (se pinta con sus colores reales, ver doodleWorld)
+  const clevergyPhoto = { x: 17.5, y: F1 + 1.85, z: -11.72, w: 1.25, h: 1.45, ny: 0 };
+
+  return { root, colliders, updateDoors, victoria, mariaEugenia, clevergyPhoto };
+}
+
+// María Eugenia: señora mayor con moño gris y gafas, en su sillón, tejiendo una bufanda
+function makeMariaEugenia() {
+  const g = new THREE.Group();
+  const part = (geo, ink, o, s, p, parent = g) => { const m = new THREE.Mesh(geo, mat(ink, o)); m.scale.set(...s); m.position.set(...p); parent.add(m); return m; };
+  const k = 2.1; // bastante más grande que en la vida real: está al otro lado de la calle
+  // sillón orejero
+  part(GEO.box, INK.GREEN, { tone: -0.05 }, [0.9 * k, 0.45 * k, 0.8 * k], [0, 0.35 * k, -0.05 * k]);
+  part(GEO.box, INK.GREEN, { tone: -0.12 }, [0.9 * k, 1.1 * k, 0.18 * k], [0, 0.95 * k, -0.42 * k]);
+  for (const s of [-1, 1]) part(GEO.box, INK.GREEN, { tone: -0.1 }, [0.16 * k, 0.4 * k, 0.75 * k], [s * 0.42 * k, 0.7 * k, 0]);
+  // cuerpo: rebeca morada, falda y zapatillas
+  part(GEO.cyl, INK.PURPLE, { tone: 0.15 }, [0.5 * k, 0.6 * k, 0.4 * k], [0, 0.92 * k, -0.1 * k]);
+  part(GEO.box, INK.BLUE, { tone: 0.2 }, [0.5 * k, 0.16 * k, 0.5 * k], [0, 0.62 * k, 0.15 * k]);
+  const head = part(GEO.sph, INK.ORANGE, { tone: 0.5 }, [0.36 * k, 0.4 * k, 0.36 * k], [0, 1.42 * k, -0.08 * k]);
+  part(GEO.sph, INK.BLACK, { tone: 0.62 }, [0.38 * k, 0.3 * k, 0.36 * k], [0, 1.52 * k, -0.14 * k]); // pelo canoso
+  part(GEO.sph, INK.BLACK, { tone: 0.62 }, [0.2 * k, 0.2 * k, 0.2 * k], [0, 1.66 * k, -0.24 * k]); // el moño
+  for (const s of [-1, 1]) part(GEO.torus, INK.BLACK, { fill: true }, [0.09 * k, 0.09 * k, 0.09 * k], [s * 0.07 * k, 1.44 * k, 0.1 * k]); // gafas
+  part(GEO.box, INK.RED, { fill: true }, [0.1 * k, 0.02 * k, 0.02 * k], [0, 1.33 * k, 0.1 * k]); // sonrisa
+  // brazos con las agujas y la bufanda a medias
+  const arms = new THREE.Group(); arms.position.set(0, 0.95 * k, 0.15 * k); g.add(arms);
+  const armL = part(GEO.box, INK.PURPLE, { tone: 0.15 }, [0.1 * k, 0.1 * k, 0.4 * k], [-0.16 * k, 0, 0.1 * k], arms);
+  const armR = part(GEO.box, INK.PURPLE, { tone: 0.15 }, [0.1 * k, 0.1 * k, 0.4 * k], [0.16 * k, 0, 0.1 * k], arms);
+  const needleL = part(GEO.cyl, INK.BLACK, { fill: true }, [0.02 * k, 0.45 * k, 0.02 * k], [-0.08 * k, 0.08 * k, 0.32 * k], arms);
+  const needleR = part(GEO.cyl, INK.BLACK, { fill: true }, [0.02 * k, 0.45 * k, 0.02 * k], [0.08 * k, 0.08 * k, 0.32 * k], arms);
+  needleL.rotation.z = 0.6; needleR.rotation.z = -0.6;
+  part(GEO.box, INK.RED, { tone: 0.1 }, [0.26 * k, 0.4 * k, 0.05 * k], [0, -0.18 * k, 0.32 * k], arms); // la bufanda
+  const yarn = part(GEO.sph, INK.RED, { tone: 0.05 }, [0.2 * k, 0.2 * k, 0.2 * k], [0.32 * k, 0.62 * k, 0.35 * k]); // el ovillo
+  // brazo para saludar (escondido mientras teje)
+  const wave = new THREE.Group(); wave.position.set(0.28 * k, 1.12 * k, 0); g.add(wave);
+  part(GEO.box, INK.PURPLE, { tone: 0.15 }, [0.1 * k, 0.5 * k, 0.1 * k], [0, 0.24 * k, 0], wave);
+  part(GEO.sph, INK.ORANGE, { tone: 0.5 }, [0.12 * k, 0.12 * k, 0.12 * k], [0, 0.52 * k, 0], wave);
+  wave.visible = false;
+  let t = 0, waveT = 0;
+  function update(dt) {
+    t += dt;
+    waveT = Math.max(0, waveT - dt);
+    const waving = waveT > 0;
+    wave.visible = waving;
+    armR.visible = !waving;
+    needleR.visible = !waving;
+    if (waving) wave.rotation.z = -0.3 + Math.sin(t * 10) * 0.45;
+    else {
+      // punto del derecho, punto del revés
+      needleL.rotation.x = Math.sin(t * 7) * 0.35;
+      needleR.rotation.x = -Math.sin(t * 7) * 0.35;
+      armL.position.y = Math.sin(t * 7) * 0.02;
+      armR.position.y = -Math.sin(t * 7) * 0.02;
+    }
+    head.rotation.x = waving ? -0.15 : 0.25 + Math.sin(t * 0.7) * 0.04; // mira la labor… o a ti
+    yarn.rotation.y += dt * 0.6;
+  }
+  return { group: g, update, greet: () => (waveT = 3.2), name: "María Eugenia" };
 }
 
 // Victoria: morena, delgada, con camisa clara; saluda al verte llegar
