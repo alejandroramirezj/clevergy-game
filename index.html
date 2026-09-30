@@ -173,18 +173,18 @@
 
 
   <!-- CLOUDFLARE D1 LEADERBOARD MODAL -->
-  <div id="lbOv" class="overlay hidden nb-page">
+  <div id="lbOv" class="overlay hidden nb-page lb2">
     <header class="nb-page-head">
       <button class="nb-back" id="btnCloseLB" aria-label="Volver">↩</button>
       <div class="nb-page-title"><small>CLASIFICACIÓN · EN VIVO</small><h1>🏆 Ranking</h1></div>
-      <div class="lb-tabs" role="tablist">
-        <button class="lb-tab on" data-tab="general" role="tab">General</button>
-        <button class="lb-tab" data-tab="worlds" role="tab">Por mundo</button>
+      <div class="lb2-head-right">
+        <button class="lb2-login hidden" id="lbLogin"></button>
+        <button class="nb-icon-btn" id="btnRefreshLB" aria-label="Actualizar">⟳</button>
       </div>
-      <button class="nb-icon-btn" id="btnRefreshLB" aria-label="Actualizar">⟳</button>
     </header>
-    <div id="lbModalContent" class="nb-page-scroll lb-content">
-      <div class="lb-empty">Cargando clasificación…</div>
+    <div class="lb2-body">
+      <nav class="lb2-tabs" id="lbTabs" role="tablist"></nav>
+      <div id="lbModalContent" class="lb2-board"><div class="lb-empty">Cargando clasificación…</div></div>
     </div>
   </div>
 

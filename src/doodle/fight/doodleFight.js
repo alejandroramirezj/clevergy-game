@@ -92,7 +92,7 @@ const TEMPLATE = `
 <div class="dd-ov cf-lobby">
   <div class="dd-card cf-card">
     <div class="cf-col cf-pickcol">
-      <div class="dd-kicker">MUNDO 2 · TODOS CONTRA TODOS</div>
+      <div class="dd-kicker">MUNDO 3 · TODOS CONTRA TODOS</div>
       <h1 class="cf-title">Coworking Fight</h1>
       <div class="cf-picker">
         <button class="cf-arrow" data-d="-1" aria-label="Anterior">◀</button>

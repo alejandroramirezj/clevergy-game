@@ -6,7 +6,7 @@ import { ANIM, SPR, getCharacterAvatar } from "../engine/sprites.js";
 import { fetchGlobalLeaderboard } from "../game/leaderboard.js";
 import { GOOGLE_G } from "../game/auth.js";
 
-export function initOverlays({ onStartGame, onOpenMap }) {
+export function initOverlays({ onStartGame, onOpenMap, onPlayWorld }) {
   // Elements
   const menuOv = document.getElementById("menuOv");
   const nameInput = document.getElementById("nameInput");
@@ -435,54 +435,75 @@ export function initOverlays({ onStartGame, onOpenMap }) {
     }
     return { all, perWorld };
   }
-  function renderGeneral({ all }) {
-    if (!all.length) return `<div class="lb-empty">🏆 ¡Aún no hay nadie! Supera cualquier mundo y estrena el ranking.</div>`;
-    const me = GameState.playerName;
-    const podium = [all[1], all[0], all[2]].map((p, i) => {
-      if (!p) return `<div class="lb-pod lb-pod-empty"></div>`;
-      const place = [2, 1, 3][i];
-      return `<div class="lb-pod lb-pod-${place}${p.name === me ? " me" : ""}">
-        <div class="lb-pod-av">${avatarOf(p.top && p.top.character)}<span class="lb-medal">${["🥇", "🥈", "🥉"][place - 1]}</span></div>
-        <div class="lb-pod-name">${esc(p.name)}</div>
-        <div class="lb-pod-pts">${fmtN(p.total)}</div>
-        <div class="lb-pod-block">${place}</div>
-      </div>`;
-    }).join("");
-    const rows = all.slice(3, 60).map((p, i) => `
-      <li class="lb-row${p.name === me ? " me" : ""}">
-        <span class="lb-pos">${i + 4}</span>
-        ${avatarOf(p.top && p.top.character)}
-        <span class="lb-name">${esc(p.name)}</span>
-        <span class="lb-wbadges">${VISIBLE_WORLDS.map((w) => `<i class="lb-wb${p.best[w.id] ? " on" : ""}" title="${esc(w.name)}">${w.num}</i>`).join("")}</span>
-        <b class="lb-pts">${fmtN(p.total)}</b>
-      </li>`).join("");
-    return `<div class="lb-general">
-      <div class="lb-podium">${podium}</div>
-      <div class="lb-list-wrap">
-        <div class="lb-note">Suma del mejor récord de cada jugador en cada mundo</div>
-        <ol class="lb-list">${rows || `<li class="lb-row lb-row-empty">Solo hay podio… ¡entra tú en la lista!</li>`}</ol>
-      </div>
+  // ── pantalla de ranking: pestañas a la izquierda · podio · lista · tu fila fija abajo ──
+  const lbTabsEl = document.getElementById("lbTabs");
+  const lbLoginEl = document.getElementById("lbLogin");
+  const podiumHtml = (top3, valueOf, me) => [top3[1], top3[0], top3[2]].map((p, i) => {
+    const place = [2, 1, 3][i];
+    if (!p) return `<div class="lb2-pod lb2-pod-${place} empty"><div class="lb2-pod-av">?</div><div class="lb2-pod-name">—</div><div class="lb2-pod-block">${place}</div></div>`;
+    return `<div class="lb2-pod lb2-pod-${place}${p.name === me ? " me" : ""}">
+      <div class="lb2-pod-av">${avatarOf(p.character)}${place === 1 ? '<span class="lb2-crown">👑</span>' : ""}</div>
+      <div class="lb2-pod-name">${esc(p.name)}</div>
+      <div class="lb2-pod-pts">${fmtN(valueOf(p))}</div>
+      <div class="lb2-pod-block">${place}</div>
     </div>`;
+  }).join("");
+  const rowHtml = (p, pos, value, extra, me) => `<li class="lb2-row${p.name === me ? " me" : ""}"><span class="lb2-pos">${pos}</span>${avatarOf(p.character)}<span class="lb2-name">${esc(p.name)}</span>${extra || ""}<b class="lb2-pts">${fmtN(value)}</b></li>`;
+  function renderBoard() {
+    const me = GameState.playerName;
+    const general = lbTab === "general";
+    const w = general ? null : VISIBLE_WORLDS.find((x) => String(x.id) === String(lbTab));
+    let list, valueOf, extra;
+    if (general) {
+      list = lbData.all.map((p) => ({ name: p.name, character: p.top && p.top.character, total: p.total, best: p.best }));
+      valueOf = (p) => p.total;
+      extra = (p) => `<span class="lb2-wb">${VISIBLE_WORLDS.map((x) => `<i class="${p.best[x.id] ? "on" : ""}" style="--c:${x.color}">${x.num}</i>`).join("")}</span>`;
+    } else {
+      list = lbData.perWorld[w.id] || [];
+      valueOf = (p) => p.score;
+      extra = (p) => (p.rank ? `<span class="lb2-rank">${esc(p.rank)}</span>` : "");
+    }
+    const acc = general ? "#1f38b8" : w.color;
+    lbModalContent.style.setProperty("--acc", acc);
+    if (!list.length) {
+      lbModalContent.innerHTML = `<div class="lb2-emptybox">
+        <div class="lb2-empty-ico">🏁</div>
+        <h3>${general ? "Nadie ha puntuado todavía" : `Nadie ha superado ${esc(w.name)}`}</h3>
+        <p>¡El primero en ${general ? "superar un mundo" : "terminarlo"} se queda con la corona 👑!</p>
+        ${general ? "" : `<button class="lb2-play" data-id="${w.id}">▶ Jugar ${esc(w.name)}</button>`}
+      </div>`;
+    } else {
+      const myIdx = list.findIndex((p) => p.name === me);
+      const rest = list.slice(3, 50).map((p, i) => rowHtml(p, i + 4, valueOf(p), extra(p), me)).join("");
+      lbModalContent.innerHTML = `
+        <div class="lb2-top">
+          <div class="lb2-podium">${podiumHtml(list.slice(0, 3), valueOf, me)}</div>
+          <div class="lb2-listbox">
+            <div class="lb2-listhead">${general ? "Suma de tu mejor récord en cada mundo" : `Mejor récord en ${esc(w.name)}`}</div>
+            <ol class="lb2-list">${rest || `<li class="lb2-row lb2-row-empty">Aún no hay más jugadores… ¡entra en el top!</li>`}</ol>
+          </div>
+        </div>
+        <div class="lb2-me">${myIdx >= 0
+          ? `<span class="lb2-me-tag">TÚ</span><span class="lb2-pos">${myIdx + 1}º</span>${avatarOf(list[myIdx].character)}<span class="lb2-name">${esc(me)}</span><b class="lb2-pts">${fmtN(valueOf(list[myIdx]))}</b>`
+          : `<span class="lb2-me-tag">TÚ</span><span class="lb2-name">${esc(me)} · todavía sin récord ${general ? "" : "aquí"}</span>${general ? "" : `<button class="lb2-play mini" data-id="${w.id}">▶ Jugar</button>`}`}</div>`;
+    }
+    lbModalContent.querySelectorAll(".lb2-play").forEach((b) => b.addEventListener("click", () => { lbOv.classList.add("hidden"); if (onPlayWorld) onPlayWorld(Number(b.dataset.id)); }));
   }
-  function renderWorlds({ perWorld }) {
-    return `<div class="lb-worlds">${VISIBLE_WORLDS.map((w, i) => {
-      const list = perWorld[w.id] || [];
-      const champ = list[0];
-      return `<section class="lb-wcard lb-wc-${i % 4}">
-        <div class="lb-wc-head"><span class="lb-wc-num">${w.num}</span><div><small>${esc(w.genre || "")}</small><h3>${esc(w.name)}</h3></div></div>
-        ${champ ? `<div class="lb-champ">${avatarOf(champ.character)}<div><small>👑 El mejor</small><b>${esc(champ.name)}</b><span>${fmtN(champ.score)} pts${champ.rank ? ` · rango ${esc(champ.rank)}` : ""}</span></div></div>` : `<div class="lb-champ lb-champ-empty">Nadie lo ha dominado aún</div>`}
-        <ol class="lb-wlist">${list.slice(1, 6).map((p, k) => `<li class="${p.name === GameState.playerName ? "me" : ""}"><span>${k + 2}</span>${esc(p.name)}<b>${fmtN(p.score)}</b></li>`).join("")}</ol>
-      </section>`;
-    }).join("")}</div>`;
+  function renderTabs() {
+    const tabs = [{ id: "general", num: "★", name: "General", color: "#1f38b8", sub: "puntos totales" }, ...VISIBLE_WORLDS.map((w) => ({ id: String(w.id), num: w.num, name: w.name, color: w.color, sub: (lbData && lbData.perWorld[w.id] && lbData.perWorld[w.id][0]) ? `👑 ${lbData.perWorld[w.id][0].name}` : "sin récords" }))];
+    lbTabsEl.innerHTML = tabs.map((t) => `<button class="lb2-tab${String(lbTab) === t.id ? " on" : ""}" data-tab="${t.id}" style="--c:${t.color}"><i>${t.num}</i><span><b>${esc(t.name)}</b><small>${esc(t.sub)}</small></span></button>`).join("");
+    lbTabsEl.querySelectorAll(".lb2-tab").forEach((b) => b.addEventListener("click", () => { lbTab = b.dataset.tab; sfx(660, 0.05); paintLB(); }));
   }
   function paintLB() {
     if (!lbModalContent || !lbData) return;
     const A = window.__cgAuth;
-    const banner = A && !A.user
-      ? `<div class="lb-login"><span>🔒 Entra para que tus récords cuenten y se guarde tu progreso</span><button class="lb-login-btn">${GOOGLE_G}<span>Entrar con Google</span></button></div>` : "";
-    lbModalContent.innerHTML = banner + (lbTab === "general" ? renderGeneral(lbData) : renderWorlds(lbData));
-    lbModalContent.querySelector(".lb-login-btn")?.addEventListener("click", () => A.open());
-    lbOv.querySelectorAll(".lb-tab").forEach((b) => b.classList.toggle("on", b.dataset.tab === lbTab));
+    if (lbLoginEl) {
+      lbLoginEl.classList.toggle("hidden", !A || !!A.user);
+      lbLoginEl.innerHTML = `${GOOGLE_G}<span>Entra para que cuenten</span>`;
+      lbLoginEl.onclick = () => A && A.open();
+    }
+    renderTabs();
+    renderBoard();
   }
   async function renderLeaderboardModal() {
     if (!lbModalContent) return;
@@ -492,7 +513,6 @@ export function initOverlays({ onStartGame, onOpenMap }) {
     paintLB();
   }
   window.addEventListener("cg_auth", () => { if (lbOv && !lbOv.classList.contains("hidden")) paintLB(); });
-  lbOv?.querySelectorAll(".lb-tab").forEach((b) => b.addEventListener("click", () => { lbTab = b.dataset.tab; sfx(660, 0.05); paintLB(); }));
 
   function openLeaderboard() {
     lbOv.classList.remove("hidden");

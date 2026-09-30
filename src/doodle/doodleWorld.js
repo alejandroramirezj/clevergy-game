@@ -77,7 +77,7 @@ const TEMPLATE = `
 <div class="dd-ov dd-start">
   <div class="dd-card dd-startcard">
     <div class="ds-col ds-info">
-      <div class="dd-kicker">MUNDO 3 · LASER TAG</div>
+      <div class="dd-kicker">MUNDO 2 · LASER TAG</div>
       <h1>BoliBic Tag</h1>
       <p class="dd-lead">El CINK de Infanta Mercedes se ha llenado de emails, reuniones y «¿tienes 5 minutos?». Limpia las tres plantas hasta la oficina de Clevergy con tu boli Bic.</p>
       <details class="ds-help">

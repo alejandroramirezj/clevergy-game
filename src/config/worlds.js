@@ -22,7 +22,7 @@ export const WORLDS = [
   },
   {
     id: 6,
-    num: 2,
+    num: 3,
     theme: "arena",
     color: "#6b2bd4",
     tapeColor: "#c8b7f8",
@@ -38,7 +38,7 @@ export const WORLDS = [
   },
   {
     id: 7,
-    num: 3,
+    num: 2,
     theme: "doodle",
     color: "#166ae6",
     tapeColor: "#9ed4fb",

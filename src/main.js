@@ -170,7 +170,7 @@ initSprites();
 fitCanvas();
 
 const worldMap = initWorldMap({ onSelectWorld: (worldId) => startGame(worldId) });
-const { updateSpotlight } = initOverlays({ onStartGame: () => worldMap.showWorldMap(), onOpenMap: () => worldMap.showWorldMap() });
+const { updateSpotlight } = initOverlays({ onStartGame: () => worldMap.showWorldMap(), onOpenMap: () => worldMap.showWorldMap(), onPlayWorld: (id) => { document.getElementById("menuOv")?.classList.add("hidden"); startGame(id); } });
 // en vertical, el mando Game Boy también maneja los menús (A pulsa, B vuelve)
 initDeckNav();
 // cuenta de Google (opcional): guarda progreso y ranking y fija "tu" personaje
