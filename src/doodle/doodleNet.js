@@ -9,7 +9,7 @@
 import { Peer } from "peerjs";
 
 const PREFIX = "clevergy-doodle-";
-export const MAX_PLAYERS = 6;
+export const MAX_PLAYERS = 20;
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ"; // sin números: no chocan con los atajos 1-2-3
 
 const PEER_OPTS = {

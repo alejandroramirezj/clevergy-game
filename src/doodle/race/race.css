@@ -106,3 +106,10 @@ body.gameboy-mode .rk-time { top: 68px; font-size: 13px; }
 body.gameboy-mode .rk-map { width: 84px; height: 84px; }
 body.gameboy-mode .rk-root .dd-hudbtns { right: 100px; }
 body.gameboy-mode .rk-item { width: 48px; height: 48px; font-size: 26px; top: 56px; }
+
+/* líneas de velocidad (turbo / modo focus), dibujadas a boli */
+.rk-speedlines { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.2s;
+  background: repeating-conic-gradient(from 0deg at 50% 55%, transparent 0deg 7deg, rgba(31, 56, 184, 0.16) 7deg 7.6deg, transparent 7.6deg 13deg);
+  -webkit-mask: radial-gradient(ellipse at 50% 55%, transparent 38%, #000 70%); mask: radial-gradient(ellipse at 50% 55%, transparent 38%, #000 70%); }
+.rk-speedlines.on { opacity: 1; animation: rk-lines 0.18s steps(2) infinite; }
+@keyframes rk-lines { 50% { transform: rotate(1.5deg) scale(1.02); } }

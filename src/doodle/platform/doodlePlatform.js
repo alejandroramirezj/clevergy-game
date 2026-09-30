@@ -16,7 +16,7 @@ import { GEO } from "../doodleLevel.js";
 import { createSticker } from "../doodleSticker.js";
 import { createTouchPad, ICON } from "../touchPad.js";
 import { makeEmail, makeMeeting, makeClock, makeBoss } from "../doodleActors.js";
-import { inkText } from "../inkText.js";
+import { inkText, cinkLogo } from "../inkText.js";
 import { touch as mando } from "../../engine/input.js";
 import { CHARS } from "../../config/characters.js";
 import { getCharacterAvatar } from "../../engine/sprites.js";
@@ -31,6 +31,11 @@ const PW = 0.78, PH = 1.7;
 const COYOTE = 0.1, BUFFER = 0.13;
 const MAX_FALL = 22;
 const HEARTS = 3;
+// las oficinas por las que ha pasado Clevergy, en orden
+const ZONES = [
+  { x: 258, t: "WAYRA", s: "Edificio Telefónica · Gran Vía 28 · sube a la 8ª planta" },
+  { x: 364, t: "CINK COWORKING", s: "Infanta Mercedes · la casa de Clevergy" }
+];
 
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const rnd = (a, b) => a + Math.random() * (b - a);
@@ -60,7 +65,7 @@ const TEMPLATE = `
     <div class="pf-col">
       <div class="dd-kicker">MUNDO 1 · GOOGLE FOR STARTUPS CAMPUS</div>
       <h1 class="pf-title">La Oficina</h1>
-      <p class="pf-lead">De la terraza de Moreno Nieto al escenario del <b>Demo Day</b>: cruza el café, sube la torre de coworking, salta las salas de cristal y tumba a <b>EMAIL CHAIN</b> con el Palacio Real al fondo.</p>
+      <p class="pf-lead">El viaje de Clevergy: de <b>Google for Startups Campus</b> a <b>Wayra</b> (Edificio Telefónica, Gran Vía) y al <b>CINK</b> de Infanta Mercedes, donde espera <b>EMAIL CHAIN</b> antes de llegar a la oficina.</p>
       <div class="pf-picker">
         <button class="cf-arrow pf-arrow" data-d="-1" aria-label="Anterior">◀</button>
         <div class="pf-preview"><img class="cf-sticker pf-sticker" alt=""><div class="cf-pname pf-pname"></div><div class="cf-pspecial pf-pspecial"></div></div>
@@ -136,7 +141,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     x: 3, y: 2, vx: 0, vy: 0, g: false, facing: 1, coyote: 0, buf: 0, wall: 0, wallT: 0, jumpHeld: false,
     hearts: HEARTS, inv: 0, dead: 0, cd: 0, dashT: 0, dashV: 0, dashFloat: false, slam: 0, shieldT: 0, riseT: 0, squash: 1, flash: 0, onMover: null,
     lockT: 0, fly: 1, energy: 1, ball: false, mega: 0, zenT: 0, buffT: 0, climb: false, prevY: 2, onPrint: null,
-    coins: 0, frags: new Set(), cp: 3, score: 0, time: 0, won: false, stomps: 0, pose: "idle", poseT: 0
+    coins: 0, frags: new Set(), zones: new Set(), cp: 3, score: 0, time: 0, won: false, stomps: 0, pose: "idle", poseT: 0
   };
   let enemies = [], shots = [], powers = [], pickups = [], pops = [], minions = [], prints = [], rings = [];
   let boss = null, bossDone = false, bossWalls = [];
@@ -362,6 +367,90 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
       box(g, 0, 5.2, 0, 5.4, 2.2, 0.12, INK.BLACK, { tone: 0.35 });
       const w = gword("CAMPUS", 0.8); w.position.set(0, 5.6, 0.1); g.add(w);
       const m = inkText("MADRID", { size: 0.5, ink: INK.BLACK }); m.position.set(0, 4.6, 0.1); g.add(m);
+    } else if (t === "arrow") {
+      // señal de calle hacia el siguiente sitio
+      box(g, 0, 1.6, 0.8, 0.14, 3.2, 0.14, INK.BLACK, { fill: true });
+      box(g, 0.9, 3.2, 0.8, 3.6, 0.9, 0.1, INK.BLUE, { tone: -0.1 });
+      box(g, 2.9, 3.2, 0.8, 0.5, 0.5, 0.1, INK.BLUE, { tone: -0.1 }).rotation.z = Math.PI / 4;
+      const tx = inkText(d.label || "", { size: 0.42, ink: INK.BLACK }); tx.position.set(0.9, 3.2, 0.9); g.add(tx);
+    } else if (t === "granvia") {
+      // Gran Vía: fachadas con cornisas y cúpulas, y el luminoso de Schweppes en Callao
+      g.position.set(d.x, 0, -14);
+      for (let k = 0; k < 9; k++) {
+        const bx = k * 12, h = 16 + (k % 3) * 5;
+        box(g, bx, h / 2, 0, 11, h, 4, k % 2 ? INK.ORANGE : INK.BLACK, { tone: 0.42 });
+        for (let r = 0; r < Math.floor(h / 3.4) - 1; r++) for (let c = -1; c <= 1; c++) box(g, bx + c * 3.2, 3 + r * 3.4, 2.02, 1.3, 1.9, 0.05, INK.BLUE, { tone: 0.3 });
+        box(g, bx, h + 0.3, 0, 11.6, 0.6, 4.4, INK.BLACK, { tone: 0.2 });
+        if (k % 4 === 1) { const c = new THREE.Mesh(GEO.sph, mat(INK.BLACK, { tone: 0.25 })); c.scale.set(5, 4, 4); c.position.set(bx, h + 1.5, 0); g.add(c); }
+      }
+      // el cartel de Schweppes sobre el edificio Carrión
+      box(g, 24, 29.5, 2.2, 13, 3.2, 0.2, INK.BLACK, { fill: true });
+      const sch = inkText("SCHWEPPES", { size: 1.9, ink: INK.ORANGE, weight: 1.4 }); sch.position.set(24, 29.5, 2.4); g.add(sch);
+      const gv = inkText("GRAN VIA", { size: 0.9, ink: INK.RED }); gv.position.set(6, 7.2, 2.1); g.add(gv);
+    } else if (t === "metro") {
+      box(g, 0, 1.8, 1.2, 0.12, 3.6, 0.12, INK.RED, { fill: true });
+      box(g, 0, 3.8, 1.2, 2.6, 0.9, 0.12, INK.RED, { tone: -0.05 });
+      const m = inkText("METRO", { size: 0.5, ink: INK.BLUE }); m.position.set(0, 3.8, 1.3); g.add(m);
+      box(g, 2.5, 0.2, 1.4, 3.2, 0.4, 2, INK.BLACK, { tone: 0.3 }); // boca del metro
+    } else if (t === "telefonica") {
+      // el Edificio Telefónica (Gran Vía 28), el primer rascacielos de Europa: cuerpo escalonado y torre
+      g.position.set(d.x, 0, -5.5);
+      box(g, 0, 12, 0, 46, 24, 4, INK.BLACK, { tone: 0.5 });
+      box(g, 0, 27, -0.5, 30, 6, 3, INK.BLACK, { tone: 0.45 });
+      box(g, 0, 32, -1, 14, 5, 2.4, INK.BLACK, { tone: 0.42 });
+      box(g, 0, 36, -1, 5, 4, 2, INK.BLACK, { tone: 0.38 });
+      box(g, 0, 39.5, -1, 0.3, 3, 0.3, INK.BLACK, { fill: true });
+      for (let r = 0; r < 7; r++) for (let c = -5; c <= 5; c++) box(g, c * 4, 2.5 + r * 3, 2.02, 1.5, 2, 0.05, INK.BLUE, { tone: 0.3 });
+      disc(g, 0, 33, 1.3, 1.3, INK.BLACK, { tone: 0.55 }); // el reloj
+      const tl = inkText("TELEFONICA", { size: 1.2, ink: INK.BLUE, weight: 1.2 }); tl.position.set(0, 25.2, 1.1); g.add(tl);
+    } else if (t === "wayra") {
+      g.position.z = -1.8;
+      box(g, 0, 3.4, -0.6, 32, 7, 0.2, INK.BLACK, { tone: 0.55 }); // la pared de la 8ª planta
+      const w = gword("WAYRA", 1.6); w.position.set(0, 5.2, -0.4); g.add(w);
+      const sub = inkText("TELEFONICA · 8 PLANTA", { size: 0.4, ink: INK.BLACK }); sub.position.set(0, 3.9, -0.4); g.add(sub);
+      for (const x of [-12, 12]) { box(g, x, 1.6, -0.4, 4, 2.4, 0.06, INK.BLUE, { tone: 0.3 }); }
+    } else if (t === "pingpong") {
+      g.position.z = 0;
+      box(g, 0.5, 1.02, 0, 3, 0.06, 1.8, INK.GREEN, { tone: -0.1 });
+      box(g, 0.5, 1.3, 0, 0.05, 0.5, 1.8, INK.BLACK, { tone: 0.5 }); // la red
+      const ball = new THREE.Mesh(GEO.sph, mat(INK.ORANGE, { tone: 0.3 })); ball.scale.setScalar(0.18); ball.position.set(1.2, 1.5, 0); g.add(ball);
+    } else if (t === "cink") {
+      // el CINK de Infanta Mercedes: esquina redonda, cristal y el logo
+      g.position.set(d.x, 0, -5.8);
+      box(g, 14, 9, 0, 40, 18, 3, INK.BLACK, { tone: 0.46 });
+      const corner = new THREE.Mesh(GEO.cyl, mat(INK.BLUE, { tone: 0.3 })); corner.scale.set(10, 18, 10); corner.position.set(-6, 9, 0); g.add(corner);
+      for (let r = 0; r < 4; r++) for (let c = 0; c < 8; c++) box(g, 2 + c * 4.4, 2.6 + r * 4.2, 1.52, 2.6, 2.6, 0.05, INK.BLUE, { tone: 0.3 });
+      const logo = cinkLogo({ size: 2.4, ink: INK.BLACK }); logo.position.set(12, 15.6, 1.6); g.add(logo);
+      const pm = inkText("#PEOPLEMAKECINK", { size: 0.55, ink: INK.RED }); pm.position.set(26, 1.2, 1.6); g.add(pm);
+    } else if (t === "reception") {
+      g.position.z = 0;
+      const b = inkText("BIENVENIDO", { size: 0.35, ink: INK.BLUE }); b.position.set(0, 0.5, 0.82); g.add(b);
+      // Victoria detrás del mostrador
+      box(g, 0.2, 0.3, -1.2, 0.5, 0.8, 0.4, INK.RED, { tone: 0.42 });
+      const h = new THREE.Mesh(GEO.sph, mat(INK.ORANGE, { tone: 0.48 })); h.scale.setScalar(0.42); h.position.set(0.2, 1.0, -1.2); g.add(h);
+      const hair = new THREE.Mesh(GEO.sph, mat(INK.BLACK, { tone: -0.3 })); hair.scale.set(0.46, 0.46, 0.4); hair.position.set(0.2, 1.1, -1.3); g.add(hair);
+    } else if (t === "grass") {
+      g.position.z = 0;
+      box(g, (d.w || 10) / 2, -0.94, 0, d.w || 10, 0.08, 3.9, INK.GREEN, { tone: -0.05 });
+      for (let k = 0; k < (d.w || 10); k += 1.3) box(g, k, -0.7, 1.8, 0.06, 0.4, 0.06, INK.GREEN, { fill: true });
+    } else if (t === "sala") {
+      g.position.z = -6;
+      box(g, 0, 5, 0, 20, 10, 0.1, INK.ORANGE, { tone: 0.3 }); // pared de acento
+      box(g, 0, 5.2, 0.1, 6, 2.6, 0.06, INK.BLACK, { tone: 0.5 }); // pizarra
+      const n = inkText("SALA 4 · CINK", { size: 0.7, ink: INK.BLUE }); n.position.set(0, 8.4, 0.12); g.add(n);
+    } else if (t === "clevergy") {
+      // la oficina de Clevergy: tres mesas, la estantería con café y la pizarra
+      g.position.z = -4;
+      box(g, 0, 5, -1.6, 26, 10, 0.2, INK.GREEN, { tone: 0.35 });
+      const c = inkText("CLEVERGY", { size: 1.4, ink: INK.GREEN, weight: 1.3 }); c.position.set(0, 8, -1.4); g.add(c);
+      for (const x of [-8, -2, 4]) {
+        box(g, x, 0.8, 0, 3, 0.1, 1.4, INK.ORANGE, { tone: 0.1 });
+        box(g, x, 1.35, -0.4, 1.2, 0.8, 0.06, INK.BLACK, { tone: -0.2 });
+        for (const s2 of [-1.3, 1.3]) box(g, x + s2, 0.4, 0, 0.1, 0.8, 1.2, INK.BLACK, {});
+      }
+      box(g, 10, 1.4, -1, 2, 2.8, 0.8, INK.ORANGE, { tone: 0.05 }); // estantería del café
+      for (let k = 0; k < 3; k++) box(g, 9.4 + k * 0.6, 2.95, -0.9, 0.3, 0.4, 0.3, k % 2 ? INK.RED : INK.BLUE, { tone: 0.1 });
+      box(g, -3, 4.2, -1.45, 5, 2.4, 0.06, INK.BLACK, { tone: 0.5 }); // pizarra
     } else if (t === "plant") {
       box(g, 0, 0.35, 0, 0.7, 0.7, 0.7, INK.ORANGE, { tone: 0.05 });
       const s = new THREE.Mesh(GEO.sph, mat(INK.GREEN, { tone: -0.05 }));
@@ -804,6 +893,8 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
         P.hearts = Math.max(P.hearts, HEARTS);
       }
     }
+    // rótulos al llegar a cada oficina del viaje
+    for (const z of ZONES) if (!P.zones.has(z.x) && P.x > z.x) { P.zones.add(z.x); big(z.t, z.s, 2); }
     if (!P.won && P.x > L.flagX - 0.2 && P.x < L.flagX + 1.2) finish();
   }
 
@@ -1212,7 +1303,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
   }
   function rankFor() {
     const coinRatio = P.coins / Math.max(1, L.coins.length);
-    let pts = P.frags.size + (coinRatio > 0.6 ? 1 : 0) + (P.time < 300 ? 1 : 0) + (P.hearts === HEARTS ? 1 : 0);
+    let pts = P.frags.size + (coinRatio > 0.6 ? 1 : 0) + (P.time < 480 ? 1 : 0) + (P.hearts === HEARTS ? 1 : 0);
     return pts >= 5 ? "S" : pts >= 3 ? "A" : pts >= 2 ? "B" : "C";
   }
   function endScreen(win) {
@@ -1418,7 +1509,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     buildLevel();
     Object.assign(P, {
       x: cp + 0.5, y: 2, vx: 0, vy: 0, g: true, facing: 1, coyote: 0, buf: 0, wall: 0, wallT: 0, hearts: HEARTS, inv: 1, dead: 0,
-      cd: 0, dashT: 0, slam: 0, shieldT: 0, riseT: 0, squash: 1, onMover: null, coins: 0, frags: new Set(), cp, score: 0, time: 0, won: false, stomps: 0,
+      cd: 0, dashT: 0, slam: 0, shieldT: 0, riseT: 0, squash: 1, onMover: null, coins: 0, frags: new Set(), zones: new Set(), cp, score: 0, time: 0, won: false, stomps: 0,
       lockT: 0, fly: 1, energy: 1, ball: false, mega: 0, zenT: 0, buffT: 0
     });
     P.y = surfaceAt(P.x) + 0.02; P.prevY = P.y;
@@ -1439,7 +1530,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     showOv(null);
     syncPad();
   }
-  $(".pf-go").addEventListener("click", () => { resetRun(false); play(); big("LA OFICINA", "Google for Startups Campus · ¡a por el Demo Day!", 1.8); });
+  $(".pf-go").addEventListener("click", () => { resetRun(false); play(); big("LA OFICINA", "Campus → Wayra → CINK: ¡a por la oficina de Clevergy!", 1.8); });
   $(".pf-resume").addEventListener("click", () => play());
   $(".pf-restart").addEventListener("click", () => { resetRun(false); play(); });
   $(".pf-retry").addEventListener("click", () => { const won = P.won; resetRun(!won); play(); });
@@ -1549,7 +1640,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     } else acc = 0;
     if (screen === "start") {
       // presentación: la cámara recorre el nivel despacio
-      const x = 12 + (Math.sin(wall * 0.06) * 0.5 + 0.5) * 220;
+      const x = 12 + (Math.sin(wall * 0.04) * 0.5 + 0.5) * (LEVEL_W - 30);
       const y = surfaceAt(x) + 3;
       camY += (y - camY) * 0.02;
       camera.position.set(x, camY + 2, 22);
@@ -1581,7 +1672,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     if (window.__plat) delete window.__plat;
   }
   function exit() { destroy(); if (onExit) onExit(); }
-  if (import.meta.env && import.meta.env.DEV) window.__plat = { P, setChar: (id) => { devChar = true; setChar(charById(id)); }, get prints() { return prints; }, get minions() { return minions; }, get L() { return L; }, get boss() { return boss; }, get enemies() { return enemies; }, get screen() { return screen; } };
+  if (import.meta.env && import.meta.env.DEV) window.__plat = { P, step: (n = 1) => { for (let i = 0; i < n; i++) stepSim(STEP); }, setChar: (id) => { devChar = true; setChar(charById(id)); }, get prints() { return prints; }, get minions() { return minions; }, get L() { return L; }, get boss() { return boss; }, get enemies() { return enemies; }, get screen() { return screen; } };
 
   showOv("start");
   return { destroy, exit };

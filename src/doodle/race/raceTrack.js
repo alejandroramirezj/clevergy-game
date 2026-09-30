@@ -8,6 +8,7 @@
 import * as THREE from "three";
 import { INK, mat } from "../doodleRender.js";
 import { GEO } from "../doodleLevel.js";
+import { inkText } from "../inkText.js";
 
 export const TRACK_HALF = 13; // media anchura del canal entre boyas (m)
 export const N_SAMPLES = 900;
@@ -118,38 +119,46 @@ export function buildRaceWorld(scene, track) {
   const { center } = track;
 
   // agua lejana (plana) y agua cercana con olas que sigue a la cámara
-  const farWater = new THREE.Mesh(new THREE.PlaneGeometry(5000, 5000), mat(INK.BLUE, { tone: -0.28 }));
+  const farWater = new THREE.Mesh(new THREE.PlaneGeometry(5000, 5000), mat(INK.BLUE, { tone: -0.3 }));
   farWater.rotation.x = -Math.PI / 2;
   farWater.position.y = -0.25;
   root.add(farWater);
-  const WG = 96, WS = 180; // celdas y tamaño del parche de olas
+  const WG = 2, WS = 400; // celdas y tamaño del parche de olas
   const wGeo = new THREE.PlaneGeometry(WS, WS, WG, WG);
   wGeo.rotateX(-Math.PI / 2);
-  const wPos = wGeo.attributes.position, wNor = wGeo.attributes.normal;
+  const wPos = wGeo.attributes.position; // normales planas: rayado uniforme (sin muaré) aunque haya olas
   const base = Float32Array.from(wPos.array);
   const water = new THREE.Mesh(wGeo, mat(INK.BLUE, { tone: -0.3 }));
   water.frustumCulled = false;
   root.add(water);
   const cell = WS / WG;
-  function updateWater(camX, camZ, t) {
-    const ox = Math.round(camX / cell) * cell, oz = Math.round(camZ / cell) * cell;
-    water.position.set(ox, 0, oz);
-    for (let i = 0; i < wPos.count; i++) {
-      const x = base[i * 3] + ox, z = base[i * 3 + 2] + oz;
-      // bordes del parche hundidos para que se funda con el agua lejana
-      const edge = Math.max(Math.abs(base[i * 3]), Math.abs(base[i * 3 + 2])) / (WS / 2);
-      const fall = edge > 0.85 ? (edge - 0.85) / 0.15 : 0;
-      wPos.array[i * 3 + 1] = waveH(x, z, t) * (1 - fall) - fall * 0.3;
-      // normal analítica de la ola
-      const dx = 0.3 * 0.33 * Math.cos(0.33 * x + 1.3 * t) * Math.cos(0.29 * z + 1.05 * t) + 0.12 * 0.75 * Math.cos(0.75 * (x + z) + 2.1 * t);
-      const dz = -0.3 * 0.29 * Math.sin(0.33 * x + 1.3 * t) * Math.sin(0.29 * z + 1.05 * t) + 0.12 * 0.75 * Math.cos(0.75 * (x + z) + 2.1 * t);
-      const l = Math.hypot(dx * 2.2, 1, dz * 2.2);
-      wNor.array[i * 3] = (-dx * 2.2) / l;
-      wNor.array[i * 3 + 1] = 1 / l;
-      wNor.array[i * 3 + 2] = (-dz * 2.2) / l;
+  // el agua se pinta plana (el render calcula la luz por triángulo y las olas darían un rayado a
+  // cuadros): las olas se notan en motos, boyas y en los trazos "~"; y así no hay que recalcular vértices
+  function updateWater(camX, camZ) {
+    water.position.set(Math.round(camX / cell) * cell, 0, Math.round(camZ / cell) * cell);
+  }
+
+  // olas dibujadas a boli: trazos cortos que cabecean sobre el agua
+  const strokes = [];
+  for (let i = 0; i < N_SAMPLES; i += 3) {
+    const p = track.at(i);
+    for (let k = 0; k < 2; k++) {
+      const lat = (R() - 0.5) * (TRACK_HALF * 2 + 60);
+      strokes.push({ x: p.x - p.tz * lat + (R() - 0.5) * 4, z: p.z + p.tx * lat + (R() - 0.5) * 4, ph: R() * 6, ry: R() * 0.6 - 0.3 + Math.atan2(p.tx, p.tz) + Math.PI / 2, s: 1.2 + R() * 1.6 });
     }
-    wPos.needsUpdate = true;
-    wNor.needsUpdate = true;
+  }
+  const strokeIM = new THREE.InstancedMesh(GEO.box, mat(INK.BLUE, { fill: true }), strokes.length);
+  strokeIM.frustumCulled = false;
+  root.add(strokeIM);
+  function updateStrokes(t) {
+    strokes.forEach((w, k) => {
+      const y = waveH(w.x, w.z, t) + 0.08, sc = w.s * (0.7 + 0.3 * Math.sin(t * 1.5 + w.ph));
+      tmpE.set(0, w.ry, 0);
+      tmpQ.setFromEuler(tmpE);
+      tmpM.compose(tmpP.set(w.x, y, w.z), tmpQ, tmpS.set(sc * 1.6, 0.06, 0.14));
+      strokeIM.setMatrixAt(k, tmpM);
+    });
+    strokeIM.instanceMatrix.needsUpdate = true;
   }
 
   // boyas a ambos lados del canal (rojas y naranjas alternas), con cabeceo
@@ -183,6 +192,7 @@ export function buildRaceWorld(scene, track) {
   const hills = [], pines = [], trunks = [], rocks = [];
   let damAngle = 0.05; // la presa, hacia el este
   let beachAngle = Math.PI + 0.1; // la playa, hacia el oeste
+  const picnicAngle = 1.95; // el merendero y el restaurante, en la orilla norte
   const angDist = (a, b) => Math.abs(Math.atan2(Math.sin(a - b), Math.cos(a - b)));
   function radiusAt(a) {
     // distancia desde el centro hasta el punto del trazado más lejano en esa dirección
@@ -201,9 +211,10 @@ export function buildRaceWorld(scene, track) {
     const x = center.x + Math.cos(a) * rr, z = center.z + Math.sin(a) * rr;
     const sx = r(45, 80), sy = r(14, 34), sz = r(45, 80);
     const beach = angDist(a, beachAngle) < 0.16;
-    hills.push({ x, y: -sy * 0.45, z, sx, sy: beach ? sy * 0.45 : sy, sz, ry: r(0, 3), beach });
-    if (!beach) {
-      for (let k = 0; k < 9; k++) {
+    const picnic = angDist(a, picnicAngle) < 0.15;
+    hills.push({ x, y: -sy * 0.45, z, sx, sy: beach || picnic ? sy * 0.35 : sy, sz, ry: r(0, 3), beach });
+    if (!beach && !picnic) {
+      for (let k = 0; k < 15; k++) {
         const ang = r(0, Math.PI * 2), d = r(0.1, 0.8);
         const px = x + Math.cos(ang) * d * sx * 0.5, pz = z + Math.sin(ang) * d * sz * 0.5;
         const hy = -sy * 0.45 + sy * 0.5 * Math.sqrt(Math.max(0, 1 - d * d));
@@ -218,6 +229,26 @@ export function buildRaceWorld(scene, track) {
         rocks.push({ x: center.x + Math.cos(a + r(-0.04, 0.04)) * back, y: s * 0.1, z: center.z + Math.sin(a + r(-0.04, 0.04)) * back, sx: s * r(1, 1.6), sy: s * r(0.5, 0.9), sz: s, ry: r(0, 3) });
       }
     }
+  }
+  // el bosque de pinos que rodea el embalse: un segundo anillo, más espeso, tierra adentro
+  for (let a = 0; a < Math.PI * 2; a += 0.022) {
+    if (angDist(a, damAngle) < 0.2) continue;
+    const base = radiusAt(a);
+    for (let k = 0; k < 3; k++) {
+      const d = base + r(70, 140), aa = a + r(-0.01, 0.01);
+      const px = center.x + Math.cos(aa) * d, pz = center.z + Math.sin(aa) * d, h = r(9, 16);
+      pines.push({ x: px, y: h * 0.55 - 2, z: pz, sx: h * 0.4, sy: h, sz: h * 0.4 });
+      trunks.push({ x: px, y: h * 0.05 - 2, z: pz, sx: 0.7, sy: h * 0.3, sz: 0.7 });
+    }
+  }
+  // suelo del pinar (para que el bosque no flote sobre el agua lejana)
+  {
+    const ring = new THREE.Mesh(new THREE.RingGeometry(1, 2, 64), mat(INK.GREEN, { tone: 0.3 }));
+    ring.rotation.x = -Math.PI / 2;
+    const rMax = Math.max(track.bounds.maxX - track.bounds.minX, track.bounds.maxZ - track.bounds.minZ);
+    ring.scale.setScalar(rMax * 0.62);
+    ring.position.set(center.x, -1.6, center.z);
+    root.add(ring);
   }
   batch(GEO.sph, INK.GREEN, { tone: 0.2 }, hills.filter((h) => !h.beach));
   batch(GEO.sph, INK.ORANGE, { tone: 0.32 }, hills.filter((h) => h.beach));
@@ -298,6 +329,99 @@ export function buildRaceWorld(scene, track) {
     // torre del socorrista
     for (const sx of [-1, 1]) for (const sz of [-1, 1]) put(GEO.box, INK.BLACK, {}, [0.2, 4, 0.2], [-30 + sx * 0.8, 2.7, -12 + sz * 0.8]);
     put(GEO.box, INK.RED, { tone: 0.05 }, [2.4, 1.4, 2.4], [-30, 5.4, -12]);
+    // bandera azul (la única playa de Madrid que la tiene)
+    put(GEO.cyl, INK.BLACK, { fill: true }, [0.2, 9, 0.2], [-22, 4.6, -10]);
+    put(GEO.box, INK.BLUE, { tone: -0.05 }, [2.6, 1.6, 0.08], [-20.6, 8.2, -10]);
+    // pasarela de madera hasta el agua
+    put(GEO.box, INK.ORANGE, { tone: -0.12 }, [3, 0.25, 24], [8, 0.75, -4]);
+    for (let k = 0; k < 8; k++) put(GEO.box, INK.ORANGE, { fill: true }, [3.1, 0.05, 0.12], [8, 0.9, -15 + k * 3]);
+    // hidropedales amarrados en la orilla
+    for (let k = 0; k < 4; k++) {
+      const hx = -14 + k * 5;
+      put(GEO.box, k % 2 ? INK.ORANGE : INK.BLUE, { tone: 0.05 }, [2.2, 0.7, 3.6], [hx, 0.2, 9]);
+      put(GEO.cone, INK.GREEN, { tone: 0.2 }, [1.2, 1.6, 0.2], [hx, 1.5, 8.2]);
+    }
+    // cartel de la playa
+    put(GEO.box, INK.ORANGE, { tone: 0.1 }, [0.3, 5, 0.3], [0, 2.5, -18]);
+    const sign = inkText("VIRGEN DE LA NUEVA", { size: 1.1, ink: INK.BLUE });
+    sign.position.set(0, 5.8, -17.8);
+    g.add(sign);
+    put(GEO.box, INK.BLACK, { tone: 0.55 }, [sign.userData.width + 1.4, 1.8, 0.2], [0, 5.8, -18.05]);
+    // pinos dando sombra detrás de la arena
+    for (let k = 0; k < 12; k++) {
+      const px = -44 + k * 8 + r(-2, 2), h = r(9, 13);
+      put(GEO.cone, INK.GREEN, { tone: -0.08 }, [h * 0.42, h, h * 0.42], [px, h * 0.6 + 1, -26 + r(-3, 3)]);
+      put(GEO.cyl, INK.ORANGE, { tone: -0.2 }, [0.6, h * 0.3, 0.6], [px, 1.2, -26]);
+    }
+  }
+
+  // merendero del pantano: mesas de madera, barbacoas con humo, familias y un restaurante con terraza
+  const smoke = [];
+  {
+    const rr = radiusAt(picnicAngle) + 36;
+    const g = new THREE.Group();
+    g.position.set(center.x + Math.cos(picnicAngle) * rr, 0, center.z + Math.sin(picnicAngle) * rr);
+    g.rotation.y = -picnicAngle + Math.PI / 2;
+    root.add(g);
+    const put = (geo, ink, o, sc, p, ry) => { const m = new THREE.Mesh(geo, mat(ink, o)); m.scale.set(...sc); m.position.set(...p); if (ry) m.rotation.y = ry; g.add(m); return m; };
+    put(GEO.box, INK.GREEN, { tone: 0.12 }, [110, 1.4, 40], [0, 0.2, -8]); // la pradera
+    put(GEO.box, INK.ORANGE, { tone: 0.3 }, [110, 0.6, 6], [0, 0.4, 13]); // orilla de arena
+    const WOOD = INK.ORANGE;
+    for (let k = 0; k < 8; k++) {
+      const tx = -42 + (k % 4) * 13 + r(-1, 1), tz = k < 4 ? -2 : -14;
+      put(GEO.box, WOOD, { tone: -0.1 }, [4, 0.25, 1.6], [tx, 1.9, tz]);
+      for (const s of [-1, 1]) {
+        put(GEO.box, WOOD, { tone: -0.15 }, [4, 0.2, 0.5], [tx, 1.3, tz + s * 1.3]);
+        put(GEO.box, INK.BLACK, { fill: true }, [0.15, 1.2, 1.8], [tx + s * 1.6, 1.3, tz]);
+      }
+      // mantel de cuadros y familias
+      put(GEO.box, k % 2 ? INK.RED : INK.BLUE, { tone: 0.35 }, [2.2, 0.05, 1.2], [tx, 2.05, tz]);
+      if (k % 2 === 0) for (const s of [-1, 1]) {
+        const ink = [INK.RED, INK.BLUE, INK.PURPLE, INK.GREEN][(k + (s > 0 ? 1 : 0)) % 4];
+        put(GEO.cyl, ink, { tone: 0.1 }, [0.8, 1.3, 0.6], [tx + r(-1, 1), 2.1, tz + s * 1.35]);
+        put(GEO.sph, INK.ORANGE, { tone: 0.45 }, [0.6, 0.6, 0.6], [tx + r(-1, 1), 3.05, tz + s * 1.35]);
+      }
+    }
+    // barbacoas de ladrillo con su humo
+    for (const bx of [-50, 6]) {
+      put(GEO.box, INK.RED, { tone: 0.1 }, [2.2, 1.6, 1.4], [bx, 1.6, -22]);
+      put(GEO.box, INK.BLACK, { fill: true }, [2, 0.1, 1.2], [bx, 2.45, -22]);
+      put(GEO.box, INK.RED, { tone: 0.05 }, [0.6, 3, 0.6], [bx + 0.7, 3.5, -22.5]);
+      for (let k = 0; k < 5; k++) {
+        const puff = put(GEO.sph, INK.BLACK, { tone: 0.55 }, [1, 1, 1], [bx + 0.7, 5 + k, -22.5]);
+        smoke.push({ m: puff, g, ph: k / 5, x: bx + 0.7, z: -22.5 });
+      }
+    }
+    // el restaurante con terraza y sombrillas
+    put(GEO.box, INK.ORANGE, { tone: 0.2 }, [22, 7, 10], [36, 4, -20]);
+    put(GEO.box, INK.RED, { tone: 0 }, [24, 0.8, 12], [36, 7.9, -20]);
+    for (let k = 0; k < 4; k++) put(GEO.box, INK.BLUE, { tone: 0.3 }, [3.2, 2.6, 0.1], [28 + k * 5.4, 4.2, -14.95]);
+    put(GEO.box, INK.ORANGE, { tone: -0.1 }, [26, 0.4, 12], [36, 1.1, -6]); // tarima de la terraza
+    for (let k = 0; k < 4; k++) {
+      const ux = 27 + k * 6;
+      put(GEO.cyl, INK.BLACK, { fill: true }, [0.15, 3.5, 0.15], [ux, 3, -6]);
+      put(GEO.cone, k % 2 ? INK.GREEN : INK.RED, { tone: 0.15 }, [4, 1, 4], [ux, 5, -6]);
+      put(GEO.cyl, INK.BLACK, { tone: 0.5 }, [1.6, 0.15, 1.6], [ux, 2.1, -6]);
+    }
+    const rest = inkText("RESTAURANTE", { size: 1.2, ink: INK.BLACK });
+    rest.position.set(36, 9.8, -14.8);
+    g.add(rest);
+    const mer = inkText("MERENDERO", { size: 1.1, ink: INK.GREEN });
+    put(GEO.box, INK.ORANGE, { tone: 0.1 }, [0.3, 4.5, 0.3], [-20, 2.4, 6]);
+    put(GEO.box, INK.BLACK, { tone: 0.55 }, [mer.userData.width + 1.2, 1.7, 0.2], [-20, 5.3, 6]);
+    mer.position.set(-20, 5.3, 6.15);
+    g.add(mer);
+    // coches aparcados bajo los pinos
+    for (let k = 0; k < 6; k++) {
+      const cx = -46 + k * 6.5, ink = [INK.RED, INK.BLUE, INK.BLACK, INK.ORANGE, INK.GREEN, INK.PURPLE][k];
+      put(GEO.box, ink, { tone: 0.1 }, [2.2, 1.2, 4.2], [cx, 1.5, -32]);
+      put(GEO.box, INK.BLUE, { tone: 0.35 }, [2, 0.9, 2.2], [cx, 2.5, -32.4]);
+    }
+    for (let k = 0; k < 14; k++) {
+      const px = -52 + k * 8 + r(-2, 2), pz = -36 + r(-4, 4), h = r(10, 15);
+      put(GEO.cone, INK.GREEN, { tone: -0.08 }, [h * 0.42, h, h * 0.42], [px, h * 0.6 + 1, pz]);
+      put(GEO.cyl, INK.ORANGE, { tone: -0.2 }, [0.6, h * 0.3, 0.6], [px, 1.2, pz]);
+    }
   }
 
   // embarcadero junto a la salida, con barcas amarradas
@@ -315,6 +439,28 @@ export function buildRaceWorld(scene, track) {
     for (let k = -2; k <= 2; k++) {
       put(GEO.box, k % 2 ? INK.BLUE : INK.RED, { tone: 0.1 }, [5, 0.9, 2], [k * 8, 0.3, -2.8]);
     }
+  }
+
+  // gran cartel "PANTANO DE SAN JUAN" en la orilla, a la vista desde la salida
+  {
+    const p = track.at(30);
+    const side = TRACK_HALF + 24;
+    const g = new THREE.Group();
+    g.position.set(p.x + p.tz * side, 0, p.z - p.tx * side);
+    g.rotation.y = Math.atan2(p.tx, p.tz) - Math.PI / 2;
+    root.add(g);
+    const t1 = inkText("PANTANO DE", { size: 2.2, ink: INK.BLUE, weight: 1.2 });
+    const t2 = inkText("SAN JUAN", { size: 3.2, ink: INK.RED, weight: 1.2 });
+    t1.position.set(0, 12, 0.3); t2.position.set(0, 8.4, 0.3);
+    g.add(t1, t2);
+    // y por detrás (se lee desde los dos sentidos de la carrera)
+    const b1 = inkText("PANTANO DE", { size: 2.2, ink: INK.BLUE, weight: 1.2 }), b2 = inkText("SAN JUAN", { size: 3.2, ink: INK.RED, weight: 1.2 });
+    b1.position.set(0, 12, -0.3); b2.position.set(0, 8.4, -0.3); b1.rotation.y = b2.rotation.y = Math.PI;
+    g.add(b1, b2);
+    const w = Math.max(t1.userData.width, t2.userData.width) + 3;
+    const board = new THREE.Mesh(GEO.box, mat(INK.BLACK, { tone: 0.58 }));
+    board.scale.set(w, 7.4, 0.4); board.position.set(0, 10.2, 0); g.add(board);
+    for (const s of [-1, 1]) { const post = new THREE.Mesh(GEO.box, mat(INK.ORANGE, { tone: -0.1 })); post.scale.set(0.6, 7, 0.6); post.position.set(s * (w / 2 - 1), 3.5, -0.2); g.add(post); }
   }
 
   // veleros y piraguas navegando fuera del circuito
@@ -398,15 +544,21 @@ export function buildRaceWorld(scene, track) {
     const g = new THREE.Group();
     g.position.set(b.x, 0.3, b.z);
     g.rotation.y = b.yaw;
-    for (let k = 0; k < 3; k++) for (const s of [-1, 1]) {
-      const m = new THREE.Mesh(GEO.box, mat(INK.ORANGE, { fill: true }));
-      m.scale.set(0.6, 0.12, 3.2);
-      m.position.set(s * 1.1, 0, -2 + k * 2.2);
-      m.rotation.y = s * 0.7;
-      g.add(m);
+    const chev = [];
+    const pad = new THREE.Mesh(GEO.box, mat(INK.ORANGE, { tone: 0.35 }));
+    pad.scale.set(4.6, 0.08, 8); g.add(pad);
+    for (let k = 0; k < 3; k++) {
+      const row = new THREE.Group(); row.position.z = -2.4 + k * 2.4; g.add(row); chev.push(row);
+      for (const s of [-1, 1]) {
+        const m = new THREE.Mesh(GEO.box, mat(k === 1 ? INK.RED : INK.ORANGE, { fill: true }));
+        m.scale.set(0.7, 0.14, 2.6);
+        m.position.set(s * 0.95, 0.06, 0);
+        m.rotation.y = -s * 0.75;
+        row.add(m);
+      }
     }
     root.add(g);
-    boostPads.push({ ...b, g });
+    boostPads.push({ ...b, g, chev });
   }
   for (const [i, lat] of [[350, 3], [720, -3]]) {
     const b = placeOnTrack(i, lat);
@@ -434,31 +586,43 @@ export function buildRaceWorld(scene, track) {
   for (const i of [150, 420, 610, 860]) {
     for (let k = -2; k <= 2; k++) {
       const b = placeOnTrack(i, k * 4.4);
+      // caja "?" estilo kart: cada una de un color, con la interrogación en sus 4 caras
       const g = new THREE.Group();
-      const cube = new THREE.Mesh(GEO.box, mat(INK.PURPLE, { tone: 0.2 }));
-      cube.scale.setScalar(2);
+      const ink = [INK.BLUE, INK.PURPLE, INK.ORANGE, INK.GREEN, INK.RED][k + 2];
+      const cube = new THREE.Mesh(GEO.box, mat(ink, { tone: 0.3 }));
+      cube.scale.setScalar(2.1);
       g.add(cube);
-      const q1 = new THREE.Mesh(GEO.box, mat(INK.ORANGE, { fill: true }));
-      q1.scale.set(0.2, 0.9, 2.05);
-      g.add(q1);
-      const q2 = new THREE.Mesh(GEO.box, mat(INK.ORANGE, { fill: true }));
-      q2.scale.set(2.05, 0.9, 0.2);
-      g.add(q2);
+      for (let f = 0; f < 4; f++) {
+        const q = inkText("?", { size: 1.3, ink: INK.BLACK, weight: 1.6 });
+        const a = (f * Math.PI) / 2;
+        q.position.set(Math.sin(a) * 1.07, 0, Math.cos(a) * 1.07);
+        q.rotation.y = a;
+        g.add(q);
+      }
       g.position.set(b.x, 1.6, b.z);
       root.add(g);
       itemBoxes.push({ ...b, g, cool: 0, ph: R() * 6 });
     }
   }
 
+  let frameN = 0;
   function update(t, camX, camZ, dt) {
-    updateWater(camX, camZ, t);
+    updateWater(camX, camZ);
     updateBuoys(t);
+    if ((frameN = (frameN + 1) % 2) === 0) updateStrokes(t);
     for (const s of sailers) {
       s.g.position.x = s.x0 + Math.sin(t * 0.05 * s.speed + s.ph) * 18;
       s.g.position.z = s.z0 + Math.cos(t * 0.04 * s.speed + s.ph) * 14;
       s.g.position.y = waveH(s.g.position.x, s.g.position.z, t) * 0.8;
       s.g.rotation.z = Math.sin(t * 1.1 + s.ph) * 0.06;
       if (s.g.userData.paddle) s.g.userData.paddle.rotation.z = Math.sin(t * 3 + s.ph) * 0.5;
+    }
+    for (const b of boostPads) b.chev.forEach((row, k) => { const s = 1 + 0.25 * Math.max(0, Math.sin(t * 8 - k * 1.2)); row.scale.set(s, 1, s); });
+    for (const p of smoke) {
+      const k = (t * 0.25 + p.ph) % 1;
+      p.m.position.set(p.x + Math.sin(t + p.ph * 6) * 0.6 * k, 4.6 + k * 7, p.z);
+      p.m.scale.setScalar(0.6 + k * 2);
+      p.m.visible = k < 0.92;
     }
     for (const b of itemBoxes) {
       if (b.cool > 0) { b.cool -= dt; b.g.visible = b.cool <= 0; }

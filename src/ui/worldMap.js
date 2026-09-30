@@ -6,7 +6,7 @@
 //   Mundo 4: Pantano de San Juan (Carreras)
 // =============================================================================
 
-import { VISIBLE_WORLDS, loadWorldProgress, getWorldChallenges, isWorldLocked } from "../config/worlds.js";
+import { VISIBLE_WORLDS, loadWorldProgress, getWorldChallenges, isWorldLocked, worldRetos } from "../config/worlds.js";
 import { getCharacterAvatar } from "../engine/sprites.js";
 import { CHARS } from "../config/characters.js";
 import { GameState } from "../game/state.js";
@@ -376,7 +376,7 @@ export function initWorldMap({ onSelectWorld }) {
               <div class="ws-genre-pill" style="background: ${w.genreBg}; color: ${w.genreColor};">${w.genre}</div>
 
               <!-- Fila de retos con 3 estrellas y contador -->
-              <div class="ws-retos-row">
+              <div class="ws-retos-row" role="button" tabindex="0" data-id="${w.id}" title="Ver qué te falta">
                 <div class="ws-stars">
                   ${[1, 2, 3].map(i => `
                     <svg class="ws-star ${i <= retos ? "filled" : "empty"}" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
@@ -388,7 +388,7 @@ export function initWorldMap({ onSelectWorld }) {
                     </svg>
                   `).join("")}
                 </div>
-                <span class="ws-retos-txt">${retos}/3 RETOS</span>
+                <span class="ws-retos-txt">${retos}/3 RETOS <i class="ws-retos-info">ⓘ</i></span>
               </div>
 
               <!-- Botón JUGAR o Caja bloqueada -->
@@ -483,6 +483,24 @@ export function initWorldMap({ onSelectWorld }) {
         play(Number(b.dataset.id));
       })
     );
+
+    // al tocar los retos: qué hay que hacer y qué te falta
+    grid.querySelectorAll(".ws-retos-row").forEach((row) => row.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const id = Number(row.dataset.id);
+      const open = grid.querySelector(".ws-retos-pop");
+      if (open) { const same = open.dataset.id === String(id); open.remove(); if (same) return; }
+      const list = worldRetos(id, loadWorldProgress());
+      const left = list.filter((x) => !x.done).length;
+      const pop = document.createElement("div");
+      pop.className = "ws-retos-pop";
+      pop.dataset.id = id;
+      pop.innerHTML = `<div class="ws-retos-pop-h">${left ? `Te falta${left > 1 ? "n" : ""} ${left}` : "¡Todos conseguidos! 🏆"}<button aria-label="Cerrar">✕</button></div>
+        <ol>${list.map((x, i) => `<li class="${x.done ? "done" : ""}"><span>${x.done ? "★" : "☆"}</span><div><b>Reto ${i + 1}</b> ${x.txt}</div></li>`).join("")}</ol>`;
+      pop.addEventListener("click", (ev) => { ev.stopPropagation(); if (ev.target.closest("button")) pop.remove(); });
+      row.closest(".ws-card").appendChild(pop);
+      try { sfx(700, 0.05, "triangle"); } catch (err) {}
+    }));
 
     grid.querySelectorAll(".ws-locked-box").forEach((b) =>
       b.addEventListener("click", (e) => {

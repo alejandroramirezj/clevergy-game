@@ -1,7 +1,7 @@
 // =============================================================================
 // doodleRace.js — MUNDO 4 · PANTANO KART (carreras de motos de agua, Three.js)
 // Carreras estilo kart por el Pantano de San Juan dibujado a boli.
-// · 3 vueltas, 6 pilotos (tú + CPU, o hasta 6 personas online y el resto CPU).
+// · 3 vueltas, 6 pilotos (tú + CPU), u online hasta 20 personas (con CPUs si sois menos de 6).
 // · Derrape con miniturbo, rampas, flechas de turbo y cajas de objetos de oficina.
 // · Online P2P (PeerJS): cada móvil simula su moto y envía su estado; el anfitrión
 //   simula las motos de la CPU, sincroniza el reloj, da la salida y cierra la carrera.
@@ -25,7 +25,8 @@ import "./race.css";
 
 const STEP = 1 / 60;
 const LAPS = 3;
-const RACERS = 6;
+const RACERS = 6; // parrilla mínima (se rellena con CPUs)
+const MAX_ONLINE = 20; // personas por sala online
 const BOAT_R = 1.7;
 const SEND_HZ = 20;
 const INTERP_MS = 110;
@@ -61,6 +62,7 @@ const TEMPLATE = `
   <div class="rk-item"><span></span></div>
   <canvas class="rk-map" width="240" height="240"></canvas>
   <div class="rk-speed"><b>0</b> km/h</div>
+  <div class="rk-speedlines"></div>
   <div class="rk-big"></div>
   <div class="rk-msg"></div>
   <div class="rk-ping"></div>
@@ -82,7 +84,7 @@ const TEMPLATE = `
     <div class="rk-col">
       <button class="dd-btn rk-solo">🏁 Carrera contra la CPU</button>
       <div class="dd-mp rk-online">
-        <div class="dd-mp-head">📱 <b>Online</b> <small>hasta 6 · el resto CPU</small></div>
+        <div class="dd-mp-head">📱 <b>Online</b> <small>hasta 20 · CPUs si sois menos de 6</small></div>
         <div class="dd-mp-row rk-lobbyrow">
           <button class="dd-btn dd-mini rk-create">Crear sala</button>
           <input class="dd-mp-code rk-code" maxlength="5" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters" spellcheck="false" />
@@ -167,7 +169,7 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory } = {}) 
   const schedule = (at, fn) => RC.events.push({ at, fn });
 
   // ── red ──
-  const net = createNet({ prefix: "clevergy-race-", maxPlayers: RACERS });
+  const net = createNet({ prefix: "clevergy-race-", maxPlayers: MAX_ONLINE });
   const online = { on: false, roster: [], lastRx: new Map(), pingT: 0, sendT: 0 };
   const tx = (m) => (net.isHost ? net.broadcast(m) : net.send(m));
   const isAuthority = () => mode === "solo" || net.isHost;
@@ -407,6 +409,11 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory } = {}) 
         r.v *= 0.55;
         if (r === me) { sfx.bump(); shake(0.6); }
       }
+    }
+    // chispas del derrape (azules y, cargado del todo, naranjas) saliendo de la popa
+    if (r.drift && r.driftLvl > 0 && !r.air && Math.random() < 0.7) {
+      const ink = r.driftLvl === 2 ? INK.ORANGE : INK.BLUE;
+      for (const s of [-1, 1]) spray(r.x - fx * 1.8 + fz * s * 0.9, r.y + 0.35, r.z - fz * 1.8 - fx * s * 0.9, ink, 1, r.driftLvl === 2 ? 1.4 : 1);
     }
     // estela
     r.wakeT -= dt;
@@ -729,8 +736,10 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory } = {}) 
     bigT = dur;
   }
   let lastItem = "", mapT = 0;
+  const speedLinesEl = $(".rk-speedlines");
   function updateHud(dt) {
     if (!me) return;
+    speedLinesEl.classList.toggle("on", me.boostT > 0 || me.starT > 0);
     const ranked = racers.slice().sort((a, b) => (b.finished && a.finished ? a.finishT - b.finishT : b.finished ? 1 : a.finished ? -1 : b.prog - a.prog));
     ranked.forEach((r, i) => (r.rank = i + 1));
     hud.pos.textContent = `${me.rank}º`;

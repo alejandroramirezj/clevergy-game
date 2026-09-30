@@ -14,12 +14,11 @@ export const WORLDS = [
     genreBg: "#fedfe8",
     genreColor: "#d6204c",
     genre: "PLATAFORMAS",
-    defaultRetos: 2,
-    blurb: "La vieja fábrica de ladrillo de Google for Startups junto al Palacio Real: café, torre de coworking y el escenario del Demo Day.",
+    blurb: "El viaje de Clevergy por sus oficinas: Google for Startups Campus, Wayra en el Edificio Telefónica de Gran Vía y el CINK Coworking de Infanta Mercedes.",
     chips: ["👤 1 jugador", "🦸 18 poderes", "👾 Email Chain"],
     name: "La Oficina",
     subtitle: "Google for Startups · Campus Madrid",
-    desc: "Cruza el Campus Café, sube la torre de coworking, salta entre las salas de cristal y derrota a Email Chain en el Demo Day."
+    desc: "Empieza en Google for Startups Campus (café, torre de coworking y Demo Day), cruza Gran Vía y trepa por el Edificio Telefónica hasta Wayra en la 8ª planta, y termina en el CINK de Infanta Mercedes: derrota a Email Chain en la sala y llega a la oficina de Clevergy."
   },
   {
     id: 6,
@@ -31,7 +30,6 @@ export const WORLDS = [
     genreBg: "#ede4fb",
     genreColor: "#6b2bd4",
     genre: "PELEA · HASTA 4",
-    defaultRetos: 1,
     blurb: "Pelea estilo Smash en la terraza del CINK: hasta 4 a la vez, porcentaje de daño, vidas y objetos que coger del suelo.",
     chips: ["🥊 Hasta 4", "🎁 Objetos", "📱 Online"],
     name: "Coworking Fight",
@@ -48,9 +46,8 @@ export const WORLDS = [
     genreBg: "#def0ff",
     genreColor: "#166ae6",
     genre: "LASER TAG",
-    defaultRetos: 0,
     blurb: "Laser tag a boli por el CINK Coworking: oleadas de emails en cooperativo o todos contra todos con tus compañeros.",
-    chips: ["👥 Hasta 6", "⚔️ PvP", "🤝 Coop"],
+    chips: ["👥 Hasta 20", "⚔️ PvP", "🤝 Coop"],
     name: "BoliBic Tag",
     subtitle: "Laser tag en el CINK · Infanta Mercedes",
     desc: "Laser tag en primera persona con el boli Bic como pistola, por las tres plantas del CINK Coworking (recepción, comedor, terraza, salas y la oficina de Clevergy): sobrevive a las oleadas de emails, reuniones y relojes y borra a INBOX INFINITO, o juega todos contra todos con tus compañeros."
@@ -65,9 +62,8 @@ export const WORLDS = [
     genreBg: "#fdf1d1",
     genreColor: "#996808",
     genre: "CARRERAS",
-    defaultRetos: 0,
     blurb: "Carreras de motos de agua por el Pantano de San Juan: derrapes, rampas, turbos y objetos de oficina contra 5 rivales u online.",
-    chips: ["🚤 6 pilotos", "🎁 Objetos", "📱 Online"],
+    chips: ["🚤 Hasta 20", "🎁 Objetos", "📱 Online"],
     name: "Pantano de San Juan",
     subtitle: "Motos de agua · Madrid",
     desc: "Carreras de motos de agua estilo kart por el Pantano de San Juan: la presa, la playa de la Virgen de la Nueva, rampas, turbos y objetos de oficina contra 5 rivales o tus compañeros online."
@@ -77,27 +73,30 @@ export const WORLDS = [
 // en pantalla, por su número
 export const VISIBLE_WORLDS = WORLDS.slice().sort((a, b) => a.num - b.num);
 
+// los 3 retos de cada mundo: superarlo, rango A y rango S (el rango lo da cada mundo al ganar)
+export const WORLD_RETOS = {
+  // La Oficina: 1 punto por disquete (hay 3), +1 con más del 60 % de las monedas, +1 en menos de 8:00 y +1 sin perder corazones
+  1: ["Llega a la bandera del final", "Suma 3 puntos (cada disquete 💾 vale 1; +1 con más del 60 % de monedas; +1 en menos de 8:00; +1 sin perder corazones)", "Suma 5 de esos 6 puntos"],
+  6: ["Gana una pelea contra la CPU", "Gana perdiendo solo 1 de tus 3 vidas", "Gana sin perder ninguna vida"],
+  7: ["Supera las 6 oleadas y derrota a INBOX INFINITO", "Termina con 15.000 puntos o más", "Termina con 19.000 puntos o más"],
+  8: ["Gana una carrera (llega el 1º)", "Gana en menos de 2:50", "Gana en menos de 2:20"]
+};
+const RANK_ORDER = { S: 3, A: 2, B: 1, C: 0 };
+/** Estado de los 3 retos de un mundo: [{ txt, done }] */
+export function worldRetos(worldId, progress) {
+  const won = !!(progress && progress.completed && progress.completed.includes(worldId));
+  const r = RANK_ORDER[String((progress && progress.ranks && progress.ranks[worldId]) || "").toUpperCase()] ?? -1;
+  const done = [won, won && r >= 2, won && r >= 3];
+  return (WORLD_RETOS[worldId] || ["Supera el mundo", "Consigue el rango A", "Consigue el rango S"]).map((txt, i) => ({ txt, done: done[i] }));
+}
 export function getWorldChallenges(worldId, progress) {
-  if (progress && progress.challenges && progress.challenges[worldId] !== undefined) {
-    return Math.min(3, Math.max(0, Number(progress.challenges[worldId])));
-  }
-  if (progress && progress.completed && progress.completed.includes(worldId)) {
-    return 3;
-  }
-  const w = WORLDS.find((x) => x.id === worldId);
-  return w ? (w.defaultRetos ?? 0) : 0;
+  return worldRetos(worldId, progress).filter((x) => x.done).length;
 }
 
-export function isWorldLocked(world, progress) {
-  if (world.num === 4 || world.id === 8) {
-    if (progress && progress.completed && progress.completed.includes(7)) {
-      return false;
-    }
-    return true;
-  }
+// todos los mundos están abiertos desde el principio
+export function isWorldLocked() {
   return false;
 }
-
 
 const STORAGE_KEY = "clevergy_worlds_progress_v1";
 

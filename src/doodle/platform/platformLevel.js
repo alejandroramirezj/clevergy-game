@@ -11,14 +11,14 @@
 //   k muro de ladrillo visto (sólido, la fábrica neomudéjar)
 // =============================================================================
 
-export const LEVEL_W = 252;
+export const LEVEL_W = 480;
 export const LEVEL_H = 34;
 
 export function makeLevel() {
   const tiles = new Map();
   const L = {
     tiles, coins: [], enemies: [], movers: [], springs: [], checkpoints: [], fragments: [], decor: [], vents: [],
-    start: { x: 3, y: 2 }, boss: { x0: 194, x1: 213, spawnX: 208 }, flagX: 238, width: LEVEL_W
+    start: { x: 3, y: 2 }, boss: { x0: 424, x1: 443, spawnX: 438 }, flagX: 468, width: LEVEL_W
   };
   const set = (x, y, t, extra) => tiles.set(`${x},${y}`, { t, ...extra });
   const clear = (x0, x1, y0, y1) => { for (let x = x0; x <= x1; x++) for (let y = y0; y <= y1; y++) tiles.delete(`${x},${y}`); };
@@ -113,11 +113,62 @@ export function makeLevel() {
   ground(193, 214);
   decor("screen", 203, 2); decor("spot", 196, 2); decor("spot", 210, 2);
 
-  // ── 6 · Salida: la bandera con el Palacio Real al fondo ──
-  ground(215, LEVEL_W - 1);
+  // ── 6 · Salida del Campus, con el Palacio Real al fondo, hacia Gran Vía ──
+  puf(200, 2); puf(207, 2); // el Demo Day ya es sólo un escenario: el jefe espera en el CINK
+  coins(198, 6, 10, 1);
+  ground(215, 256);
   for (let i = 0; i < 5; i++) solid(226 + i, 226 + i, 2, 2 + i);
   coins(226, 9, 5);
-  decor("campus", 246, 2);
+  decor("campus", 240, 2);
+  enemy("walker", 236, 2); enemy("walker", 248, 2);
+  decor("arrow", 252, 2, { label: "GRAN VIA" });
+  L.checkpoints.push({ x: 218 });
+
+  // ── 7 · Gran Vía 28: se trepa por los balcones del Edificio Telefónica hasta Wayra (8ª planta) ──
+  ground(257, 362);
+  decor("granvia", 257, 2);
+  decor("metro", 262, 2);
+  L.checkpoints.push({ x: 264 });
+  enemy("walker", 272, 2); enemy("walker", 282, 2); enemy("flyer", 278, 7);
+  q(275, 6); q(276, 6, "coffee"); q(277, 6);
+  decor("telefonica", 311, 2);
+  // balcones en zigzag por la fachada (cada 3 m)
+  for (let k = 0; k < 7; k++) plat(k % 2 ? 294 : 289, 4, 4 + k * 3);
+  coins(290, 7, 1); coins(295, 10, 1); coins(290, 13, 1); coins(295, 16, 1); coins(290, 19, 1); coins(295, 22, 1);
+  enemy("flyer", 300, 14);
+  // la 8ª planta: Wayra, con ping-pong, pufs y zona de juego
+  solid(298, 330, 22, 22);
+  decor("wayra", 314, 23);
+  solid(306, 308, 23, 23); solid(318, 320, 23, 23); // mesas de ping-pong
+  decor("pingpong", 307, 23); decor("pingpong", 319, 23);
+  puf(312, 23); puf(326, 23);
+  coins(310, 27, 8, 2);
+  L.checkpoints.push({ x: 302 });
+  enemy("meeting", 314, 23); enemy("walker", 324, 23);
+  q(313, 27, "coffee");
+  // salida: se salta desde la terraza de vuelta a Gran Vía
+  coins(333, 20, 6, 1, -3);
+  enemy("walker", 345, 2); enemy("walker", 355, 2);
+  decor("arrow", 358, 2, { label: "INFANTA MERCEDES" });
+
+  // ── 8 · CINK Coworking (Infanta Mercedes): recepción, terraza, jefe y la oficina de Clevergy ──
+  ground(363, LEVEL_W - 1);
+  decor("cink", 372, 2);
+  L.checkpoints.push({ x: 368 });
+  solid(384, 387, 2, 2); decor("reception", 385.5, 3); // el mostrador de Victoria
+  plat(391, 4, 5); plat(397, 4, 8); plat(403, 5, 5); // la terraza con césped, en escalones
+  decor("grass", 391, 2, { w: 17 });
+  coins(391, 7, 4); coins(397, 10, 4); coins(403, 7, 5);
+  enemy("walker", 395, 2); enemy("flyer", 404, 10);
+  for (let k = 0; k < 4; k++) solid(410 + k, 410 + k, 2, 2 + k); // escalera a la sala
+  plat(414, 6, 6);
+  q(416, 10); q(417, 10, "coffee");
+  L.checkpoints.push({ x: 419 });
+  // la sala grande del CINK (el jefe EMAIL CHAIN), 424–443
+  decor("sala", 433, 2);
+  // la oficina de Clevergy y la bandera de INBOX ZERO
+  decor("clevergy", 460, 2);
+  coins(448, 5, 12, 1);
 
   return L;
 }
