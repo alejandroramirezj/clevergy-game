@@ -1,5 +1,5 @@
 // =============================================================================
-// doodleFight.js — MUNDO 2 · COWORKING FIGHT (pelea estilo Smash, dibujada a boli)
+// doodleFight.js — MUNDO 3 · COWORKING FIGHT (pelea estilo Smash, dibujada a boli)
 //
 // · Hasta 4 luchadores en la azotea del CINK: tú + CPUs, u online con compañeros
 //   (y CPUs para rellenar huecos).
@@ -26,6 +26,7 @@ import { CHARS } from "../../config/characters.js";
 import { getCharacterAvatar } from "../../engine/sprites.js";
 import { buildFightStage, PLATFORMS, MAIN, BLAST, RESPAWN, FIGHT_Z } from "./fightStage.js";
 import { specialFor, rollMulti, specialCooldown } from "./fightMoves.js";
+import { buzz } from "../haptics.js";
 import "../doodle.css";
 import "./fight.css";
 
@@ -104,6 +105,9 @@ const TEMPLATE = `
       <div class="sb-cpubox">
         <div class="sb-cpurow"><span>🤖 Rivales CPU</span>
           <div class="sb-seg" role="group"><button data-n="1">1</button><button data-n="2">2</button><button data-n="3" class="on">3</button></div>
+        </div>
+        <div class="sb-cpurow"><span>🎚️ Dificultad</span>
+          <div class="sb-seg sb-diff" role="group"><button data-d="0">Fácil</button><button data-d="1" class="on">Normal</button><button data-d="2">Difícil</button></div>
         </div>
         <button class="dd-btn cf-cpu">¡A pelear!</button>
       </div>
@@ -186,6 +190,9 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory } = {})
   let myChar = charId || CHARS[0].id;
   let meSlot = 0;
   let cpuCount = 3;
+  // dificultad de la CPU: tiempo de reacción, ganas de bloquear y de atacar
+  const DIFFS = [{ react: 1.9, block: 0.3, hit: 0.55, spec: 0.5 }, { react: 1, block: 1, hit: 1, spec: 1 }, { react: 0.55, block: 1.9, hit: 1.1, spec: 1.6 }];
+  let diff = DIFFS[1];
   let F = []; // luchadores por hueco
   const M = { fightAt: 0, slow: 1, freeze: 0, hype: 0.2, shake: 0, events: [], out: [], itemT: 6, frozenTime: null };
   let projectiles = [];
@@ -319,7 +326,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory } = {})
       return inp;
     }
     if (ai.t > 0) return inp;
-    ai.t = rnd(0.08, 0.18);
+    ai.t = rnd(0.08, 0.18) * diff.react;
     ai.x = 0; ai.y = 0; ai.jumpHeld = false;
     // 2 · objetivo: el rival más cercano (a veces cambia)
     const list = foes(f);
@@ -338,7 +345,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory } = {})
     if (!o) return inp;
     const dx = o.x - f.x, dist = Math.abs(dx), dy = o.y - f.y;
     // se protege a veces cuando le atacan de cerca
-    if (o.move && dist < 2.2 && f.g && Math.random() < 0.08) { ai.block = rnd(0.2, 0.45); return inp; }
+    if (o.move && dist < 2.2 && f.g && Math.random() < 0.08 * diff.block) { ai.block = rnd(0.2, 0.45); return inp; }
     // lanza lo que tenga en la mano si el rival está a tiro
     if (f.item && ITEMS[f.item].type === "throw" && dist < 9 && Math.abs(dy) < 1.5) { f.facing = Math.sign(dx) || f.facing; ai.x = Math.sign(dx) * 0.3; inp.punch = true; return inp; }
     // no te tires al vacío persiguiendo
@@ -346,9 +353,9 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory } = {})
     if (dist > 1.3) ai.x = Math.sign(dx) * (dist > 4 ? 1 : 0.7);
     if (!edgeSafe(f.x + ai.x * 0.8) && f.g && !PLATFORMS.some((p) => f.y >= p.y - 0.1 && f.x > p.x0 && f.x < p.x1)) ai.x = 0;
     const sp = f.sp;
-    if (f.cd <= 0 && Math.random() < 0.18 && ((sp.kind === "proj" && dist > 3 && dist < 10 && Math.abs(dy) < 1.5) || (sp.kind !== "proj" && dist < 3))) inp.special = true;
+    if (f.cd <= 0 && Math.random() < 0.18 * diff.spec && ((sp.kind === "proj" && dist > 3 && dist < 10 && Math.abs(dy) < 1.5) || (sp.kind !== "proj" && dist < 3))) inp.special = true;
     else if (dist < 1.7 && Math.abs(dy) < 1.4) {
-      inp.punch = Math.random() < 0.85;
+      inp.punch = Math.random() < 0.85 * diff.hit;
       if (o.pct > 70 && f.g && Math.random() < 0.5) ai.x = Math.sign(dx); // golpe fuerte para rematar
       else if (Math.random() < 0.25) ai.x = 0;
     } else if (dy > 1.3 && Math.abs(dx) < 1.4) { ai.y = 1; inp.punch = Math.random() < 0.6; }
@@ -595,6 +602,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory } = {})
   }
 
   function knockOut(f) {
+    if (f.ctrl === "local") buzz(120);
     if (f.state === "dead") return;
     const by = f.lastHitT > 0 ? f.lastHit : -1;
     f.stocks--;
@@ -630,6 +638,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory } = {})
     else net.send(msg);
   }
   function receiveHit(v, h) {
+    if (v.ctrl === "local" && v.inv <= 0 && v.starT <= 0) buzz(h.heavy ? 45 : 20);
     if (v.inv > 0 || v.starT > 0 || v.state === "dead" || phase !== "fight" || v.gone) return "miss";
     const px = (h.fromX + v.x) / 2, py = v.y + FH * 0.6;
     if (v.move && v.move.special && v.move.def.kind === "shield" && v.move.t < v.move.def.time) {
@@ -1471,9 +1480,14 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory } = {})
     if (onPickChar) try { onPickChar(myChar); } catch (e) {}
   }));
   renderPick();
-  root.querySelectorAll(".sb-seg button").forEach((b) => b.addEventListener("click", () => {
+  root.querySelectorAll(".sb-diff button").forEach((b) => b.addEventListener("click", () => {
+    diff = DIFFS[Number(b.dataset.d)];
+    root.querySelectorAll(".sb-diff button").forEach((x) => x.classList.toggle("on", x === b));
+    audio.init(); audio.tone({ freq: 500 + Number(b.dataset.d) * 200, dur: 0.05, type: "triangle", gain: 0.08 });
+  }));
+  root.querySelectorAll(".sb-seg:not(.sb-diff) button").forEach((b) => b.addEventListener("click", () => {
     cpuCount = Number(b.dataset.n);
-    root.querySelectorAll(".sb-seg button").forEach((x) => x.classList.toggle("on", x === b));
+    root.querySelectorAll(".sb-seg:not(.sb-diff) button").forEach((x) => x.classList.toggle("on", x === b));
     audio.init();
     audio.tone({ freq: 600 + cpuCount * 120, dur: 0.05, type: "triangle", gain: 0.08 });
   }));

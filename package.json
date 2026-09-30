@@ -2,18 +2,19 @@
   "name": "clevergy-game",
   "private": true,
   "version": "1.0.0",
-  "description": "RETREAT: THE LEGEND OF THE TEAM - Clevergy Retro Platformer Arcade Game",
+  "description": "THE RETREAT · el juego de Clevergy: 4 mundos 3D dibujados a boli",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run"
   },
   "devDependencies": {
-    "vite": "^6.2.0"
+    "vite": "^6.2.0",
+    "vitest": "^3.2.7"
   },
   "dependencies": {
-    "matter-js": "^0.20.0",
     "peerjs": "^1.5.5",
     "three": "^0.170.0"
   }

@@ -1,5 +1,5 @@
 // =============================================================================
-// doodleWorld.js — MUNDO 3 · DOODLE DISTRICT
+// doodleWorld.js — MUNDO 2 · BOLIBIC TAG (laser tag a boli en el CINK Coworking)
 // Shooter en primera persona dibujado a boli. Sobrevive a 5 oleadas de emails,
 // reuniones y "¿tienes 5 minutos?" y tumba al jefe INBOX INFINITO.
 // Se autogestiona: crea su propio canvas/HUD, su bucle y lo destruye todo al salir.
@@ -15,6 +15,7 @@ import { createSticker } from "./doodleSticker.js";
 import { createTouchPad, ICON } from "./touchPad.js";
 import { touch as mando } from "../engine/input.js";
 import { createNet, randomCode, cleanCode, MAX_PLAYERS } from "./doodleNet.js";
+import { buzz } from "./haptics.js";
 import "./doodle.css";
 
 // ── constantes de juego ──
@@ -1065,6 +1066,7 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
 
   const _kb = new THREE.Vector3();
   function hurtPlayer(dmg, fromPos) {
+    buzz(dmg > 12 ? 45 : 22);
     if (P.iframes > 0 || P.down || !(state === "play" || (mp.on && state === "pause"))) return;
     P.hp -= dmg;
     P.iframes = 0.3;

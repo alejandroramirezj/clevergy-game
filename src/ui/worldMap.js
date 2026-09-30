@@ -6,7 +6,7 @@
 //   Mundo 4: Pantano de San Juan (Carreras)
 // =============================================================================
 
-import { VISIBLE_WORLDS, loadWorldProgress, getWorldChallenges, isWorldLocked, worldRetos } from "../config/worlds.js";
+import { VISIBLE_WORLDS, loadWorldProgress, getWorldChallenges, isWorldLocked, worldRetos, dailyChallenge } from "../config/worlds.js";
 import { getCharacterAvatar } from "../engine/sprites.js";
 import { CHARS } from "../config/characters.js";
 import { GameState } from "../game/state.js";
@@ -392,23 +392,12 @@ export function initWorldMap({ onSelectWorld }) {
               </div>
 
               <!-- Botón JUGAR o Caja bloqueada -->
-              ${locked ? `
-                <div class="ws-locked-box" data-id="${w.id}">
-                  <div class="ws-lock-icon">
-                    <svg viewBox="0 0 24 24" width="22" height="22" fill="#5c677d">
-                      <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
-                    </svg>
-                  </div>
-                  <div class="ws-lock-txt">
-                    COMPLETA EL MUNDO 3<br>PARA DESBLOQUEAR
-                  </div>
-                </div>
-              ` : `
+
                 <button class="ws-play ${isSel ? "is-selected" : ""}" data-id="${w.id}">
                   <span class="ws-play-icon">▶</span>
                   <span>JUGAR</span>
                 </button>
-              `}
+
             </div>
           </div>
         </article>`;
@@ -502,13 +491,17 @@ export function initWorldMap({ onSelectWorld }) {
       try { sfx(700, 0.05, "triangle"); } catch (err) {}
     }));
 
-    grid.querySelectorAll(".ws-locked-box").forEach((b) =>
-      b.addEventListener("click", (e) => {
-        e.stopPropagation();
-        play(Number(b.dataset.id));
-      })
-    );
 
+    // reto del día (igual para todo el equipo)
+    {
+      const d = dailyChallenge(new Date(), loadWorldProgress());
+      let el = mapOv.querySelector(".ws-daily");
+      if (!el) { el = document.createElement("button"); el.className = "ws-daily"; mapOv.appendChild(el); }
+      el.style.setProperty("--card-acc", d.world.color);
+      el.classList.toggle("done", d.done);
+      el.innerHTML = `<b>${d.done ? "✅" : "🎯"} Reto del día</b><span>${d.world.name}: Reto ${d.idx + 1} · ${d.txt}</span><i>${d.done ? "¡Hecho!" : "▶ Jugar"}</i>`;
+      el.onclick = () => { if (!d.done) play(d.world.id); };
+    }
     const def = VISIBLE_WORLDS.find((w) => w.id === (selectedId || GameState.currentWorld)) || VISIBLE_WORLDS[0];
     select(def.id, false);
   }

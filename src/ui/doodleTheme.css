@@ -1630,3 +1630,24 @@ html body #menuOv .lobby-brand-crest { bottom: 8px !important; }
 .lb2-me .lb2-name { flex: 1 1 auto; }
 .lb2-pod-name { font-size: 14px !important; letter-spacing: -0.3px; }
 .lb2-podium { gap: 4px; }
+
+/* accesibilidad: si el móvil pide "reducir movimiento", fuera animaciones y parpadeos */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001s !important; animation-iteration-count: 1 !important; transition-duration: 0.001s !important; scroll-behavior: auto !important; }
+}
+
+/* reto del día en la elección de mundo */
+html body #worldMapOv .ws-daily {
+  position: absolute; left: 50%; bottom: max(8px, env(safe-area-inset-bottom)); transform: translateX(-50%) rotate(-0.6deg); z-index: 20;
+  display: flex; align-items: center; gap: 10px; max-width: min(640px, calc(100% - 40px)); padding: 5px 8px 5px 12px; cursor: pointer;
+  background: #fff7d6; border: 2.5px solid #232738; border-radius: 14px 9px 15px 10px; box-shadow: 3px 4px 0 var(--card-acc);
+  font-family: "Patrick Hand", cursive; color: #232738; text-align: left;
+}
+html body #worldMapOv .ws-daily b { flex: 0 0 auto; font: 700 18px/1 "Caveat", cursive; color: var(--card-acc); }
+html body #worldMapOv .ws-daily span { min-width: 0; font-size: 13px; line-height: 1.15; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+html body #worldMapOv .ws-daily i { flex: 0 0 auto; font-style: normal; font: 700 16px/1 "Caveat", cursive; color: #fff; background: var(--card-acc); padding: 4px 10px; border-radius: 10px; border: 2px solid #232738; }
+html body #worldMapOv .ws-daily.done { opacity: 0.8; cursor: default; }
+@media (orientation: landscape) and (max-height: 440px) {
+  html body #worldMapOv .ws-grid { padding-bottom: 44px !important; }
+  html body #worldMapOv .ws-art-window { height: calc(100dvh - 290px) !important; }
+}

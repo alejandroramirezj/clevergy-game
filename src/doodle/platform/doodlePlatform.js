@@ -18,9 +18,10 @@ import { createTouchPad, ICON } from "../touchPad.js";
 import { makeEmail, makeMeeting, makeClock, makeBoss } from "../doodleActors.js";
 import { inkText, cinkLogo } from "../inkText.js";
 import { touch as mando } from "../../engine/input.js";
-import { CHARS } from "../../config/characters.js";
+import { CHARS, POWER_INFO } from "../../config/characters.js";
 import { getCharacterAvatar } from "../../engine/sprites.js";
 import { makeLevel, LEVEL_W, LEVEL_H } from "./platformLevel.js";
+import { buzz } from "../haptics.js";
 import "../doodle.css";
 import "../fight/fight.css";
 import "./platform.css";
@@ -31,6 +32,7 @@ const PW = 0.78, PH = 1.7;
 const COYOTE = 0.1, BUFFER = 0.13;
 const MAX_FALL = 22;
 const HEARTS = 3;
+const SAVE_KEY = "clevergy_oficina_cp";
 // las oficinas por las que ha pasado Clevergy, en orden
 const ZONES = [
   { x: 258, t: "WAYRA", s: "Edificio Telefónica · Gran Vía 28 · sube a la 8ª planta" },
@@ -82,6 +84,7 @@ const TEMPLATE = `
       <div class="pf-help dd-desktop-only">A/D mover · Espacio/W saltar · J poder · S bajar · Tab compañero · Esc pausa · 🎮 mando</div>
       <div class="dd-btns">
         <button class="dd-btn pf-go">¡A jugar!</button>
+        <button class="dd-btn pf-continue hidden"></button>
         <button class="dd-btn dd-ghost pf-exit">Volver al mapa</button>
       </div>
     </div>
@@ -890,6 +893,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     for (const c of L.checkpoints) {
       if (!c.on && P.x > c.x) {
         c.on = true; P.cp = c.x; sfx.item(); msg("☕ Punto de control: café recargado", 1.8);
+        try { localStorage.setItem(SAVE_KEY, String(c.x)); } catch (e) {}
         P.hearts = Math.max(P.hearts, HEARTS);
       }
     }
@@ -1061,6 +1065,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
   }
 
   function hurt(fromX) {
+    if (P.inv <= 0 && P.dead <= 0 && !P.won) buzz(40);
     if (P.inv > 0 || P.dead > 0 || P.won) return;
     P.hearts--;
     P.inv = 1.4;
@@ -1294,6 +1299,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
 
   // ── meta ──
   function finish() {
+    try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
     P.won = true;
     const grab = clamp((P.y - 2) / 10, 0, 1);
     P.score += Math.round(grab * 2000) + Math.max(0, 3000 - Math.round(P.time) * 10);
@@ -1416,6 +1422,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     hud.coins.textContent = `🪙 ${P.coins}`;
     hud.frags.textContent = `💾 ${P.frags.size}/3`;
     hud.time.textContent = fmt(P.time);
+    hud.time.classList.toggle("late", P.time > 480); // el reto de tiempo es acabar en menos de 8:00
     hud.score.textContent = P.score.toLocaleString("es-ES");
     const meter = char.id === "paloma" || char.id === "alejandro" ? P.fly : char.id === "beltran" ? P.energy : null;
     const useMeter = meter !== null && meter < 0.995 && P.cd <= 0;
@@ -1529,6 +1536,18 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     screen = "play";
     showOv(null);
     syncPad();
+    // recordatorio del poder de tu personaje al empezar
+    const pi = POWER_INFO[char.id];
+    if (pi) setTimeout(() => { if (screen === "play") msg(`${pi.icon} ${char.ab}: ${pi.desc}`, 4); }, 1900);
+  }
+  // continuar desde el último café (el nivel es largo: se guarda en este móvil)
+  const savedCp = (() => { try { return Number(localStorage.getItem(SAVE_KEY)) || 0; } catch (e) { return 0; } })();
+  if (savedCp > 3) {
+    const where = savedCp >= 364 ? "el CINK" : savedCp >= 257 ? "Wayra" : savedCp >= 200 ? "la salida del Campus" : "el Campus";
+    const bc = $(".pf-continue");
+    bc.textContent = `☕ Continuar en ${where}`;
+    bc.classList.remove("hidden");
+    bc.addEventListener("click", () => { P.cp = savedCp; resetRun(true); play(); big("¡SEGUIMOS!", `Desde ${where}`, 1.4); });
   }
   $(".pf-go").addEventListener("click", () => { resetRun(false); play(); big("LA OFICINA", "Campus → Wayra → CINK: ¡a por la oficina de Clevergy!", 1.8); });
   $(".pf-resume").addEventListener("click", () => play());

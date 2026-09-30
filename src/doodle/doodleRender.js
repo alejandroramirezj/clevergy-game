@@ -240,7 +240,9 @@ export function mat(ink, opts = {}) {
 export function createDoodleRenderer(canvas, opts = {}) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: "high-performance" });
   const coarse = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
-  const pr = Math.min(window.devicePixelRatio || 1, coarse ? 1.25 : 1.5);
+  // móviles modestos (pocos núcleos o poca memoria): resolución 1× para ir fluido
+  const lowEnd = (navigator.hardwareConcurrency || 8) <= 4 || (navigator.deviceMemory || 8) <= 3;
+  const pr = Math.min(window.devicePixelRatio || 1, lowEnd ? 1 : coarse ? 1.25 : 1.5);
   renderer.setPixelRatio(pr);
   renderer.setClearColor(0x000000, 0);
 

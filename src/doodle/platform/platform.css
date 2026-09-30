@@ -1,5 +1,5 @@
 /* =============================================================================
-   MUNDO 1 · THE OFFICE — HUD de plataformas y menú, estilo cuaderno
+   MUNDO 1 · LA OFICINA — HUD de plataformas y menú, estilo cuaderno
    ============================================================================= */
 
 .pf-hud { position: absolute; inset: 0; pointer-events: none; }
@@ -73,3 +73,4 @@ body.gameboy-mode .pf-title { font-size: 34px; }
 body.gameboy-mode .pf-sticker { height: 76px; }
 body.gameboy-mode .pf-howto { font-size: 13px; }
 body.gameboy-mode .pf-score { top: 40px; font-size: 26px; }
+.pf-time.late { color: var(--dd-red, #d6243a); }

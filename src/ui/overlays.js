@@ -91,8 +91,17 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld }) {
   // Load saved name
   try {
     const saved = localStorage.getItem("clevergy_player_name");
-    if (saved) nameInput.value = saved;
+    if (saved) {
+      nameInput.value = saved;
+      GameState.playerName = (saved.trim() || "ANON").toUpperCase().slice(0, 12);
+    }
   } catch (e) {}
+
+  if (nameInput) {
+    nameInput.addEventListener("input", () => {
+      GameState.playerName = (nameInput.value.trim() || "ANON").toUpperCase().slice(0, 12);
+    });
+  }
 
   // Update spotlight UI based on selected character
   function updateSpotlight() {

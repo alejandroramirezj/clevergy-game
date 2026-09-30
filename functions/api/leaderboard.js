@@ -1,4 +1,5 @@
 import { currentUser } from "../../server/auth.js";
+import { validateScore } from "../../server/score.js";
 
 export async function onRequestGet({ env }) {
   try {
@@ -18,8 +19,7 @@ export async function onRequestGet({ env }) {
     return new Response(JSON.stringify({ success: true, data }), {
       headers: {
         "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Cache-Control": "public, max-age=5"
+                "Cache-Control": "public, max-age=5"
       }
     });
   } catch (err) {
@@ -30,71 +30,37 @@ export async function onRequestGet({ env }) {
   }
 }
 
+const J = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json", "Cache-Control": "no-store" } });
+
+// POST: sólo desde el propio juego (sin CORS abierto), con tope por mundo, límite de envíos
+// y guardando sólo el mejor récord de cada jugador en cada mundo
 export async function onRequestPost({ request, env }) {
   try {
-    if (!env.DB) {
-      return new Response(JSON.stringify({ success: false, error: "Database not bound" }), {
-        status: 200,
-        headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
-      });
-    }
-
-    const body = await request.json();
-    // con sesión de Google, la puntuación va a su nombre (no se puede suplantar a otro)
+    if (!env.DB) return J({ success: false, error: "Database not bound" });
+    const body = await request.json().catch(() => ({}));
     const user = await currentUser(request, env).catch(() => null);
-    if (env.REQUIRE_LOGIN && !user) {
-      return new Response(JSON.stringify({ success: false, error: "Inicia sesión para entrar en el ranking" }), {
-        status: 401, headers: { "Content-Type": "application/json" }
-      });
-    }
-    const name = String((user && user.nick) || body.name || "ANON").trim().slice(0, 15).toUpperCase();
-    const score = Math.max(0, parseInt(body.score, 10) || 0);
-    const character = String(body.character || "alejandro").slice(0, 30);
-    const char_name = String(body.char_name || "ALEJANDRO R.").slice(0, 40);
-    const time_seconds = Math.max(0, parseFloat(body.time_seconds) || 0);
-    const rank = String(body.rank || "C").slice(0, 5);
-    const deaths = Math.max(0, parseInt(body.deaths, 10) || 0);
+    if (env.REQUIRE_LOGIN && !user) return J({ success: false, error: "Inicia sesión para entrar en el ranking" }, 401);
+    const v = validateScore(body, user);
+    if (!v.ok) return J({ success: false, error: v.error }, 400);
+    const e = v.entry;
+    const who = e.user_id ? ["user_id = ?", e.user_id] : ["name = ? AND user_id IS NULL", e.name];
 
-    const world = Math.max(0, parseInt(body.world, 10) || 0);
-    let info;
-    try {
-      info = await env.DB.prepare(
-        "INSERT INTO leaderboard (name, score, character, char_name, time_seconds, rank, deaths, world, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-      ).bind(name, score, character, char_name, time_seconds, rank, deaths, world, user ? user.id : null).run();
-    } catch (e) {
-      // base de datos sin la columna "world" todavía (migrations/0002_add_world.sql)
-      info = await env.DB.prepare(
-        "INSERT INTO leaderboard (name, score, character, char_name, time_seconds, rank, deaths) VALUES (?, ?, ?, ?, ?, ?, ?)"
-      ).bind(name, score, character, char_name, time_seconds, rank, deaths).run();
-    }
+    // como mucho 4 envíos por minuto por jugador
+    const recent = await env.DB.prepare(`SELECT COUNT(*) AS n FROM leaderboard WHERE ${who[0]} AND created_at > datetime('now', '-60 seconds')`).bind(who[1]).first().catch(() => ({ n: 0 }));
+    if ((recent?.n || 0) >= 4) return J({ success: false, error: "Demasiados envíos, espera un momento" }, 429);
 
-    const countResult = await env.DB.prepare(
-      "SELECT COUNT(*) as higher_count FROM leaderboard WHERE score > ?"
-    ).bind(score).first();
+    // si ya tenía un récord mejor en ese mundo, no se guarda otro
+    const prev = await env.DB.prepare(`SELECT id, score FROM leaderboard WHERE ${who[0]} AND world = ? ORDER BY score DESC LIMIT 1`).bind(who[1], e.world).first().catch(() => null);
+    if (prev && prev.score >= e.score) return J({ success: true, kept: true, best: prev.score });
+    if (prev) await env.DB.prepare(`DELETE FROM leaderboard WHERE ${who[0]} AND world = ?`).bind(who[1], e.world).run();
 
-    const position = (countResult?.higher_count || 0) + 1;
-
-    return new Response(JSON.stringify({
-      success: true,
-      id: info?.meta?.last_row_id,
-      position
-    }), {
-      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
-    });
+    const info = await env.DB.prepare(
+      "INSERT INTO leaderboard (name, score, character, char_name, time_seconds, rank, deaths, world, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    ).bind(e.name, e.score, e.character, e.char_name, e.time_seconds, e.rank, e.deaths, e.world, e.user_id).run();
+    const higher = await env.DB.prepare("SELECT COUNT(*) AS n FROM leaderboard WHERE world = ? AND score > ?").bind(e.world, e.score).first();
+    return J({ success: true, id: info?.meta?.last_row_id, position: (higher?.n || 0) + 1 });
   } catch (err) {
-    return new Response(JSON.stringify({ success: false, error: err.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" }
-    });
+    console.error("Leaderboard POST error:", err);
+    return J({ success: false, error: err.message || "Error guardando la puntuación" }, 500);
   }
-}
-
-export async function onRequestOptions() {
-  return new Response(null, {
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type"
-    }
-  });
 }

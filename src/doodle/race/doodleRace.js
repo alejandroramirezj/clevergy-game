@@ -19,6 +19,7 @@ import { touch as mando } from "../../engine/input.js";
 import { CHARS } from "../../config/characters.js";
 import { getCharacterAvatar } from "../../engine/sprites.js";
 import { buildTrack, buildRaceWorld, waveH, TRACK_HALF, N_SAMPLES } from "./raceTrack.js";
+import { buzz } from "../haptics.js";
 import "../doodle.css";
 import "../fight/fight.css"; // selector de piloto y botones compartidos con la pelea
 import "./race.css";
@@ -400,14 +401,14 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory } = {}) 
       const push = Math.abs(nr.lat) - (TRACK_HALF + 5);
       r.x -= -p.tz * s * push; r.z -= p.tx * s * push;
       r.v *= 0.94;
-      if (r === me && Math.random() < 0.2) { sfx.bump(); shake(0.3); }
+      if (r === me && Math.random() < 0.2) { sfx.bump(); shake(0.3); buzz(15); }
     }
     for (const c of world.colliders) {
       const dx = r.x - c.x, dz = r.z - c.z, d = Math.hypot(dx, dz);
       if (d < c.r + BOAT_R) {
         r.x = c.x + (dx / d) * (c.r + BOAT_R); r.z = c.z + (dz / d) * (c.r + BOAT_R);
         r.v *= 0.55;
-        if (r === me) { sfx.bump(); shake(0.6); }
+        if (r === me) { sfx.bump(); shake(0.6); buzz(35); }
       }
     }
     // chispas del derrape (azules y, cargado del todo, naranjas) saliendo de la popa

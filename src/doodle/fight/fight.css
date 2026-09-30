@@ -1,5 +1,5 @@
 /* =============================================================================
-   MUNDO 2 · COWORKING FIGHT — HUD estilo Smash y sala, estilo cuaderno
+   MUNDO 3 · COWORKING FIGHT — HUD estilo Smash y sala, estilo cuaderno
    (se apoya en las variables y piezas de doodle.css: dd-card, dd-btn, dd-mp…)
    ============================================================================= */
 
@@ -170,3 +170,4 @@ body.gameboy-mode .sb-roster { grid-template-columns: 1fr; }
 .cf-root.dd-landpad .sb-name { font-size: 10px; max-width: 70px; }
 .cf-root.dd-landpad .sb-stocks i { width: 8px; height: 8px; border-width: 1.5px; }
 .cf-root.dd-landpad .cf-ping { top: 48px; }
+.sb-diff button { width: auto; padding: 0 9px; font-size: 19px; }
