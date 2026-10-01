@@ -97,3 +97,6 @@ body.gameboy-mode .fg-lead { display: none; }
 .fg-follow span { font-family: "Caveat", cursive; font-size: 24px; color: var(--dd-ink); white-space: nowrap; min-width: 150px; text-align: center; }
 .fg-follow button { width: 40px; height: 40px; border-radius: 50%; border: 2.5px solid var(--dd-black); background: #fff; font-size: 16px; cursor: pointer; }
 .fg-card .rk-online { margin: 0; }
+
+/* mando táctil: AGARRAR bien separado de SALTO (arriba a la izquierda del botón grande) */
+.fg-root .dd-act.slot-1 { right: 118px; bottom: 96px; }

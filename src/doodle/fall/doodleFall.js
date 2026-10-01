@@ -745,7 +745,8 @@ export function startDoodleFall({ charId, onPickChar, onExit, onVictory, onScore
       if (hidden) continue;
       _v.set(c.x, c.y, c.z);
       const sp = Math.hypot(c.vx, c.vz);
-      const pose = c.stun > 0 ? "damage" : c.dive || c.grabbing || c.grabHeld ? "attack" : !c.ground ? "jump" : undefined;
+      // lanzarse (doble salto) es un salto, no un puñetazo; la pose de ataque sólo al agarrar a alguien de verdad
+      const pose = c.stun > 0 ? "damage" : c.grabbing ? "attack" : !c.ground || c.dive ? "jump" : undefined;
       c.sticker.update(dt, {
         pos: _v, camera, moveX: Math.abs(c.vx) > 0.6 ? -c.vx : 0, speed: c.ground ? sp : 0, onGround: !!c.ground, firing: false, pose,
         hurt: c.stun > 0 ? 0.5 : c.grabbedBy ? 0.3 : 0,
