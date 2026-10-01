@@ -17,7 +17,7 @@ const PROJ = (dmg, shape, name, ink, o = {}) => ({ kind: "proj", dmg, shape, nam
 export const SPECIALS = {
   alejandro: DASH(14, 15, "FLY PUNCH", INK.BLACK),
   ale: { ...DASH(13, 17, "OIL SLIDE", INK.GREEN), low: true },
-  alvaroM: PROJ(13, "calc", "ERROR 404", INK.BLACK, { arc: true, speed: 8, vy: 7, life: 2.2 }),
+  alvaroM: PROJ(13, "404", "ERROR 404", INK.BLACK, { arc: true, speed: 8, vy: 7, life: 2.2 }),
   alvaroP: PROJ(11, "wave", "PODCAST ATTACK", INK.PURPLE, { speed: 13, life: 0.9 }),
   ana: { kind: "rise", dmg: 13, name: "TREPAR", ink: INK.ORANGE, vy: 12, vx: 3 },
   beltran: PROJ(11, "slack", "SLACK SPAM", INK.BLUE, { speed: 12, life: 1.2 }),

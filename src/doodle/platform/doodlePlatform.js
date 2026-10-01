@@ -996,8 +996,13 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     if (shape === "wave") {
       for (let k = 0; k < 3; k++) { const r = new THREE.Mesh(GEO.torus, mat(ink, { fill: true })); r.scale.setScalar(0.35 + k * 0.2); r.position.x = -k * 0.25; r.rotation.y = Math.PI / 2; g.add(r); }
     } else if (shape === "404") {
-      box(g, 0, 0, 0, 0.7, 0.5, 0.2, INK.BLUE, { tone: 0.05 });
-      const t = inkText("404", { size: 0.28, ink: INK.RED, weight: 1.3 }); t.position.z = 0.12; g.add(t);
+      // bola de fuego de ERROR 404: núcleo oscuro, corona de llamas y el texto
+      const core = new THREE.Mesh(GEO.sph, mat(INK.BLACK, { tone: -0.15 })); core.scale.setScalar(0.62); g.add(core);
+      for (let k = 0; k < 10; k++) {
+        const a = (k / 10) * Math.PI * 2, fl = new THREE.Mesh(GEO.box, mat(k % 2 ? INK.ORANGE : INK.RED, { fill: true }));
+        fl.scale.set(0.12, 0.28 + (k % 3) * 0.08, 0.06); fl.position.set(Math.cos(a) * 0.4, Math.sin(a) * 0.4, 0); fl.rotation.z = a - Math.PI / 2; g.add(fl);
+      }
+      const t = inkText("404", { size: 0.22, ink: INK.ORANGE, weight: 1.4 }); t.position.z = 0.34; g.add(t);
     } else if (shape === "slack") { // un mensaje de Slack: bocadillo blanco, el logo de colores y dos líneas de texto
       box(g, 0, 0, 0, 0.9, 0.55, 0.08, INK.BLACK, { tone: 0.62 });
       box(g, -0.33, -0.3, 0, 0.14, 0.12, 0.08, INK.BLACK, { tone: 0.62 }); // el piquito
