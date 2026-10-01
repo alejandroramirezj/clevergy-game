@@ -1999,13 +1999,13 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
     // María Eugenia teje en su balcón; si la miras desde la oficina de Clevergy, te saluda
     mariaEugenia.update(dt);
     tendedora.update(dt);
-    // el señor de las vending protesta si te pones en medio
+    // la señora de las vending protesta si te pones en medio
     const sd = Math.hypot(P.pos.x - senor.group.position.x, P.pos.z - senor.group.position.z);
     senor.update(dt, sd < 6 && P.pos.y < 2 ? P.pos : null, sd < 2.4 && P.pos.y < 2);
     if (state === "play" && sd < 2.4 && P.pos.y < 2 && wall - lastSenor > 7) {
       lastSenor = wall;
-      const quejas = ["¡Oiga, que está usted en medio!", "¿Pero no ve que estoy sacando el café?", "¡Hay que ver la juventud, siempre con prisas!", "¡Que me tapa las ChocoBom, hombre!"];
-      showMsg("", "Señor: " + quejas[(Math.random() * quejas.length) | 0], 3);
+      const quejas = ["¡Oiga, que está usted en medio!", "¿Pero no ve que estoy sacando el café?", "¡Hay que ver la juventud, siempre con prisas!", "¡Que me tapa las ChocoBom, hijo!"];
+      showMsg("", "Señora: " + quejas[(Math.random() * quejas.length) | 0], 3);
     }
     const inClevergy = P.pos.x > 9.6 && P.pos.x < 20 && P.pos.z > -12 && P.pos.z < 6 && P.pos.y > F1_Y - 0.5 && P.pos.y < F1_Y + 2;
     if (state === "play" && inClevergy && wall - lastMaria > 18) {

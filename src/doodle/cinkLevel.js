@@ -773,7 +773,7 @@ export function buildLevel(scene) {
   // la foto de la pared de la pizarra (se pinta con sus colores reales, ver doodleWorld)
   const clevergyPhoto = { x: 9.8, y: F1 + 1.85, z: -2.9, w: 1.25, h: 1.45, ry: Math.PI / 2 };
 
-  // el señor de las vending (se queja si te pones en medio)
+  // la señora de las vending (se queja si te pones en medio)
   const senor = makeSenor();
   senor.group.position.set(-14.6, 0, -26.1);
   root.add(senor.group);
@@ -893,16 +893,18 @@ function makeTendedora() {
   return { group: g, pose, update() {} };
 }
 
-// el señor que espera su café en las vending y protesta si le estorbas
+// la señora canosa que espera su café en las vending y protesta si le estorbas
 function makeSenor() {
   const g = new THREE.Group();
   const part = (geo, ink, o, sc, p, parent = g) => { const m = new THREE.Mesh(geo, mat(ink, o)); m.scale.set(...sc); m.position.set(...p); parent.add(m); return m; };
-  part(GEO.cyl, INK.BLACK, { tone: 0.1 }, [0.36, 0.85, 0.32], [0, 0.42, 0]); // pantalón
-  part(GEO.cyl, INK.BLACK, { tone: 0.35 }, [0.56, 0.75, 0.46], [0, 1.2, 0]); // rebeca gris (con barriga)
+  part(GEO.cyl, INK.BLUE, { tone: 0.1 }, [0.48, 0.85, 0.42], [0, 0.42, 0]); // falda
+  part(GEO.cyl, INK.BLACK, { tone: 0.35 }, [0.56, 0.75, 0.46], [0, 1.2, 0]); // rebeca gris
   part(GEO.sph, INK.BLACK, { tone: 0.35 }, [0.5, 0.5, 0.44], [0, 1.05, 0.06]);
   part(GEO.sph, INK.ORANGE, { tone: 0.4 }, [0.36, 0.4, 0.36], [0, 1.85, 0]);
-  part(GEO.sph, INK.BLACK, { tone: 0.45 }, [0.38, 0.18, 0.3], [0, 1.78, -0.08]); // pelo de los lados (calvo arriba)
-  part(GEO.box, INK.BLACK, { fill: true }, [0.2, 0.05, 0.04], [0, 1.76, 0.18]); // bigote
+  part(GEO.sph, INK.BLACK, { tone: 0.6 }, [0.42, 0.36, 0.4], [0, 1.98, -0.04]); // pelo canoso, cardado
+  part(GEO.sph, INK.BLACK, { tone: 0.6 }, [0.44, 0.3, 0.3], [0, 1.82, -0.12]);
+  part(GEO.box, INK.RED, { fill: true }, [0.1, 0.025, 0.02], [0, 1.76, 0.18]); // boca
+  part(GEO.box, INK.BLACK, { fill: true }, [0.26, 0.02, 0.02], [0, 1.9, 0.19]); // gafas
   for (const sx of [-0.07, 0.07]) part(GEO.sph, INK.BLACK, { fill: true }, [0.04, 0.04, 0.03], [sx, 1.9, 0.17]);
   const brows = [-1, 1].map((sd) => part(GEO.box, INK.BLACK, { fill: true }, [0.1, 0.025, 0.02], [sd * 0.08, 1.98, 0.17]));
   part(GEO.box, INK.BLACK, { tone: 0.35 }, [0.1, 0.5, 0.1], [-0.33, 1.25, 0.05]);
@@ -919,5 +921,5 @@ function makeSenor() {
     brows[0].rotation.z = -angry * 0.5; brows[1].rotation.z = angry * 0.5;
     cup.position.y = 0.98 + Math.sin(t * 1.3) * 0.02;
   }
-  return { group: g, update, name: "Señor" };
+  return { group: g, update, name: "Señora" };
 }
