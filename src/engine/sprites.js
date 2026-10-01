@@ -162,6 +162,7 @@ export function initSprites() {
     death: "/sprites/ale/death.png"
   }, {
     faceRight: true,
+    relScale: true, // todas las poses dibujadas a la misma escala
     anchorX: 150,
     canvW: 380,
     canvH: 280,
@@ -178,6 +179,7 @@ export function initSprites() {
     death: "/sprites/alvaroP/death.png"
   }, {
     faceRight: true,
+    relScale: true,
     anchorX: 210,
     canvW: 560,
     canvH: 340,
@@ -210,6 +212,7 @@ export function initSprites() {
     death: "/sprites/alvaroM/death.png"
   }, {
     faceRight: true,
+    relScale: true, // todas las poses dibujadas a la misma escala
     anchorX: 210,
     canvW: 560,
     canvH: 340,
@@ -226,6 +229,7 @@ export function initSprites() {
     death: "/sprites/beltran/death.png"
   }, {
     faceRight: true,
+    relScale: true, // todas las poses dibujadas a la misma escala
     anchorX: 140,
     canvW: 360,
     canvH: 280,
@@ -242,6 +246,7 @@ export function initSprites() {
     death: "/sprites/javi/death.png"
   }, {
     faceRight: true,
+    relScale: true, // todas las poses dibujadas a la misma escala
     anchorX: 180,
     canvW: 420,
     canvH: 360,
@@ -258,6 +263,7 @@ export function initSprites() {
     death: "/sprites/maca/death.png"
   }, {
     faceRight: true,
+    relScale: true, // todas las poses dibujadas a la misma escala
     anchorX: 190,
     canvW: 380,
     canvH: 280,
@@ -290,6 +296,7 @@ export function initSprites() {
     death: "/sprites/gonzalo/death.png"
   }, {
     faceRight: true,
+    relScale: true, // todas las poses dibujadas a la misma escala
     anchorX: 120,
     canvW: 320,
     canvH: 240,
@@ -305,6 +312,7 @@ export function initSprites() {
     death: "/sprites/silvia/death.png"
   }, {
     faceRight: true,
+    relScale: true, // todas las poses dibujadas a la misma escala
     anchorX: 120,
     canvW: 320,
     canvH: 240,
@@ -320,6 +328,7 @@ export function initSprites() {
     death: "/sprites/paloma/death.png"
   }, {
     faceRight: true,
+    relScale: true, // todas las poses dibujadas a la misma escala
     anchorX: 120,
     canvW: 320,
     canvH: 240,
@@ -335,6 +344,7 @@ export function initSprites() {
     death: "/sprites/manu/death.png"
   }, {
     faceRight: true,
+    relScale: true, // todas las poses dibujadas a la misma escala
     anchorX: 120,
     canvW: 320,
     canvH: 240,
@@ -350,6 +360,7 @@ export function initSprites() {
     death: "/sprites/bruno/death.png"
   }, {
     faceRight: true,
+    relScale: true, // todas las poses dibujadas a la misma escala
     anchorX: 120,
     canvW: 320,
     canvH: 240,
@@ -366,6 +377,7 @@ export function initSprites() {
     death: "/sprites/josu/death.png"
   }, {
     faceRight: true,
+    relScale: true, // todas las poses dibujadas a la misma escala
     anchorX: 120,
     canvW: 320,
     canvH: 240,
@@ -381,6 +393,7 @@ export function initSprites() {
     death: "/sprites/yair/death.png"
   }, {
     faceRight: true,
+    relScale: true, // todas las poses dibujadas a la misma escala
     anchorX: 120,
     canvW: 320,
     canvH: 240,
@@ -451,6 +464,7 @@ export function loadPoses(id, poses, options = {}) {
     images,
     anims,
     faceRight: options.faceRight !== false, // Default is facing right ▶
+    relScale: !!options.relScale,
     anchorX: options.anchorX ?? 140,
     canvW: options.canvW ?? 360,
     canvH: options.canvH ?? 260,

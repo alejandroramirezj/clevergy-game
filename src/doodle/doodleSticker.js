@@ -80,7 +80,7 @@ function bakeSticker(img, pixelArt) {
   ring(white, WHITE);
   ring(white, WHITE * 0.5);
   og.drawImage(body, pad, pad);
-  return { canvas: out, charH: sh / out.height, feet: pad / out.height };
+  return { canvas: out, charH: sh / out.height, feet: pad / out.height, srcH: bh };
 }
 
 function stickerTexture(img, pixelArt, onReady) {
@@ -91,7 +91,7 @@ function stickerTexture(img, pixelArt, onReady) {
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.minFilter = THREE.LinearFilter;
     tex.generateMipmaps = false;
-    onReady({ tex, aspect: baked.canvas.width / baked.canvas.height, charH: baked.charH, feet: baked.feet });
+    onReady({ tex, aspect: baked.canvas.width / baked.canvas.height, charH: baked.charH, feet: baked.feet, srcH: baked.srcH });
   };
   if (img instanceof HTMLImageElement && !(img.complete && img.naturalWidth)) img.addEventListener("load", make, { once: true });
   else make();
@@ -119,6 +119,7 @@ export function createSticker(targetScene, opts = {}) {
 
   let poses = {};
   let faceRight = true;
+  let relScale = false; // las poses guardan su tamaño relativo a la de pie
   let pose = "";
   let charKey = 0;
   let facing = 1; // 1 = derecha, -1 = izquierda
@@ -135,6 +136,7 @@ export function createSticker(targetScene, opts = {}) {
     faceRight = true;
     if (rec && rec.type === "poses" && rec.images) {
       faceRight = rec.faceRight !== false;
+      relScale = !!rec.relScale;
       for (const [k, list] of Object.entries(rec.images)) if (list && list[0]) sources.push([k, list[0], false]);
     }
     if (!sources.some(([k]) => k === "idle") && SPR[charId] && SPR[charId].img) sources.push(["idle", SPR[charId].img, true]);
@@ -154,7 +156,8 @@ export function createSticker(targetScene, opts = {}) {
     material.map = p.tex;
     material.needsUpdate = true;
     // el personaje mide ~1.75 m (1.4 m los pixel art)
-    const H = (p.pixel ? baseH * 0.8 : baseH) / p.charH;
+    const rel = relScale && poses.idle && p !== poses.idle ? p.srcH / poses.idle.srcH : 1;
+    const H = ((p.pixel ? baseH * 0.8 : baseH) / p.charH) * rel;
     plane.scale.set(H * p.aspect, H, 1);
     plane.position.y = H / 2 - p.feet * H;
   }
