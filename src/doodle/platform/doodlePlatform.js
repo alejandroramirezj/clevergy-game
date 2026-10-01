@@ -1462,12 +1462,12 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
   function drawPlayer(dt) {
     const air = !P.g;
     let pose = P.dead > 0 ? (sticker.hasPose("death") ? "death" : "damage")
-      : P.poseT > 0 ? "attack" : P.inv > 1.1 ? "damage" : air ? "jump" : Math.abs(P.vx) > 6 ? "run" : Math.abs(P.vx) > 0.5 ? "walk" : "idle";
+      : P.poseT > 0 ? "attack" : P.inv > 1.1 ? "damage" : air && P.wall && sticker.hasPose("climb") ? "climb" : air ? "jump" : Math.abs(P.vx) > 6 ? "run" : Math.abs(P.vx) > 0.5 ? "walk" : "idle";
     P.flash = Math.max(0, P.flash - dt);
     sticker.update(dt, {
-      pos: _v.set(P.x, P.y, 0.3), camera, moveX: 0, facing: P.facing, speed: Math.abs(P.vx) * (P.g ? 1 : 0), onGround: P.g,
+      pos: _v.set(P.x, P.y, 0.3), camera, moveX: 0, facing: pose === "climb" ? P.wall : P.facing, speed: Math.abs(P.vx) * (P.g ? 1 : 0), onGround: P.g,
       firing: false, pose, hurt: P.flash > 0 ? 1 : 0,
-      tilt: P.dead > 0 ? P.dead * 3 : P.wall && !P.g ? -P.wall * 0.2 : P.dashT > 0 ? -P.facing * 0.25 : 0,
+      tilt: P.dead > 0 ? P.dead * 3 : pose === "climb" ? 0 : P.wall && !P.g ? -P.wall * 0.2 : P.dashT > 0 ? -P.facing * 0.25 : 0,
       squash: P.squash
     });
     sticker.pivot.rotation.y = 0;

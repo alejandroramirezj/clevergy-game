@@ -356,6 +356,22 @@ export function initSprites() {
     targetH: 58
   });
 
+  loadPoses("josu", {
+    idle: "/sprites/josu/idle.png",
+    walk: "/sprites/josu/walk.png",
+    run: "/sprites/josu/walk.png",
+    jump: "/sprites/josu/jump.png",
+    climb: "/sprites/josu/climb.png",
+    attack: "/sprites/josu/attack.png",
+    death: "/sprites/josu/death.png"
+  }, {
+    faceRight: true,
+    anchorX: 120,
+    canvW: 320,
+    canvH: 240,
+    targetH: 58
+  });
+
   loadPoses("yair", {
     idle: "/sprites/yair/idle.png",
     walk: "/sprites/yair/walk.png",
@@ -489,6 +505,7 @@ export function getCharacterAvatar(charId) {
   if (charId === "juan") return "/sprites/juan/idle.png";
   if (charId === "joseluis") return "/sprites/joseluis/idle.png";
   if (charId === "yair") return "/sprites/yair/idle.png";
+  if (charId === "josu") return "/sprites/josu/idle.png";
   if (charId === "bruno") return "/sprites/bruno/idle.png";
   if (charId === "manu") return "/sprites/manu/idle.png";
   if (charId === "paloma") return "/sprites/paloma/idle.png";
