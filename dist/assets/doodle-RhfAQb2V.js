@@ -1,4 +1,4 @@
-import{A as Qo,S as vr}from"./index-DDHE2IzM.js";/**
+import{A as Qo,S as vr}from"./index-DUKcWNqp.js";/**
  * @license
  * Copyright 2010-2024 Three.js Authors
  * SPDX-License-Identifier: MIT

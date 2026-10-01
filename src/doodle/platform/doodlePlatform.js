@@ -1235,7 +1235,14 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
   // las dos caras, el CUPS, la API v21…). Cuando se le cae la plataforma (503) es el momento de
   // pisarle la cabeza.
   const BOSS_HP = 4;
-  const DEMANDS = ["DNI", "DNI x2", "CUPS??", "API v21", "AUDITORÍA", "SIN ACCESO", "SUBE TODO", "FOTO DNI"];
+  // cada ataque tiene su pose y su papel
+  const ATTACKS = [
+    { pose: "throw", labels: ["DNI", "DNI x2", "FOTO DNI"] },
+    { pose: "beam", labels: ["CUPS??", "CUPS"] },
+    { pose: "process", labels: ["API v21", "NUEVO PROCESO"] },
+    { pose: "audit", labels: ["AUDITORÍA", "DNI MAL"] },
+    { pose: "access", labels: ["SIN ACCESO", "503"] }
+  ];
   const QUEJAS = [
     "Datadis: «Hemos cambiado el proceso de integración. Otra vez.»",
     "Datadis: «Necesitamos la foto del DNI por las dos caras.»",
@@ -1247,7 +1254,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
   ];
   let bossShots = [];
   // el jefe es un sprite con sus poses (se pinta encima, con sus colores reales)
-  const DATADIS_POSES = ["idle", "hop", "throw", "beam", "crash", "dead"];
+  const DATADIS_POSES = ["maint", "loading", "modules", "ready", "idle", "prep", "air", "land", "stomp", "hit", "throw", "beam", "process", "audit", "access", "down", "dead"];
   const datadisTex = {};
   for (const n of DATADIS_POSES) { const t = new THREE.TextureLoader().load(`/sprites/datadis/${n}.png`); t.colorSpace = THREE.SRGBColorSpace; datadisTex[n] = t; }
   function makeDatadisSprite() {
@@ -1269,10 +1276,10 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     };
   }
   function clearShots() { bossShots.forEach((s) => scene.remove(s.g)); bossShots = []; }
-  function throwDemand(b) {
+  function throwDemand(b, atk) {
     const g = new THREE.Group();
     box(g, 0, 0, 0, 1.3, 0.85, 0.08, INK.BLACK, { tone: 0.6 }); // el papel
-    const t = inkText(DEMANDS[(Math.random() * DEMANDS.length) | 0], { size: 0.2, ink: INK.RED, weight: 1.3 }); t.position.z = 0.06; g.add(t);
+    const t = inkText(atk.labels[(Math.random() * atk.labels.length) | 0], { size: 0.2, ink: INK.RED, weight: 1.3 }); t.position.z = 0.06; g.add(t);
     scene.add(g);
     const dir = Math.sign(P.x - b.x) || 1;
     bossShots.push({ g, x: b.x + dir * 1.2, y: b.y + 2.6, vx: dir * rnd(5.5, 8), vy: rnd(5, 8), life: 3 });
@@ -1288,7 +1295,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     bossShots = bossShots.filter((s) => s.life > 0);
   }
   function startBoss() {
-    boss = { x: L.boss.spawnX, y: 14, vx: 0, vy: 0, hp: BOSS_HP, state: "intro", t: 0, hops: 0, model: makeDatadisSprite(), flash: 0, lastLand: 9 };
+    boss = { x: L.boss.spawnX, y: 3, vx: 0, vy: 0, hp: BOSS_HP, state: "intro", t: 0, hops: 0, model: makeDatadisSprite(), flash: 0, lastLand: 9, introT: 3.2, atk: ATTACKS[0], stompNear: false };
     // paredes que cierran la arena
     for (const x of [L.boss.x0 - 1, L.boss.x1 + 1]) for (let y = 2; y < 16; y++) { L.tiles.set(`${x},${y}`, { t: "w" }); bossWalls.push(`${x},${y}`); }
     bossWalls.meshes = [L.boss.x0 - 1, L.boss.x1 + 1].map((x) => box(levelRoot, x + 0.5, 9, 0, 1, 14, 2, INK.RED, { tone: 0.15 }));
@@ -1345,7 +1352,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     const res = moveBody(body, 3, 3.2, dt, false);
     b.x = body.x; b.y = body.y; b.vx = body.vx; b.vy = body.vy;
     if (res.ground) b.vx *= 0.8;
-    if (b.state === "intro" && res.ground) { b.state = "hop"; b.t = 1; b.landed = true; shake(1); }
+    if (b.state === "intro") { b.introT -= dt; if (b.introT <= 0 && res.ground) { b.state = "hop"; b.t = 0.6; b.landed = true; shake(1); audio.bossRoar(); } }
     if (b.state === "hop" && res.ground) {
       if (!b.landed) {
         // aterrizaje: temblor, onda de choque y, cada dos saltos, emails
@@ -1354,8 +1361,10 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
         b.t = b.hp === 1 ? 0.45 : 0.75;
         shake(0.7);
         spawnInk(b.x, b.y, INK.RED, 10, 5);
-        throwDemand(b); // un requisito nuevo en cada aterrizaje
-        if (b.hp <= 2) throwDemand(b);
+        b.atk = ATTACKS[(Math.random() * ATTACKS.length) | 0];
+        b.stompNear = Math.abs(P.x - b.x) < 5;
+        throwDemand(b, b.atk); // un requisito nuevo en cada aterrizaje
+        if (b.hp <= 2) throwDemand(b, b.atk);
         if (b.hops === 1) msg(QUEJAS[(Math.random() * QUEJAS.length) | 0], 2.6);
         if (P.g && Math.abs(P.x - b.x) < 5) hurt(b.x); // salta para esquivar la onda
       } else if (b.t <= 0) {
@@ -1380,12 +1389,15 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     b.lastLand += dt;
     // pose: 503 cuando se le cae la plataforma, cargando energía en el aire y, al aterrizar,
     // lanzando el DNI o el rayo del CUPS
-    const pose = b.state === "tired" || b.state === "hurt" ? "crash"
-      : !b.landed || b.state === "intro" ? "hop"
-      : b.lastLand < 0.6 ? (b.hops % 2 ? "beam" : "throw") : "idle";
+    const pose = b.state === "intro" ? (b.introT > 2.4 ? "maint" : b.introT > 1.6 ? "loading" : b.introT > 0.8 ? "modules" : "ready")
+      : b.state === "tired" ? "down" : b.state === "hurt" ? "hit"
+      : !b.landed ? "air"
+      : b.lastLand < 0.25 ? (b.stompNear ? "stomp" : "land")
+      : b.lastLand < 0.9 ? b.atk.pose
+      : b.t < 0.3 && b.hops < 3 ? "prep" : "idle";
     m.setPose(pose);
     m.group.position.set(b.x, b.y, 1.2);
-    m.group.scale.x = (P.x >= b.x ? 1 : -1) * (b.state === "tired" ? 0.97 + Math.sin(performance.now() / 90) * 0.02 : 1);
+    m.group.scale.x = b.state === "tired" ? 0.97 + Math.sin(performance.now() / 90) * 0.02 : 1; // sin voltear, para que el logo se lea
     m.group.visible = !(b.flash > 0 && Math.floor(b.flash * 16) % 2);
     updateShots(dt);
     $(".pf-boss-bar i").style.width = `${(b.hp / BOSS_HP) * 100}%`;

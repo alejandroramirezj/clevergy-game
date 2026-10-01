@@ -587,7 +587,7 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld }) {
     { icon: "📅", name: "Reunión de 5 minutos", where: "La Oficina · BoliBic Tag", desc: "Te lanza invitaciones de calendario desde lejos.", tip: "Acércate entre invitación e invitación." },
     { icon: "🥊", name: "El compañero rival", where: "Coworking Fight", desc: "Otro héroe de Clevergy, de la CPU o desde otro móvil.", tip: "Bloquea, esquiva y guarda el especial para rematar." },
     { icon: "🚤", name: "Los rivales del pantano", where: "Pantano de San Juan", desc: "Cinco motos de agua que no te dejarán ganar tan fácil.", tip: "Derrapa en las curvas para cargar turbo." },
-    { icon: "🗄️", name: "DATADIS", where: "Jefe · La Oficina", boss: true, desc: "El proveedor de datos de consumo y nuestro peor enemigo: cambia la API cada dos por tres, pide el DNI por las dos caras y el CUPS, y se cae cuando menos lo esperas.", tip: "Esquiva sus requisitos y písale la cabeza cuando se le caiga la plataforma (503)." },
+    { icon: "🗄️", img: "/sprites/datadis/ready.png", name: "DATADIS", where: "Jefe · La Oficina", boss: true, desc: "El proveedor de datos de consumo y nuestro peor enemigo, un monstruo de servidores y cables. Aparece «en mantenimiento», te lanza el DNI por las dos caras, el CUPS, auditorías, cambia el proceso de la API (x20), te quita el acceso sin avisar… y se cae cuando menos lo esperas.", tip: "Salta sus pisotones, esquiva los requisitos y písale la cabeza cuando se le caiga la plataforma." },
     { icon: "📬", name: "INBOX INFINITO", where: "Jefe · BoliBic Tag", boss: true, desc: "La bandeja de entrada hecha monstruo en la última oleada.", tip: "Muévete sin parar y apunta al centro." }
   ];
   const ITEMS_DATA = [
@@ -667,7 +667,7 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld }) {
   }
   const miniCard = (e) => `
     <article class="comp2-card${e.boss ? " boss" : ""}">
-      <div class="comp2-card-icon">${e.icon}</div>
+      <div class="comp2-card-icon">${e.img ? `<img src="${e.img}" alt="" style="width:100%;height:100%;object-fit:contain">` : e.icon}</div>
       <div class="comp2-card-txt">
         <small>${e.where}</small>
         <h3>${e.name}</h3>
