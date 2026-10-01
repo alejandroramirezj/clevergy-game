@@ -172,7 +172,8 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
   camera.rotation.order = "YXZ";
   scene.add(camera);
 
-  const { colliders, updateDoors, victoria, mariaEugenia, clevergyPhoto } = buildLevel(scene);
+  const { colliders, updateDoors, victoria, mariaEugenia, clevergyPhoto, senor, tendedora, vendingPacks } = buildLevel(scene);
+  let lastSenor = -99;
 
   const gun = makeGun();
   camera.add(gun.group);
@@ -199,18 +200,30 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
       ctx.drawImage(img, 20, iy, pw, Math.min(ph, 420));
       ctx.strokeStyle = "#272a36"; ctx.lineWidth = 6; ctx.strokeRect(3, 3, cv.width - 6, cv.height - 6);
       ctx.fillStyle = "rgba(255, 226, 150, 0.85)"; ctx.save(); ctx.translate(cv.width / 2, 12); ctx.rotate(-0.05); ctx.fillRect(-70, -14, 140, 30); ctx.restore(); // cinta
-      ctx.fillStyle = "#1f38b8"; ctx.font = "34px Caveat, cursive"; ctx.textAlign = "center"; ctx.fillText("el jefe explicando el roadmap", cv.width / 2, cv.height - 24);
+      ctx.fillStyle = "#1f38b8"; ctx.font = "34px Caveat, cursive"; ctx.textAlign = "center"; ctx.fillText("Álvaro, el jefe", cv.width / 2, cv.height - 24);
       tex.needsUpdate = true;
     };
     img.src = "/ui/clevergy-pizarra.webp";
     const m = new THREE.Mesh(new THREE.PlaneGeometry(clevergyPhoto.w, clevergyPhoto.w * cv.height / cv.width),
       new THREE.MeshBasicMaterial({ map: tex, depthTest: false, depthWrite: false, transparent: true }));
     m.position.set(clevergyPhoto.x, clevergyPhoto.y, clevergyPhoto.z);
-    m.rotation.z = 0.04;
+    m.rotation.set(0, clevergyPhoto.ry || 0, 0.04);
     overlay.add(m);
     return m;
   })();
-  const _photoP = new THREE.Vector3(clevergyPhoto.x, clevergyPhoto.y, clevergyPhoto.z + 0.15);
+  // las bolsas de ChocoBom de la máquina de vending (foto real; mismo truco que la foto de Álvaro)
+  const packs = (() => {
+    const g = new THREE.Group();
+    const tex = new THREE.TextureLoader().load("/ui/chocobom.png");
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const mt = new THREE.MeshBasicMaterial({ map: tex, depthTest: false, depthWrite: false, transparent: true });
+    const geo = new THREE.PlaneGeometry(1, 1);
+    for (const q of vendingPacks) { const m = new THREE.Mesh(geo, mt); m.scale.set(q.w, q.h, 1); m.position.set(q.x, q.y, q.z); g.add(m); }
+    overlay.add(g);
+    return g;
+  })();
+  const _packP = new THREE.Vector3(vendingPacks[0].x + 0.5, vendingPacks[0].y + 0.5, vendingPacks[0].z + 0.15);
+  const _photoP = new THREE.Vector3(clevergyPhoto.x + Math.sin(clevergyPhoto.ry || 0) * 0.15, clevergyPhoto.y, clevergyPhoto.z + Math.cos(clevergyPhoto.ry || 0) * 0.15);
   let lastMaria = -99;
   const shadow = new THREE.Mesh(GEO.disc, mat(INK.BLACK, { fill: true }));
   shadow.rotation.x = -Math.PI / 2;
@@ -1981,11 +1994,20 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
     victoria.update(dt, vd < 14 && P.pos.y < 2 ? P.pos : null, vd < 6 && P.pos.y < 2);
     if (state === "play" && vd < 4.5 && P.pos.y < 2 && wall - lastHello > 25) {
       lastHello = wall;
-      showMsg("", "Victoria: ¡Hola! Bienvenido a CINK 👋 El comedor, a la izquierda; la terraza y las salas, al fondo; Clevergy, subiendo a la derecha.", 4.5);
+      showMsg("", "Victoria: ¡Hola! Bienvenido a CINK 👋 La escalera, a la izquierda; la cocina y el patio, al fondo; Clevergy, en la 1ª, por la puerta de la derecha.", 4.5);
     }
     // María Eugenia teje en su balcón; si la miras desde la oficina de Clevergy, te saluda
     mariaEugenia.update(dt);
-    const inClevergy = P.pos.x > 8.2 && P.pos.x < 20 && P.pos.z > -12 && P.pos.z < 6 && P.pos.y > F1_Y - 0.5 && P.pos.y < F1_Y + 2;
+    tendedora.update(dt);
+    // el señor de las vending protesta si te pones en medio
+    const sd = Math.hypot(P.pos.x - senor.group.position.x, P.pos.z - senor.group.position.z);
+    senor.update(dt, sd < 6 && P.pos.y < 2 ? P.pos : null, sd < 2.4 && P.pos.y < 2);
+    if (state === "play" && sd < 2.4 && P.pos.y < 2 && wall - lastSenor > 7) {
+      lastSenor = wall;
+      const quejas = ["¡Oiga, que está usted en medio!", "¿Pero no ve que estoy sacando el café?", "¡Hay que ver la juventud, siempre con prisas!", "¡Que me tapa las ChocoBom, hombre!"];
+      showMsg("", "Señor: " + quejas[(Math.random() * quejas.length) | 0], 3);
+    }
+    const inClevergy = P.pos.x > 9.6 && P.pos.x < 20 && P.pos.z > -12 && P.pos.z < 6 && P.pos.y > F1_Y - 0.5 && P.pos.y < F1_Y + 2;
     if (state === "play" && inClevergy && wall - lastMaria > 18) {
       _v3.set(mariaEugenia.group.position.x - camera.position.x, mariaEugenia.group.position.y + 1.6 - camera.position.y, mariaEugenia.group.position.z - camera.position.z).normalize();
       camera.getWorldDirection(_v2);
@@ -1996,6 +2018,7 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
       }
     }
     // la foto sólo se ve si no hay una pared por medio (desde dentro de la oficina o por los cristales)
+    packs.visible = camera.position.y < 3 && camera.position.z > _packP.z && camera.position.distanceTo(_packP) < 16 && hasLOS(camera.position, _packP);
     photo.visible = Math.abs(camera.position.y - clevergyPhoto.y) < 3.5 && camera.position.distanceTo(_photoP) < 22 && hasLOS(camera.position, _photoP);
     netTick(dt);
     updateRemotes(state === "start" ? 0 : dt);
