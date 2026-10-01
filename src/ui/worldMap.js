@@ -184,6 +184,43 @@ function artDoodle(hero) {
   `;
 }
 
+function artFall(hero) {
+  const plats = [[8, 104, 54, "#e0399a"], [70, 92, 46, "#1f8cff"], [124, 80, 40, "#ffb020"], [158, 66, 34, "#3bb54a"]];
+  return `
+    <div class="ws-scene-wrap">
+      <svg class="ws-scene-svg" viewBox="0 0 200 130" preserveAspectRatio="xMidYMid slice" fill="none">
+        <!-- cielo de plató con focos -->
+        <rect width="200" height="130" fill="#ffd6ec"/>
+        <g opacity="0.55">
+          <polygon points="20,0 34,0 70,130 30,130" fill="#fff6c8"/>
+          <polygon points="166,0 180,0 170,130 130,130" fill="#fff6c8"/>
+        </g>
+        <!-- mar de datos -->
+        <rect x="0" y="112" width="200" height="18" fill="#6bb8ff"/>
+        <g fill="#1f38b8" font-family="monospace" font-size="7" opacity="0.6"><text x="10" y="124">0101</text><text x="70" y="126">1001</text><text x="140" y="123">0110</text></g>
+        <!-- plataformas de colores en escalera hasta la batería -->
+        ${plats.map(([x, y, w, c]) => `<rect x="${x}" y="${y}" width="${w}" height="8" rx="2" fill="${c}" stroke="#232738" stroke-width="1.8"/>`).join("")}
+        <!-- ruleta -->
+        <g transform="translate(97, 86)"><rect x="-22" y="-2" width="44" height="4" fill="#e5283b" stroke="#232738" stroke-width="1.4" transform="rotate(-14)"/><circle r="3" fill="#232738"/></g>
+        <!-- la batería arriba, con brillo -->
+        <g transform="translate(175, 40)">
+          <circle r="15" fill="#fff6c8" opacity="0.8"/>
+          <rect x="-7" y="-11" width="14" height="22" rx="2" fill="#3bb54a" stroke="#232738" stroke-width="2"/>
+          <rect x="-3" y="-14" width="6" height="3" fill="#232738"/>
+          <path d="M 1 -7 L -3 1 L 1 1 L -1 8 L 4 -1 L 0 -1 Z" fill="#fff"/>
+        </g>
+        <!-- confeti -->
+        <g stroke-width="2" stroke-linecap="round">
+          <line x1="40" y1="20" x2="44" y2="24" stroke="#e0399a"/><line x1="90" y1="14" x2="88" y2="20" stroke="#1f8cff"/>
+          <line x1="120" y1="28" x2="126" y2="27" stroke="#ffb020"/><line x1="60" y1="40" x2="62" y2="46" stroke="#3bb54a"/>
+          <line x1="150" y1="12" x2="154" y2="17" stroke="#e5283b"/>
+        </g>
+      </svg>
+      ${heroImg(hero, "ws-hero-kart")}
+    </div>
+  `;
+}
+
 function artKart(hero) {
   return `
     <div class="ws-scene-wrap">
@@ -333,7 +370,7 @@ export function initWorldMap({ onSelectWorld }) {
       const retos = getWorldChallenges(w.id, progress);
       const locked = isWorldLocked(w, progress);
       const isSel = (selectedId === w.id);
-      const art = w.theme === "mario" ? artMario(hero) : w.theme === "arena" ? artArena(hero, rival) : w.theme === "kart" ? artKart(hero) : artDoodle(hero);
+      const art = w.theme === "mario" ? artMario(hero) : w.theme === "arena" ? artArena(hero, rival) : w.theme === "kart" ? artKart(hero) : w.theme === "fall" ? artFall(hero) : artDoodle(hero);
 
       return `
         <article class="ws-card ws-${w.theme} ${isSel ? "selected" : ""} ${locked ? "locked" : ""}" data-id="${w.id}" data-num="${w.num}" tabindex="0" style="--card-acc: ${w.color};">

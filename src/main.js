@@ -97,7 +97,8 @@ const WORLD_LOADERS = {
   1: { name: "La Oficina", load: () => import("./doodle/platform/doodlePlatform.js"), start: (m, o) => m.startDoodlePlatform({ ...o, charId: o.char.id, getChar: o.getChar, onSwitchChar: o.onSwitchChar }) },
   6: { name: "Coworking Fight", load: () => import("./doodle/fight/doodleFight.js"), start: (m, o) => m.startDoodleFight({ ...o, charId: o.char.id }) },
   7: { name: "BoliBic Tag", load: () => import("./doodle/doodleWorld.js"), start: (m, o) => m.startDoodleWorld({ ...o, char: o.char, getChar: o.getChar, onSwitchChar: o.onSwitchChar }) },
-  8: { name: "Pantano de San Juan", load: () => import("./doodle/race/doodleRace.js"), start: (m, o) => m.startDoodleRace({ ...o, charId: o.char.id }) }
+  8: { name: "Pantano de San Juan", load: () => import("./doodle/race/doodleRace.js"), start: (m, o) => m.startDoodleRace({ ...o, charId: o.char.id }) },
+  9: { name: "La Integración", load: () => import("./doodle/fall/doodleFall.js"), start: (m, o) => m.startDoodleFall({ ...o, charId: o.char.id }) }
 };
 
 let doodle = null;

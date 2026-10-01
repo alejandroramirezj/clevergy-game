@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import { worldRetos, getWorldChallenges, isWorldLocked, VISIBLE_WORLDS, WORLD_RETOS } from "../src/config/worlds.js";
 
 describe("mundos y retos", () => {
-  it("hay 4 mundos visibles, ordenados y con sus 3 retos", () => {
-    expect(VISIBLE_WORLDS.map((w) => w.num)).toEqual([1, 2, 3, 4]);
+  it("hay 5 mundos visibles, ordenados y con sus 3 retos", () => {
+    expect(VISIBLE_WORLDS.map((w) => w.num)).toEqual([1, 2, 3, 4, 5]);
     for (const w of VISIBLE_WORLDS) expect(WORLD_RETOS[w.id]).toHaveLength(3);
   });
   it("sin progreso no hay retos conseguidos ni mundos bloqueados", () => {

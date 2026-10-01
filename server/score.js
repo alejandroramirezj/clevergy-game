@@ -9,7 +9,8 @@ export const SCORE_CAP = {
   1: 45000, // La Oficina: monedas, disquetes, pisotones, jefe y bonus de bandera
   7: 60000, // BoliBic Tag: 6 oleadas + jefe
   6: 9000, // Coworking Fight: victoria + KOs + vidas
-  8: 10000 // Pantano de San Juan: 10000 - tiempo
+  8: 10000, // Pantano de San Juan: 10000 - tiempo
+  9: 15000 // La Integración: rondas superadas + batería
 };
 export const RANKS = ["S", "A", "B", "C"];
 

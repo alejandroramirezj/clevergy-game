@@ -1,5 +1,5 @@
 // =============================================================================
-// worlds.js — Los 4 mundos del Retreat y el progreso guardado en este móvil
+// worlds.js — Los 5 mundos del Retreat y el progreso guardado en este móvil
 // (el id es el histórico de cada mundo; `num` es el orden en el que se muestran)
 // =============================================================================
 
@@ -64,9 +64,25 @@ export const WORLDS = [
     genre: "CARRERAS",
     blurb: "Carreras de motos de agua por el Pantano de San Juan: derrapes, rampas, turbos y objetos de oficina contra 5 rivales u online.",
     chips: ["🚤 Hasta 20", "🎁 Objetos", "📱 Online"],
-    name: "Pantano de San Juan",
+    name: "Pantano S.Juan",
     subtitle: "Motos de agua · Madrid",
     desc: "Carreras de motos de agua estilo kart por el Pantano de San Juan: la presa, la playa de la Virgen de la Nueva, rampas, turbos y objetos de oficina contra 5 rivales o tus compañeros online."
+  },
+  {
+    id: 9,
+    num: 5,
+    theme: "fall",
+    color: "#e0399a",
+    tapeColor: "#f9b8db",
+    kickerBg: "#fde7f3",
+    genreBg: "#fde0f0",
+    genreColor: "#c4207a",
+    genre: "SHOW DE OBSTÁCULOS",
+    blurb: "Show eliminatorio estilo Fall Guys: de no tener nada a un usuario completo que da el consentimiento para controlar su batería en el mercado de flexibilidad.",
+    chips: ["👥 12 concursantes", "🏃 4 rondas", "🔋 1 batería"],
+    name: "La Integración",
+    subtitle: "Usuario · consumo · inversor · batería",
+    desc: "Cuatro rondas eliminatorias contra tus compañeros: crea el usuario y la casa (nombre, DNI, CUPS, dirección y CP), consigue el consumo por Datadis, FTP o API, conecta el inversor solar eligiendo bien la puerta de la marca, y en la final sube la torre de la batería: sólo se la lleva el primero que salte y la coja."
   }
 ];
 
@@ -79,7 +95,8 @@ export const WORLD_RETOS = {
   1: ["Llega a la bandera del final", "Suma 3 puntos (cada disquete 💾 vale 1; +1 con más del 60 % de monedas; +1 en menos de 8:00; +1 sin perder corazones)", "Suma 5 de esos 6 puntos"],
   6: ["Gana una pelea contra la CPU", "Gana perdiendo solo 1 de tus 3 vidas", "Gana sin perder ninguna vida"],
   7: ["Supera las 6 oleadas y derrota a INBOX INFINITO", "Termina con 15.000 puntos o más", "Termina con 19.000 puntos o más"],
-  8: ["Gana una carrera (llega el 1º)", "Gana en menos de 2:50", "Gana en menos de 2:20"]
+  8: ["Gana una carrera (llega el 1º)", "Gana en menos de 2:50", "Gana en menos de 2:20"],
+  9: ["Llévate la batería en la final", "Gana quedando entre los 3 primeros en todas las rondas", "Gana entre los 3 primeros de cada ronda y cayéndote 3 veces como mucho"]
 };
 const RANK_ORDER = { S: 3, A: 2, B: 1, C: 0 };
 /** Estado de los 3 retos de un mundo: [{ txt, done }] */

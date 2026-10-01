@@ -456,6 +456,7 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld }) {
     else if (worldId === 7) { b.push(st.won ? "🏆 6/6" : `🌊 ${st.wave || 1}/6`); if (st.kills != null) b.push(`💥 ${st.kills}`); if (st.acc != null) b.push(`🎯 ${st.acc}%`); }
     else if (worldId === 6) { b.push(st.won ? "🏆 Ganó" : `${st.place || "?"}º de ${(st.rivals || 0) + 1}`); if (st.kos != null) b.push(`💥 ${st.kos} KO`); if (st.falls != null) b.push(`💨 ${st.falls}`); }
     else if (worldId === 8) { if (st.pos) b.push(`🏁 ${st.pos}º/${st.racers || 6}`); }
+    else if (worldId === 9) { b.push(st.won ? "🔋 Batería" : `🎪 Ronda ${st.wave || 1}/4`); if (st.falls != null) b.push(`💨 ${st.falls}`); }
     if (st.time && worldId !== 6) b.push(`⏱ ${mmss(st.time)}`);
     return b.join(" · ");
   }
@@ -646,6 +647,11 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld }) {
       place: "El Pantano de San Juan, en Madrid: la presa, los pinos y la playa de la Virgen de la Nueva.",
       steps: ["Seis motos de agua, tres vueltas", "Derrapa en las curvas para cargar turbo y usa rampas y pads de impulso", "Cajas de objetos: café turbo, emails, reuniones, manchas de tinta y modo focus"],
       goal: "Cruza la meta primero, contra la CPU o contra tus compañeros online."
+    },
+    9: {
+      place: "Un plató de concurso a boli, flotando sobre un mar de datos.",
+      steps: ["Ronda 1: crea el usuario (nombre, apellidos, DNI y notificaciones) y la casa (CUPS, dirección por partes y código postal) entre ruletas y agujeros", "Ronda 2: el consumo por Datadis (recto pero todo frena), por FTP según la distribuidora (el suelo se cae y CIDE no lleva a ningún sitio) o por API", "Ronda 3: la puerta del inversor (Huawei, Fronius, GoodWe, Sungrow o Sigenergy), la documentación, los endpoints, el modelo de Clevergy y vincular la instalación", "Final: cómo funciona una batería y el mercado de flexibilidad, y la torre con una sola batería arriba"],
+      goal: "Clasifícate en cada ronda y sé el primero en saltar y coger la batería."
     }
   };
 
