@@ -15,7 +15,7 @@ import { DoodleAudio } from "../doodleAudio.js";
 import { GEO } from "../doodleLevel.js";
 import { createSticker } from "../doodleSticker.js";
 import { createTouchPad, ICON } from "../touchPad.js";
-import { makeEmail, makeMeeting, makeClock, makeDatadis } from "../doodleActors.js";
+import { makeEmail, makeMeeting, makeClock } from "../doodleActors.js";
 import { inkText, cinkLogo } from "../inkText.js";
 import { touch as mando } from "../../engine/input.js";
 import { CHARS, POWER_INFO } from "../../config/characters.js";
@@ -1246,15 +1246,28 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     "Datadis: «Nueva versión de la API: la v20 ya no funciona.»"
   ];
   let bossShots = [];
-  const datadisLogo = (() => {
-    const tex = new THREE.TextureLoader().load("/ui/datadis.svg");
-    tex.colorSpace = THREE.SRGBColorSpace;
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.6), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false }));
-    const plate = new THREE.Mesh(new THREE.PlaneGeometry(2.9, 0.85), new THREE.MeshBasicMaterial({ color: 0x17357e, depthTest: false, depthWrite: false }));
-    const g = new THREE.Group(); plate.renderOrder = 1; m.renderOrder = 2; m.position.z = 0.01; g.add(plate, m); g.visible = false;
-    overlay.add(g);
-    return g;
-  })();
+  // el jefe es un sprite con sus poses (se pinta encima, con sus colores reales)
+  const DATADIS_POSES = ["idle", "hop", "throw", "beam", "crash", "dead"];
+  const datadisTex = {};
+  for (const n of DATADIS_POSES) { const t = new THREE.TextureLoader().load(`/sprites/datadis/${n}.png`); t.colorSpace = THREE.SRGBColorSpace; datadisTex[n] = t; }
+  function makeDatadisSprite() {
+    const group = new THREE.Group();
+    const mat2 = new THREE.MeshBasicMaterial({ map: datadisTex.idle, transparent: true, depthTest: false, depthWrite: false });
+    const plane = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat2);
+    group.add(plane);
+    overlay.add(group);
+    let cur = "";
+    return {
+      group, plane,
+      setPose(n) {
+        const t = datadisTex[n];
+        if (!t.image || !t.image.width) return;
+        if (cur !== n) { cur = n; mat2.map = t; mat2.needsUpdate = true; }
+        const h = t.image.height * 0.026, w = t.image.width * 0.026;
+        plane.scale.set(w, h, 1); plane.position.y = h / 2 - 0.1;
+      }
+    };
+  }
   function clearShots() { bossShots.forEach((s) => scene.remove(s.g)); bossShots = []; }
   function throwDemand(b) {
     const g = new THREE.Group();
@@ -1275,9 +1288,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     bossShots = bossShots.filter((s) => s.life > 0);
   }
   function startBoss() {
-    boss = { x: L.boss.spawnX, y: 14, vx: 0, vy: 0, hp: BOSS_HP, state: "intro", t: 0, hops: 0, model: makeDatadis(), flash: 0 };
-    boss.model.group.scale.setScalar(0.55);
-    scene.add(boss.model.group);
+    boss = { x: L.boss.spawnX, y: 14, vx: 0, vy: 0, hp: BOSS_HP, state: "intro", t: 0, hops: 0, model: makeDatadisSprite(), flash: 0, lastLand: 9 };
     // paredes que cierran la arena
     for (const x of [L.boss.x0 - 1, L.boss.x1 + 1]) for (let y = 2; y < 16; y++) { L.tiles.set(`${x},${y}`, { t: "w" }); bossWalls.push(`${x},${y}`); }
     bossWalls.meshes = [L.boss.x0 - 1, L.boss.x1 + 1].map((x) => box(levelRoot, x + 0.5, 9, 0, 1, 14, 2, INK.RED, { tone: 0.15 }));
@@ -1304,8 +1315,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
       bossDone = true;
       P.score += 5000;
       big("¡DATOS CONSEGUIDOS!", "Datadis ha caído (y esta vez no es por mantenimiento)", 2.6);
-      scene.remove(boss.model.group);
-      datadisLogo.visible = false;
+      boss.deadT = 1.8; // se queda frito un momento antes de desaparecer
       clearShots();
       spawnInk(boss.x, boss.y + 2, INK.RED, 60, 12);
       spawnDecal(boss.x, INK.RED);
@@ -1316,8 +1326,18 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
   }
   function updateBoss(dt) {
     if (!boss && !bossDone && P.x > L.boss.x0 + 3 && P.x < L.boss.x1 - 2) startBoss();
-    if (!boss || boss.state === "dead") return;
+    if (!boss) return;
     const b = boss;
+    if (b.state === "dead") {
+      if (b.deadT > 0) {
+        b.deadT -= dt;
+        b.model.setPose("dead");
+        b.model.group.position.set(b.x, b.y, 1.2);
+        b.model.plane.material.opacity = Math.min(1, b.deadT);
+        if (b.deadT <= 0) overlay.remove(b.model.group);
+      }
+      return;
+    }
     b.t -= dt;
     b.flash = Math.max(0, b.flash - dt);
     b.vy -= GRAV * 0.8 * dt;
@@ -1330,6 +1350,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
       if (!b.landed) {
         // aterrizaje: temblor, onda de choque y, cada dos saltos, emails
         b.landed = true;
+        b.lastLand = 0;
         b.t = b.hp === 1 ? 0.45 : 0.75;
         shake(0.7);
         spawnInk(b.x, b.y, INK.RED, 10, 5);
@@ -1356,19 +1377,16 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
       else if (b.state !== "tired" && b.state !== "hurt") hurt(b.x);
     }
     const m = b.model;
-    m.group.position.set(b.x, b.y, 0);
-    m.layers.forEach((l, i) => (l.rotation.y = Math.sin(performance.now() / 300 + i) * (b.state === "tired" ? 0.05 : 0.2)));
-    m.top.rotation.z = b.state === "tired" ? Math.sin(performance.now() / 120) * 0.15 : 0;
-    m.group.scale.setScalar(0.55 * (b.state === "tired" ? 0.92 + Math.sin(performance.now() / 90) * 0.02 : 1));
+    b.lastLand += dt;
+    // pose: 503 cuando se le cae la plataforma, cargando energía en el aire y, al aterrizar,
+    // lanzando el DNI o el rayo del CUPS
+    const pose = b.state === "tired" || b.state === "hurt" ? "crash"
+      : !b.landed || b.state === "intro" ? "hop"
+      : b.lastLand < 0.6 ? (b.hops % 2 ? "beam" : "throw") : "idle";
+    m.setPose(pose);
+    m.group.position.set(b.x, b.y, 1.2);
+    m.group.scale.x = (P.x >= b.x ? 1 : -1) * (b.state === "tired" ? 0.97 + Math.sin(performance.now() / 90) * 0.02 : 1);
     m.group.visible = !(b.flash > 0 && Math.floor(b.flash * 16) % 2);
-    // los LEDs parpadean; con la plataforma caída se apagan
-    const now = performance.now();
-    m.leds.forEach((l, i) => (l.visible = b.state !== "tired" && (Math.floor(now / 140 + i * 1.7) % 3 !== 0)));
-    m.bulb.visible = b.state === "tired" ? Math.floor(now / 200) % 2 === 0 : true;
-    datadisLogo.visible = m.group.visible;
-    const sc = m.group.scale.y / 0.55;
-    datadisLogo.scale.setScalar(0.8 * sc);
-    datadisLogo.position.set(b.x, b.y + 2.55 * sc, 1.4); // en el pecho del armario
     updateShots(dt);
     $(".pf-boss-bar i").style.width = `${(b.hp / BOSS_HP) * 100}%`;
   }
@@ -1606,7 +1624,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     shots.forEach((s) => scene.remove(s.mesh)); powers.forEach((p) => scene.remove(p.mesh)); pickups.forEach((k) => scene.remove(k.g));
     minions.forEach((m) => scene.remove(m.g)); rings.forEach((r) => scene.remove(r.m));
     shots = []; powers = []; pickups = []; minions = []; prints = []; rings = [];
-    if (boss) scene.remove(boss.model.group);
+    if (boss) { overlay.remove(boss.model.group); clearShots(); }
     boss = null; bossDone = false; bossWalls = [];
     $(".pf-boss").classList.add("hidden");
     // si se retoma desde un café, los puntos de control anteriores ya están activos
