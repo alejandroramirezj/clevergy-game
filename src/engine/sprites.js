@@ -190,12 +190,14 @@ export function initSprites() {
   loadPoses("ana", {
     idle: "/sprites/ana/idle.png",
     walk: "/sprites/ana/walk.png",
-    run: "/sprites/ana/run.png",
+    run: "/sprites/ana/walk.png",
     jump: "/sprites/ana/jump.png",
+    climb: "/sprites/ana/climb.png",
     attack: "/sprites/ana/attack.png",
     death: "/sprites/ana/death.png"
   }, {
     faceRight: true,
+    relScale: true,
     anchorX: 220,
     canvW: 560,
     canvH: 360,
