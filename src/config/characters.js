@@ -34,7 +34,9 @@ export const CHARS = [
   { id: "paloma", emoji: "🕊️", name: "PALOMA", form: "Paloma", ab: "FLY AWAY", spd: 4.6, jump: 9.5, cd: 0.3,
     tip: "Mantén salto para volar (barra de vuelo)" },
   { id: "silvia", emoji: "👟", name: "SILVIA", form: "Zapatilla", ab: "SPEEDRUN", spd: 5.4, jump: 10, cd: 0.6,
-    tip: "X: dash invulnerable que arrolla" }
+    tip: "X: dash invulnerable que arrolla" },
+  { id: "yair", emoji: "🪘", name: "YAIR", form: "Cajón flamenco", ab: "BULERÍA", spd: 3.8, jump: 10, cd: 0.9,
+    tip: "X: se arranca por bulerías y aturde a todos los de alrededor" }
 ];
 
 export const FLY_META = {
@@ -71,5 +73,6 @@ export const POWER_INFO = {
   manu: { icon: "💪", desc: "Super step: salto gigantesco con un impacto enorme al caer." },
   pablo: { icon: "🍊", desc: "Rueda a toda velocidad como una naranja rompiendo ladrillos." },
   paloma: { icon: "🕊️", desc: "Mantén el salto para volar con su barra de vuelo." },
-  silvia: { icon: "👟", desc: "Speedrun: dash invulnerable que arrolla todo." }
+  silvia: { icon: "👟", desc: "Speedrun: dash invulnerable que arrolla todo." },
+  yair: { icon: "🪘", desc: "Cajón flamenco: se arranca por bulerías y el golpe de cajón y pañuelo aturde a todos los de alrededor." }
 };

@@ -914,7 +914,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
   const PINK = {
     alejandro: INK.BLACK, ale: INK.GREEN, alvaroM: INK.BLUE, alvaroP: INK.PURPLE, ana: INK.ORANGE, beltran: INK.BLUE,
     bruno: INK.PURPLE, gonzalo: INK.GREEN, javi: INK.RED, jesus: INK.ORANGE, joseluis: INK.BLUE, josu: INK.ORANGE,
-    juan: INK.PURPLE, maca: INK.ORANGE, manu: INK.RED, pablo: INK.ORANGE, paloma: INK.BLUE, silvia: INK.RED
+    juan: INK.PURPLE, maca: INK.ORANGE, manu: INK.RED, pablo: INK.ORANGE, paloma: INK.BLUE, silvia: INK.RED, yair: INK.RED
   };
   const pInk = () => PINK[char.id] || INK.BLUE;
   const attacking = () => P.dashT > 0 || P.riseT > 0 || P.slam || P.ball || P.zenT > 0 || P.shieldT > 0 || P.mega;
@@ -936,6 +936,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     else if (id === "alvaroM") shoot({ x: P.x + f * 0.6, y: P.y + 1.2, vx: f * 9, vy: 7, arc: true, bounce: 2, boom: 2.3, life: 2.2, ink: INK.BLUE, shape: "404" });
     else if (id === "alvaroP") shoot({ x: P.x + f * 0.7, y: P.y + 1, vx: f * 15, pierce: true, life: 0.95, ink: INK.PURPLE, shape: "wave", grow: true });
     else if (id === "juan") blast(P.x, P.y + 0.8, 3.3, INK.PURPLE);
+    else if (id === "yair") { blast(P.x, P.y + 0.8, 3.0, INK.RED); if (P.g) P.vy = Math.max(P.vy, 4); }
     else if (id === "jesus") {
       if (P.g) blast(P.x, P.y + 0.4, 2.7, INK.ORANGE);
       else { P.slam = 1; P.vy = -30; }

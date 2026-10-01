@@ -95,6 +95,10 @@ export function initSprites() {
     ["............","...ww.......","..wWWw......",".wWWWWwww...","wWWWWWWWWww.","wWWWWWWWWWWw",".wWWWWWWWw..","..wWWWWw....","...wWWw..o..","....ww..oo..",".....kk.....","............"],
     { w: "#e8ecf5", W: "#ffffff", o: "#ffc857", k: "#e58a3a" }
   );
+  SPR.yair = makeSprite(
+    ["...kkkkkk...","..kkKKKKkk..","..kyyyyyyk..","..kyKyyKyk..","..kyyyyyyk..","...kyrryk...","oooooooooooo","oOOOOOOOOkOo","oOssssssOkOo","oOssssssOOOo","oOOOOOOOOOOo","..ww....ww..","..gg....gg.."],
+    { k: "#2a1a10", K: "#3b2a1a", y: "#e8b48a", r: "#c0392b", o: "#7a4a1e", O: "#b8742e", s: "#5c4a3a", w: "#ffffff", g: "#2e8a4e" }
+  );
   SPR.silvia = makeSprite(
     ["............","............","........ss..","......ssSSs.","..ssssSSSSs.",".sSSSSSSSSs.",".sSSppppSSs.",".sSSSSSSSSs.",".swwwwwwwws.",".swwwwwwwws.","..ssssssss..","..k.k..k.k.."],
     { s: "#e8ecf5", S: "#ffffff", p: "#ff4d8d", w: "#cdd6e8", k: "#2a2f3d" }
@@ -232,7 +236,7 @@ export function initSprites() {
   loadPoses("javi", {
     idle: "/sprites/javi/idle.png",
     walk: "/sprites/javi/walk.png",
-    run: "/sprites/javi/run.png",
+    run: "/sprites/javi/walk.png",
     jump: "/sprites/javi/jump.png",
     attack: "/sprites/javi/attack.png",
     death: "/sprites/javi/death.png"
@@ -248,10 +252,10 @@ export function initSprites() {
   loadPoses("maca", {
     idle: "/sprites/maca/idle.png",
     walk: "/sprites/maca/walk.png",
-    run: "/sprites/maca/run.png",
+    run: "/sprites/maca/walk.png",
     jump: "/sprites/maca/jump.png",
     attack: "/sprites/maca/attack.png",
-    death: "/sprites/maca/idle.png"
+    death: "/sprites/maca/death.png"
   }, {
     faceRight: true,
     anchorX: 190,
@@ -277,6 +281,96 @@ export function initSprites() {
   });
 
   // Load Pablo (naranja) custom high-res pose sprites
+  loadPoses("gonzalo", {
+    idle: "/sprites/gonzalo/idle.png",
+    walk: "/sprites/gonzalo/walk.png",
+    run: "/sprites/gonzalo/walk.png",
+    jump: "/sprites/gonzalo/walk.png",
+    attack: "/sprites/gonzalo/attack.png",
+    death: "/sprites/gonzalo/death.png"
+  }, {
+    faceRight: true,
+    anchorX: 120,
+    canvW: 320,
+    canvH: 240,
+    targetH: 58
+  });
+
+  loadPoses("silvia", {
+    idle: "/sprites/silvia/idle.png",
+    walk: "/sprites/silvia/walk.png",
+    run: "/sprites/silvia/walk.png",
+    jump: "/sprites/silvia/jump.png",
+    attack: "/sprites/silvia/attack.png",
+    death: "/sprites/silvia/death.png"
+  }, {
+    faceRight: true,
+    anchorX: 120,
+    canvW: 320,
+    canvH: 240,
+    targetH: 58
+  });
+
+  loadPoses("paloma", {
+    idle: "/sprites/paloma/idle.png",
+    walk: "/sprites/paloma/walk.png",
+    run: "/sprites/paloma/walk.png",
+    jump: "/sprites/paloma/jump.png",
+    attack: "/sprites/paloma/attack.png",
+    death: "/sprites/paloma/death.png"
+  }, {
+    faceRight: true,
+    anchorX: 120,
+    canvW: 320,
+    canvH: 240,
+    targetH: 58
+  });
+
+  loadPoses("manu", {
+    idle: "/sprites/manu/idle.png",
+    walk: "/sprites/manu/walk.png",
+    run: "/sprites/manu/walk.png",
+    jump: "/sprites/manu/jump.png",
+    attack: "/sprites/manu/attack.png",
+    death: "/sprites/manu/death.png"
+  }, {
+    faceRight: true,
+    anchorX: 120,
+    canvW: 320,
+    canvH: 240,
+    targetH: 58
+  });
+
+  loadPoses("bruno", {
+    idle: "/sprites/bruno/idle.png",
+    walk: "/sprites/bruno/walk.png",
+    run: "/sprites/bruno/walk.png",
+    jump: "/sprites/bruno/jump.png",
+    attack: "/sprites/bruno/attack.png",
+    death: "/sprites/bruno/death.png"
+  }, {
+    faceRight: true,
+    anchorX: 120,
+    canvW: 320,
+    canvH: 240,
+    targetH: 58
+  });
+
+  loadPoses("yair", {
+    idle: "/sprites/yair/idle.png",
+    walk: "/sprites/yair/walk.png",
+    run: "/sprites/yair/walk.png",
+    jump: "/sprites/yair/jump.png",
+    attack: "/sprites/yair/attack.png",
+    death: "/sprites/yair/death.png"
+  }, {
+    faceRight: true,
+    anchorX: 120,
+    canvW: 320,
+    canvH: 240,
+    targetH: 58
+  });
+
   loadPoses("pablo", {
     idle: "/sprites/pablo/idle.png",
     walk: "/sprites/pablo/walk.png",
@@ -394,6 +488,12 @@ export function getCharacterAvatar(charId) {
   if (charId === "pablo") return "/sprites/pablo/idle.png";
   if (charId === "juan") return "/sprites/juan/idle.png";
   if (charId === "joseluis") return "/sprites/joseluis/idle.png";
+  if (charId === "yair") return "/sprites/yair/idle.png";
+  if (charId === "bruno") return "/sprites/bruno/idle.png";
+  if (charId === "manu") return "/sprites/manu/idle.png";
+  if (charId === "paloma") return "/sprites/paloma/idle.png";
+  if (charId === "silvia") return "/sprites/silvia/idle.png";
+  if (charId === "gonzalo") return "/sprites/gonzalo/idle.png";
   const s = SPR[charId];
   if (s && s.img) {
     try {

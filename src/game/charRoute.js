@@ -10,7 +10,7 @@ import { CHARS } from "../config/characters.js";
 export const CHAR_SLUGS = {
   alejandro: "alejandro", ale: "ale", alvaroM: "alvaro-merino", alvaroP: "alvaro", ana: "ana", beltran: "beltran",
   bruno: "bruno", gonzalo: "gonzalo", javi: "javi", jesus: "jesus", joseluis: "jose-luis", josu: "josu",
-  juan: "juan", maca: "maca", manu: "manu", pablo: "pablo", paloma: "paloma", silvia: "silvia"
+  juan: "juan", maca: "maca", manu: "manu", pablo: "pablo", paloma: "paloma", silvia: "silvia", yair: "yair"
 };
 const norm = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
 

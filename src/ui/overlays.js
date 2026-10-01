@@ -140,7 +140,8 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld }) {
         maca: "MATE",
         manu: "PISOTÓN",
         pablo: "RODAR",
-        silvia: "SPEEDRUN"
+        silvia: "SPEEDRUN",
+        yair: "BULERÍA"
       };
       gbLabelB.textContent = actionNames[c.id] || c.ab.split(" ")[0].toUpperCase();
     }

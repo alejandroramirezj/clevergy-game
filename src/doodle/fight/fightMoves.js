@@ -32,7 +32,8 @@ export const SPECIALS = {
   manu: { kind: "slam", dmg: 17, name: "SUPER STEP", ink: INK.RED, radius: 2.6 },
   pablo: DASH(13, 18, "ORANGE ROLL", INK.ORANGE),
   paloma: { kind: "rise", dmg: 11, name: "FLY AWAY", ink: INK.BLUE, vy: 14, vx: 2 },
-  silvia: DASH(12, 21, "SPEEDRUN", INK.PURPLE)
+  silvia: DASH(12, 21, "SPEEDRUN", INK.PURPLE),
+  yair: { kind: "slam", dmg: 14, name: "BULERÍA", ink: INK.RED, radius: 2.5 }
 };
 
 export function specialFor(charId) {
