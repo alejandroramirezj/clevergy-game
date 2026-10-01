@@ -932,7 +932,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     else if (id === "ale") dash(0.65, 1.75, false, INK.GREEN);
     else if (id === "pablo") dash(0.9, 1.85, false, INK.ORANGE);
     else if (id === "silvia") { dash(0.3, 2.3, true, INK.RED); P.inv = Math.max(P.inv, 0.4); }
-    else if (id === "beltran") { dash(0.16, 2.8, true, INK.BLUE); melee(1.6, 1.4); }
+    else if (id === "beltran") for (let k = 0; k < 3; k++) shoot({ x: P.x + f * 0.8, y: P.y + 0.7 + k * 0.45, vx: f * (12 - k * 1.5), vy: (k - 1) * 0.6, pierce: true, life: 1.1, ink: INK.BLUE, shape: "slack" }); // mensajes de Slack
     else if (id === "alvaroM") shoot({ x: P.x + f * 0.6, y: P.y + 1.2, vx: f * 9, vy: 7, arc: true, bounce: 2, boom: 2.3, life: 2.2, ink: INK.BLUE, shape: "404" });
     else if (id === "alvaroP") shoot({ x: P.x + f * 0.7, y: P.y + 1, vx: f * 15, pierce: true, life: 0.95, ink: INK.PURPLE, shape: "wave", grow: true });
     else if (id === "juan") blast(P.x, P.y + 0.8, 3.3, INK.PURPLE);
@@ -998,6 +998,13 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     } else if (shape === "404") {
       box(g, 0, 0, 0, 0.7, 0.5, 0.2, INK.BLUE, { tone: 0.05 });
       const t = inkText("404", { size: 0.28, ink: INK.RED, weight: 1.3 }); t.position.z = 0.12; g.add(t);
+    } else if (shape === "slack") { // un mensaje de Slack: bocadillo blanco, el logo de colores y dos líneas de texto
+      box(g, 0, 0, 0, 0.9, 0.55, 0.08, INK.BLACK, { tone: 0.62 });
+      box(g, -0.33, -0.3, 0, 0.14, 0.12, 0.08, INK.BLACK, { tone: 0.62 }); // el piquito
+      const C4 = [INK.BLUE, INK.GREEN, INK.RED, INK.ORANGE];
+      for (let k = 0; k < 4; k++) { const v = k % 2 === 0; box(g, -0.26 + (v ? (k ? 0.06 : -0.06) : 0), (v ? 0 : (k === 1 ? 0.06 : -0.06)), 0.05, v ? 0.05 : 0.2, v ? 0.2 : 0.05, 0.02, C4[k], { fill: true }); }
+      box(g, 0.12, 0.09, 0.05, 0.4, 0.06, 0.02, INK.BLACK, { tone: 0.2 });
+      box(g, 0.06, -0.07, 0.05, 0.28, 0.06, 0.02, INK.BLACK, { tone: 0.35 });
     } else box(g, 0, 0, 0, 0.5, 0.5, 0.5, ink, { tone: 0.05 });
     scene.add(g);
     return g;
@@ -1189,6 +1196,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
       }
       p.mesh.position.set(p.x, p.y, 0.3);
       if (p.grow) p.mesh.scale.setScalar(1 + (0.95 - p.life) * 1.6);
+      else if (p.shape === "slack") { p.mesh.rotation.z = Math.sin(p.life * 12) * 0.08; p.mesh.scale.x = Math.sign(p.vx) || 1; }
       else p.mesh.rotation.z -= dt * 10 * Math.sign(p.vx);
       const tx = Math.floor(p.x), ty = Math.floor(p.y);
       const t = T(tx, ty);

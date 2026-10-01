@@ -689,6 +689,13 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
     else if (shape === "broccoli") { add(GEO.sph, { tone: -0.05 }, [0.5, 0.5, 0.5], [0, 0.15, 0]); add(GEO.cyl, { tone: 0.2 }, [0.18, 0.35, 0.18], [0, -0.15, 0]); }
     else if (shape === "worker") { add(GEO.box, { tone: 0 }, [0.35, 0.55, 0.3], [0, 0.35, 0]); add(GEO.sph, { tone: 0.2 }, [0.3, 0.3, 0.3], [0, 0.8, 0]); add(GEO.box, { fill: true }, [0.05, 0.55, 0.05], [0.2, 0.9, 0]); }
     else if (shape === "stapler" || shape === "bomb") { scene.add(g); g.add(itemModel(shape === "stapler" ? "grapadora" : "bomba")); return g; }
+    else if (shape === "slack") { // mensaje de Slack dibujado: bocadillo, logo de colores y líneas
+      const pc = (ink2, o, s, p) => { const m = new THREE.Mesh(GEO.box, mat(ink2, o)); m.scale.set(...s); m.position.set(...p); g.add(m); };
+      pc(INK.BLACK, { tone: 0.62 }, [0.9, 0.55, 0.08], [0, 0, 0]); pc(INK.BLACK, { tone: 0.62 }, [0.14, 0.12, 0.08], [-0.33, -0.3, 0]);
+      const C4 = [INK.BLUE, INK.GREEN, INK.RED, INK.ORANGE];
+      for (let k = 0; k < 4; k++) { const v = k % 2 === 0; pc(C4[k], { fill: true }, [v ? 0.05 : 0.2, v ? 0.2 : 0.05, 0.02], [-0.26 + (v ? (k ? 0.06 : -0.06) : 0), v ? 0 : (k === 1 ? 0.06 : -0.06), 0.05]); }
+      pc(INK.BLACK, { tone: 0.2 }, [0.4, 0.06, 0.02], [0.12, 0.09, 0.05]); pc(INK.BLACK, { tone: 0.35 }, [0.28, 0.06, 0.02], [0.06, -0.07, 0.05]);
+    }
     else add(GEO.box, { tone: 0.05 }, [0.5, 0.5, 0.5]);
     scene.add(g);
     return g;

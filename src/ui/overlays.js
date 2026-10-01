@@ -126,7 +126,7 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld }) {
         ana: "TREPAR",
         alejandro: "PUÑO",
         paloma: "VOLAR",
-        beltran: "ESTOCADA",
+        beltran: "SLACK",
         alvaroM: "CALCULAR",
         alvaroP: "PODCAST",
         ale: "DESLIZAR",

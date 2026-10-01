@@ -20,7 +20,7 @@ export const SPECIALS = {
   alvaroM: PROJ(13, "calc", "ERROR 404", INK.BLACK, { arc: true, speed: 8, vy: 7, life: 2.2 }),
   alvaroP: PROJ(11, "wave", "PODCAST ATTACK", INK.PURPLE, { speed: 13, life: 0.9 }),
   ana: { kind: "rise", dmg: 13, name: "TREPAR", ink: INK.ORANGE, vy: 12, vx: 3 },
-  beltran: { kind: "shield", dmg: 12, name: "ESCUDO DEDAL", ink: INK.BLUE, time: 0.7 },
+  beltran: PROJ(11, "slack", "SLACK SPAM", INK.BLUE, { speed: 12, life: 1.2 }),
   bruno: { kind: "multi", dmg: 0, name: "MULTIFACE", ink: INK.ORANGE },
   gonzalo: PROJ(12, "broccoli", "BROCCOLI RAGE", INK.GREEN, { arc: true, speed: 9, vy: 5, life: 2 }),
   javi: PROJ(12, "worker", "WORKERS UNITED", INK.RED, { ground: true, speed: 6.5, life: 2.4 }),
