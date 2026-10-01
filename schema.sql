@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS leaderboard (
   deaths INTEGER DEFAULT 0,
   world INTEGER DEFAULT 0,
   user_id TEXT,
+  stats TEXT,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

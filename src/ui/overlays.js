@@ -432,7 +432,9 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld }) {
       const score = Number(it.score ?? it.s) || 0;
       const world = Number(it.world) || 1;
       const p = players.get(name) || { name, best: {}, top: null };
-      if (!p.best[world] || score > p.best[world].score) p.best[world] = { score, character: it.character || it.c, rank: it.rank || it.r || "" };
+      let stats = null;
+      try { stats = it.stats ? (typeof it.stats === "string" ? JSON.parse(it.stats) : it.stats) : null; } catch (e) {}
+      if (!p.best[world] || score > p.best[world].score) p.best[world] = { score, character: it.character || it.c, rank: it.rank || it.r || "", stats };
       if (!p.top || score > p.top.score) p.top = { score, character: it.character || it.c };
       players.set(name, p);
     }
@@ -444,20 +446,34 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld }) {
     }
     return { all, perWorld };
   }
+  // detalle de lo conseguido en cada mundo, en una línea corta
+  const mmss = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
+  function statLine(worldId, st) {
+    if (!st) return "";
+    const b = [];
+    if (worldId === 1) { if (st.frags != null) b.push(`💾 ${st.frags}/3`); if (st.coins != null) b.push(`🪙 ${st.coins}`); if (st.stomps) b.push(`👟 ${st.stomps}`); b.push(st.won ? "🏁 Meta" : `📍 ${st.zone || "Campus"}`); }
+    else if (worldId === 7) { b.push(st.won ? "🏆 6/6" : `🌊 ${st.wave || 1}/6`); if (st.kills != null) b.push(`💥 ${st.kills}`); if (st.acc != null) b.push(`🎯 ${st.acc}%`); }
+    else if (worldId === 6) { b.push(st.won ? "🏆 Ganó" : `${st.place || "?"}º de ${(st.rivals || 0) + 1}`); if (st.kos != null) b.push(`💥 ${st.kos} KO`); if (st.falls != null) b.push(`💨 ${st.falls}`); }
+    else if (worldId === 8) { if (st.pos) b.push(`🏁 ${st.pos}º/${st.racers || 6}`); }
+    if (st.time && worldId !== 6) b.push(`⏱ ${mmss(st.time)}`);
+    return b.join(" · ");
+  }
+
   // ── pantalla de ranking: pestañas a la izquierda · podio · lista · tu fila fija abajo ──
   const lbTabsEl = document.getElementById("lbTabs");
   const lbLoginEl = document.getElementById("lbLogin");
-  const podiumHtml = (top3, valueOf, me) => [top3[1], top3[0], top3[2]].map((p, i) => {
+  const podiumHtml = (top3, valueOf, me, detailFn) => [top3[1], top3[0], top3[2]].map((p, i) => {
     const place = [2, 1, 3][i];
     if (!p) return `<div class="lb2-pod lb2-pod-${place} empty"><div class="lb2-pod-av">?</div><div class="lb2-pod-name">—</div><div class="lb2-pod-block">${place}</div></div>`;
     return `<div class="lb2-pod lb2-pod-${place}${p.name === me ? " me" : ""}">
       <div class="lb2-pod-av">${avatarOf(p.character)}${place === 1 ? '<span class="lb2-crown">👑</span>' : ""}</div>
       <div class="lb2-pod-name">${esc(p.name)}</div>
       <div class="lb2-pod-pts">${fmtN(valueOf(p))}</div>
+      ${detailFn ? `<div class="lb2-pod-detail">${esc(detailFn(p))}</div>` : ""}
       <div class="lb2-pod-block">${place}</div>
     </div>`;
   }).join("");
-  const rowHtml = (p, pos, value, extra, me) => `<li class="lb2-row${p.name === me ? " me" : ""}"><span class="lb2-pos">${pos}</span>${avatarOf(p.character)}<span class="lb2-name">${esc(p.name)}</span>${extra || ""}<b class="lb2-pts">${fmtN(value)}</b></li>`;
+  const rowHtml = (p, pos, value, extra, me, detail) => `<li class="lb2-row${p.name === me ? " me" : ""}"><span class="lb2-pos">${pos}</span>${avatarOf(p.character)}<span class="lb2-name">${esc(p.name)}${detail ? `<small class="lb2-detail">${esc(detail)}</small>` : ""}</span>${extra || ""}<b class="lb2-pts">${fmtN(value)}</b></li>`;
   function renderBoard() {
     const me = GameState.playerName;
     const general = lbTab === "general";
@@ -478,22 +494,23 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld }) {
       lbModalContent.innerHTML = `<div class="lb2-emptybox">
         <div class="lb2-empty-ico">🏁</div>
         <h3>${general ? "Nadie ha puntuado todavía" : `Nadie ha superado ${esc(w.name)}`}</h3>
-        <p>¡El primero en ${general ? "superar un mundo" : "terminarlo"} se queda con la corona 👑!</p>
+        <p>Inicia sesión y juega: cuenta cualquier partida, aunque no la termines. ¡El primero se queda con la corona 👑!</p>
         ${general ? "" : `<button class="lb2-play" data-id="${w.id}">▶ Jugar ${esc(w.name)}</button>`}
       </div>`;
     } else {
       const myIdx = list.findIndex((p) => p.name === me);
-      const rest = list.slice(3, 50).map((p, i) => rowHtml(p, i + 4, valueOf(p), extra(p), me)).join("");
+      const detailOf = (p) => (general ? "" : statLine(w.id, p.stats));
+      const rest = list.slice(3, 50).map((p, i) => rowHtml(p, i + 4, valueOf(p), extra(p), me, detailOf(p))).join("");
       lbModalContent.innerHTML = `
         <div class="lb2-top">
-          <div class="lb2-podium">${podiumHtml(list.slice(0, 3), valueOf, me)}</div>
+          <div class="lb2-podium">${podiumHtml(list.slice(0, 3), valueOf, me, general ? null : detailOf)}</div>
           <div class="lb2-listbox">
-            <div class="lb2-listhead">${general ? "Suma de tu mejor récord en cada mundo" : `Mejor récord en ${esc(w.name)}`}</div>
+            <div class="lb2-listhead">${general ? "Suma del mejor récord de cada uno en cada mundo · cuenta aunque no termines" : `Mejor partida de cada uno en ${esc(w.name)} · cuenta aunque no termines`}</div>
             <ol class="lb2-list">${rest || `<li class="lb2-row lb2-row-empty">Aún no hay más jugadores… ¡entra en el top!</li>`}</ol>
           </div>
         </div>
         <div class="lb2-me">${myIdx >= 0
-          ? `<span class="lb2-me-tag">TÚ</span><span class="lb2-pos">${myIdx + 1}º</span>${avatarOf(list[myIdx].character)}<span class="lb2-name">${esc(me)}</span><b class="lb2-pts">${fmtN(valueOf(list[myIdx]))}</b>`
+          ? `<span class="lb2-me-tag">TÚ</span><span class="lb2-pos">${myIdx + 1}º</span>${avatarOf(list[myIdx].character)}<span class="lb2-name">${esc(me)}${detailOf(list[myIdx]) ? `<small class="lb2-detail">${esc(detailOf(list[myIdx]))}</small>` : ""}</span><b class="lb2-pts">${fmtN(valueOf(list[myIdx]))}</b>`
           : `<span class="lb2-me-tag">TÚ</span><span class="lb2-name">${esc(me)} · todavía sin récord ${general ? "" : "aquí"}</span>${general ? "" : `<button class="lb2-play mini" data-id="${w.id}">▶ Jugar</button>`}`}</div>`;
     }
     lbModalContent.querySelectorAll(".lb2-play").forEach((b) => b.addEventListener("click", () => { lbOv.classList.add("hidden"); if (onPlayWorld) onPlayWorld(Number(b.dataset.id)); }));

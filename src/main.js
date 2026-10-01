@@ -131,6 +131,7 @@ async function startGame(worldId) {
       onSwitchChar: () => { switchChar(1); updateSpotlight(); },
       onPickChar: (id) => { const i = CHARS.findIndex((c) => c.id === id); if (i >= 0) GameState.charIdx = i; },
       onVictory: (score, rank) => recordWorld(worldId, score, rank),
+      onScore: (score, stats, rank) => reportScore(worldId, score, stats, rank),
       onExit: back
     });
   } catch (err) {
@@ -153,11 +154,18 @@ function showLoading(on) {
 // cuando el mundo 3D ya ha montado su pantalla, se quita la de carga
 new MutationObserver(() => { if (document.getElementById("doodleRoot")) showLoading(false); }).observe(document.getElementById("wrap") || document.body, { childList: true });
 
-// guarda el progreso local y manda la puntuación al ranking (general y por mundo)
+// al ganar: guarda el progreso local (retos)
 function recordWorld(worldId, score, rank) {
   saveWorldProgress(worldId, score, rank);
+}
+// ranking: cuenta en cualquier momento (al acabar, al perder, en los puntos de control),
+// sólo con sesión de Google y sólo si mejora lo que ya se ha enviado en esta visita
+const sentBest = {};
+function reportScore(worldId, score, stats, rank) {
+  if (!window.__cgAuth || !window.__cgAuth.user || score <= (sentBest[worldId] || 0)) return;
+  sentBest[worldId] = score;
   const c = CHARS[GameState.charIdx] || CHARS[0];
-  if (score > 0) submitScore({ name: GameState.playerName, score: Math.round(score), character: c.id, char_name: c.name, time_seconds: 0, rank: rank || "", deaths: 0, world: worldId });
+  submitScore({ name: GameState.playerName, score: Math.round(score), character: c.id, char_name: c.name, time_seconds: (stats && stats.time) || 0, rank: rank || "", deaths: 0, world: worldId, stats });
 }
 
 // ¿Viene de un enlace/QR de personaje (/jose-luis)? Empieza con ese personaje

@@ -162,7 +162,7 @@ const TEMPLATE = `
 /**
  * @param {{charId?: string, onPickChar?: (id:string)=>void, onExit?: Function, onVictory?: (score:number, rank:string)=>void}} opts
  */
-export function startDoodleFight({ charId, onPickChar, onExit, onVictory } = {}) {
+export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScore } = {}) {
   const root = document.createElement("div");
   root.id = "doodleRoot";
   root.className = "cf-root";
@@ -1212,6 +1212,12 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory } = {})
     again.textContent = again.disabled ? "Esperando al anfitrión…" : "Revancha";
     showOv("end");
     syncPad();
+    {
+      // puntos aunque no ganes: KOs, vidas que te quedan y puesto
+      const me = F[meSlot], place = m.order.indexOf(meSlot) + 1, rivals = F.length - 1;
+      const pts = (iWon ? 1500 + rivals * 800 : Math.max(0, (F.length - place) * 300)) + me.kos * 300 + me.stocks * 400;
+      if (onScore && pts > 0) try { onScore(Math.min(9000, pts), { won: iWon, kos: me.kos, falls: me.falls, rivals, place }, iWon ? (me.stocks >= 3 ? "S" : me.stocks === 2 ? "A" : "B") : ""); } catch (e) {}
+    }
     if (mode === "cpu" && iWon && onVictory) {
       const me = F[meSlot];
       const score = 1500 + (F.length - 1) * 800 + me.kos * 300 + me.stocks * 400;

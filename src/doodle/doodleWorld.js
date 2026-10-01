@@ -154,7 +154,7 @@ const TEMPLATE = `
  * Arranca el mundo 7.
  * @param {{char?: {id:string, name:string, emoji:string, spd:number, jump:number}, getChar?: () => object, onExit?: Function, onVictory?: (score:number, rank:string)=>void}} opts
  */
-export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictory } = {}) {
+export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictory, onScore } = {}) {
   const root = document.createElement("div");
   root.id = "doodleRoot";
   root.innerHTML = TEMPLATE;
@@ -1868,7 +1868,13 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
     input.fire = false;
     syncMandoUi();
     if (document.pointerLockElement === canvas) document.exitPointerLock();
+    reportScore(win, win ? rank : "");
     return rank;
+  }
+  function reportScore(won, rank) {
+    if (!onScore || G.score <= 0 || pvp()) return;
+    const acc = G.shots ? Math.round((G.hits / G.shots) * 100) : 0;
+    try { onScore(G.score, { wave: Math.max(1, G.wave + 1), kills: G.kills, acc, time: Math.round(G.time), won: !!won }, rank); } catch (e) {}
   }
   function gameOver() {
     if (mp.on && mp.isHost) net.broadcast({ t: "over" });
@@ -2051,6 +2057,7 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
     if (window.__doodle) delete window.__doodle;
   }
   function exit() {
+    if (state === "play" || state === "pause") reportScore(false, "");
     destroy();
     if (onExit) onExit();
   }

@@ -25,3 +25,14 @@ describe("validateScore (ranking)", () => {
     expect(r.entry.user_id).toBe("g1");
   });
 });
+
+import { cleanStats } from "../server/score.js";
+describe("cleanStats (detalle del récord)", () => {
+  it("se queda sólo con claves conocidas y valores limpios", () => {
+    const s = cleanStats({ coins: 120, frags: 3, zone: "Wayra<b>", won: true, hack: "x", time: 1e9 });
+    expect(s).toMatchObject({ coins: 120, frags: 3, won: 1, time: 99999 });
+    expect(s.zone).toBe("Wayrab");
+    expect(s.hack).toBeUndefined();
+    expect(cleanStats(null)).toBeNull();
+  });
+});

@@ -121,7 +121,7 @@ const TEMPLATE = `
   </div>
 </div>`;
 
-export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar, onExit, onVictory } = {}) {
+export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar, onExit, onVictory, onScore } = {}) {
   const root = document.createElement("div");
   root.id = "doodleRoot";
   root.className = "pf-root";
@@ -901,6 +901,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
       if (!c.on && P.x > c.x) {
         c.on = true; P.cp = c.x; sfx.item(); msg("☕ Punto de control: café recargado", 1.8);
         try { localStorage.setItem(SAVE_KEY, String(c.x)); } catch (e) {}
+        reportScore(false);
         P.hearts = Math.max(P.hearts, HEARTS);
       }
     }
@@ -1335,6 +1336,13 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     showOv("end");
     syncPad();
     if (win && onVictory) try { onVictory(P.score, rank); } catch (e) {}
+    reportScore(win, rank);
+  }
+  // el ranking cuenta siempre (no sólo al ganar): puntos y lo conseguido hasta ahora
+  const zoneName = () => (P.x >= 364 ? "CINK" : P.x >= 257 ? "Wayra" : "Campus");
+  function reportScore(won, rank) {
+    if (!onScore || P.score <= 0) return;
+    try { onScore(P.score, { coins: P.coins, frags: P.frags.size, stomps: P.stomps, time: Math.round(P.time), zone: won ? "Meta" : zoneName(), won: !!won }, rank || ""); } catch (e) {}
   }
   function gameOver() { audio.lose(); endScreen(false); }
 
@@ -1698,7 +1706,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     root.remove();
     if (window.__plat) delete window.__plat;
   }
-  function exit() { destroy(); if (onExit) onExit(); }
+  function exit() { if (screen === "play" || screen === "pause") reportScore(false); destroy(); if (onExit) onExit(); }
   if (import.meta.env && import.meta.env.DEV) window.__plat = { P, step: (n = 1) => { for (let i = 0; i < n; i++) stepSim(STEP); }, setChar: (id) => { devChar = true; setChar(charById(id)); }, get prints() { return prints; }, get minions() { return minions; }, get L() { return L; }, get boss() { return boss; }, get enemies() { return enemies; }, get screen() { return screen; } };
 
   showOv("start");

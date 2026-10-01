@@ -131,7 +131,7 @@ const TEMPLATE = `
   </div>
 </div>`;
 
-export function startDoodleRace({ charId, onPickChar, onExit, onVictory } = {}) {
+export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore } = {}) {
   const root = document.createElement("div");
   root.id = "doodleRoot";
   root.className = "rk-root";
@@ -804,6 +804,12 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory } = {}) 
       showOv("end");
       syncPad();
       pos === 1 ? audio.victory() : audio.lose();
+      {
+        // puntos según puesto y tiempo, ganes o no
+        const mine = list[pos - 1], tme = (mine && mine.t) || 0;
+        const pts = tme ? Math.max(200, Math.round(10000 - tme * 40 - (pos - 1) * 1200)) : 0;
+        if (onScore && pts > 0) try { onScore(pts, { pos, time: Math.round(tme), racers: list.length, won: pos === 1 }, pos === 1 ? (tme < 140 ? "S" : tme < 170 ? "A" : "B") : ""); } catch (e) {}
+      }
       if (mode === "solo" && pos === 1 && onVictory) {
         const tme = list[0].t || 0;
         try { onVictory(Math.max(1000, Math.round(10000 - tme * 40)), tme < 140 ? "S" : tme < 170 ? "A" : "B"); } catch (e) {}

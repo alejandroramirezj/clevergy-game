@@ -13,6 +13,20 @@ export const SCORE_CAP = {
 };
 export const RANKS = ["S", "A", "B", "C"];
 
+// detalle de la partida: sólo claves conocidas, números acotados o textos cortos
+const STAT_KEYS = ["coins", "frags", "stomps", "time", "zone", "won", "wave", "kills", "acc", "kos", "falls", "rivals", "place", "pos", "racers"];
+export function cleanStats(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const out = {};
+  for (const k of STAT_KEYS) {
+    const v = raw[k];
+    if (typeof v === "number" && Number.isFinite(v)) out[k] = Math.max(0, Math.min(99999, Math.round(v * 10) / 10));
+    else if (typeof v === "boolean") out[k] = v ? 1 : 0;
+    else if (typeof v === "string" && v) out[k] = v.replace(/[^\p{L}\p{N} ._-]/gu, "").slice(0, 24);
+  }
+  return Object.keys(out).length ? out : null;
+}
+
 /** Normaliza y valida una puntuación. Devuelve { ok, error, entry }. */
 export function validateScore(body, user) {
   const world = parseInt(body && body.world, 10);
@@ -30,7 +44,8 @@ export function validateScore(body, user) {
     time_seconds: Math.max(0, Math.min(36000, parseFloat(body.time_seconds) || 0)),
     rank: RANKS.includes(rankIn) ? rankIn : "",
     deaths: Math.max(0, Math.min(999, parseInt(body.deaths, 10) || 0)),
-    user_id: user ? user.id : null
+    user_id: user ? user.id : null,
+    stats: cleanStats(body.stats)
   };
   return { ok: true, entry };
 }

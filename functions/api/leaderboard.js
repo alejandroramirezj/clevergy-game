@@ -55,8 +55,8 @@ export async function onRequestPost({ request, env }) {
     if (prev) await env.DB.prepare(`DELETE FROM leaderboard WHERE ${who[0]} AND world = ?`).bind(who[1], e.world).run();
 
     const info = await env.DB.prepare(
-      "INSERT INTO leaderboard (name, score, character, char_name, time_seconds, rank, deaths, world, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    ).bind(e.name, e.score, e.character, e.char_name, e.time_seconds, e.rank, e.deaths, e.world, e.user_id).run();
+      "INSERT INTO leaderboard (name, score, character, char_name, time_seconds, rank, deaths, world, user_id, stats) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    ).bind(e.name, e.score, e.character, e.char_name, e.time_seconds, e.rank, e.deaths, e.world, e.user_id, e.stats ? JSON.stringify(e.stats) : null).run();
     const higher = await env.DB.prepare("SELECT COUNT(*) AS n FROM leaderboard WHERE world = ? AND score > ?").bind(e.world, e.score).first();
     return J({ success: true, id: info?.meta?.last_row_id, position: (higher?.n || 0) + 1 });
   } catch (err) {
