@@ -15,10 +15,10 @@ export const WORLDS = [
     genreColor: "#d6204c",
     genre: "PLATAFORMAS",
     blurb: "El viaje de Clevergy por sus oficinas: Google for Startups Campus, Wayra en el Edificio Telefónica de Gran Vía y el CINK Coworking de Infanta Mercedes.",
-    chips: ["👤 1 jugador", "🦸 18 poderes", "👾 Email Chain"],
+    chips: ["👤 1 jugador", "🦸 18 poderes", "👾 Datadis"],
     name: "La Oficina",
     subtitle: "Google for Startups · Campus Madrid",
-    desc: "Empieza en Google for Startups Campus (café, torre de coworking y Demo Day), cruza Gran Vía y trepa por el Edificio Telefónica hasta Wayra en la 8ª planta, y termina en el CINK de Infanta Mercedes: derrota a Email Chain en la sala y llega a la oficina de Clevergy."
+    desc: "Empieza en Google for Startups Campus (café, torre de coworking y Demo Day), cruza Gran Vía y trepa por el Edificio Telefónica hasta Wayra en la 8ª planta, y termina en el CINK de Infanta Mercedes: derrota a Datadis en la sala y llega a la oficina de Clevergy."
   },
   {
     id: 6,

@@ -123,6 +123,32 @@ export function makeBoss() {
   return { group: g, body, layers, top };
 }
 
+// 🗄️ DATADIS: un armario de servidores enfadado, con LEDs, antena de "API v20" y el logo en el pecho
+export function makeDatadis() {
+  const g = new THREE.Group();
+  const body = new THREE.Group();
+  g.add(body);
+  const layers = [], leds = [];
+  for (let i = 0; i < 6; i++) { // unidades del rack
+    const l = part(GEO.box, i % 2 ? INK.BLUE : INK.BLACK, { tone: i % 2 ? -0.08 : 0.12 }, 3.2, 0.8, 2.2, 0, 0.45 + i * 0.85, 0, body);
+    layers.push(l);
+    part(GEO.box, INK.BLACK, { fill: true }, 2.2, 0.08, 0.04, -0.2, 0.45 + i * 0.85, 1.12, body); // ranura
+    for (let k = 0; k < 3; k++) leds.push(part(GEO.box, k === 2 ? INK.RED : INK.GREEN, { fill: true }, 0.14, 0.14, 0.05, 1.05 + k * 0.2 - 0.2, 0.45 + i * 0.85, 1.13, body));
+  }
+  const top = new THREE.Group();
+  top.position.y = 5.4;
+  body.add(top);
+  part(GEO.box, INK.BLUE, { tone: -0.1 }, 3.0, 1.7, 2.2, 0, 0.85, 0, top);
+  const f1 = part(GEO.box, INK.BLACK, { fill: true }, 1.0, 0.12, 0.05, -0.62, 1.32, 1.12, top);
+  const f2 = part(GEO.box, INK.BLACK, { fill: true }, 1.0, 0.12, 0.05, 0.62, 1.32, 1.12, top);
+  f1.rotation.z = -0.4; f2.rotation.z = 0.4; // cejas de enfadado
+  eyes(top, 0.6, 0.14, 0.45, 1.14);
+  part(GEO.box, INK.BLACK, { fill: true }, 1.0, 0.1, 0.05, 0, 0.45, 1.13, top); // boca recta, sin respuesta
+  part(GEO.cyl, INK.BLACK, { fill: true }, 0.05, 1.1, 0.05, 0.9, 2.2, 0, top); // antena
+  const bulb = part(GEO.sph, INK.RED, { fill: true }, 0.22, 0.22, 0.22, 0.9, 2.8, 0, top);
+  return { group: g, body, layers, top, leds, bulb };
+}
+
 // ✏️ El arma: un boli Bic gigante que va con la cámara
 export function makeGun() {
   const g = new THREE.Group();

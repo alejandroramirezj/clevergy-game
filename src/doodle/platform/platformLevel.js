@@ -164,7 +164,7 @@ export function makeLevel() {
   plat(414, 6, 6);
   q(416, 10); q(417, 10, "coffee");
   L.checkpoints.push({ x: 419 });
-  // la sala grande del CINK (el jefe EMAIL CHAIN), 424–443
+  // la sala grande del CINK (el jefe DATADIS), 424–443
   decor("sala", 433, 2);
   // la oficina de Clevergy y la bandera de INBOX ZERO
   decor("clevergy", 460, 2);

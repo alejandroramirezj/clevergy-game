@@ -587,7 +587,7 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld }) {
     { icon: "📅", name: "Reunión de 5 minutos", where: "La Oficina · BoliBic Tag", desc: "Te lanza invitaciones de calendario desde lejos.", tip: "Acércate entre invitación e invitación." },
     { icon: "🥊", name: "El compañero rival", where: "Coworking Fight", desc: "Otro héroe de Clevergy, de la CPU o desde otro móvil.", tip: "Bloquea, esquiva y guarda el especial para rematar." },
     { icon: "🚤", name: "Los rivales del pantano", where: "Pantano de San Juan", desc: "Cinco motos de agua que no te dejarán ganar tan fácil.", tip: "Derrapa en las curvas para cargar turbo." },
-    { icon: "📨", name: "EMAIL CHAIN", where: "Jefe · La Oficina", boss: true, desc: "Una torre de correos que salta en el escenario del Demo Day.", tip: "Salta sus ondas y písale la cabeza cuando se canse." },
+    { icon: "🗄️", name: "DATADIS", where: "Jefe · La Oficina", boss: true, desc: "El proveedor de datos de consumo y nuestro peor enemigo: cambia la API cada dos por tres, pide el DNI por las dos caras y el CUPS, y se cae cuando menos lo esperas.", tip: "Esquiva sus requisitos y písale la cabeza cuando se le caiga la plataforma (503)." },
     { icon: "📬", name: "INBOX INFINITO", where: "Jefe · BoliBic Tag", boss: true, desc: "La bandeja de entrada hecha monstruo en la última oleada.", tip: "Muévete sin parar y apunta al centro." }
   ];
   const ITEMS_DATA = [
@@ -629,7 +629,7 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld }) {
   const WORLD_LORE = {
     1: {
       place: "Google for Startups Campus Madrid, la antigua fábrica de ladrillo junto al Palacio Real.",
-      steps: ["Terraza de la calle Moreno Nieto con sombrillas que hacen de plataforma", "Campus Café con barra, mesas y un altillo de sofás", "Torre de coworking de cinco plantas: ascensor, rejilla de ventilación y forjados con huecos", "Salas de cristal en lo alto, con fosos y sillas plegables que se hunden", "Gradas del auditorio hasta el escenario del Demo Day, donde espera EMAIL CHAIN"],
+      steps: ["Terraza de la calle Moreno Nieto con sombrillas que hacen de plataforma", "Campus Café con barra, mesas y un altillo de sofás", "Torre de coworking de cinco plantas: ascensor, rejilla de ventilación y forjados con huecos", "Salas de cristal en lo alto, con fosos y sillas plegables que se hunden", "Gradas del auditorio hasta el escenario del Demo Day, donde espera DATADIS"],
       goal: "Llega a la bandera con el máximo de monedas y los 3 disquetes escondidos: así se saca el rango S."
     },
     6: {

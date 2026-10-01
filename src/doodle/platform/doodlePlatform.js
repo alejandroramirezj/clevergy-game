@@ -4,7 +4,7 @@
 // mando común. Mecánicas: salto variable, "coyote time", búfer de salto, salto en
 // pared, pisotón, bloques ? y ladrillos, muelles, plataformas móviles, puntos de
 // control, sillas plegables que se hunden, rejillas de ventilación que te suben,
-// pufs que rebotan, 3 disquetes secretos, el jefe EMAIL CHAIN en el escenario del
+// pufs que rebotan, 3 disquetes secretos, el jefe DATADIS en el escenario del
 // Demo Day y la bandera de INBOX ZERO. Cada personaje recupera su poder original
 // del plataformas clásico (José Luis imprime plataformas, Paloma vuela, Ana trepa…).
 // =============================================================================
@@ -15,7 +15,7 @@ import { DoodleAudio } from "../doodleAudio.js";
 import { GEO } from "../doodleLevel.js";
 import { createSticker } from "../doodleSticker.js";
 import { createTouchPad, ICON } from "../touchPad.js";
-import { makeEmail, makeMeeting, makeClock, makeBoss } from "../doodleActors.js";
+import { makeEmail, makeMeeting, makeClock, makeDatadis } from "../doodleActors.js";
 import { inkText, cinkLogo } from "../inkText.js";
 import { touch as mando } from "../../engine/input.js";
 import { CHARS, POWER_INFO } from "../../config/characters.js";
@@ -53,7 +53,7 @@ const TEMPLATE = `
     <div class="pf-power"><span class="pf-power-name"></span><div class="pf-power-bar"><i></i></div></div>
   </div>
   <div class="pf-score">0</div>
-  <div class="pf-boss hidden"><div class="pf-boss-name">📨 EMAIL CHAIN</div><div class="pf-boss-bar"><i></i></div></div>
+  <div class="pf-boss hidden"><div class="pf-boss-name">🗄️ DATADIS</div><div class="pf-boss-bar"><i></i></div></div>
   <div class="pf-big"></div>
   <div class="pf-msg"></div>
   <div class="dd-hudbtns">
@@ -67,7 +67,7 @@ const TEMPLATE = `
     <div class="pf-col pf-info">
       <div class="dd-kicker">MUNDO 1 · PLATAFORMAS</div>
       <h1 class="pf-title">La Oficina</h1>
-      <p class="pf-lead">El viaje de Clevergy por sus oficinas hasta derrotar a <b>EMAIL CHAIN</b>.</p>
+      <p class="pf-lead">El viaje de Clevergy por sus oficinas hasta derrotar a <b>DATADIS</b>.</p>
       <ol class="pf-route">
         <li><b>1</b><span>Google for Startups<small>Campus Madrid</small></span></li>
         <li><b>2</b><span>Wayra<small>Edificio Telefónica</small></span></li>
@@ -1230,21 +1230,65 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     pickups = pickups.filter((k) => !k.dead);
   }
 
-  // ── jefe: EMAIL CHAIN ──
+  // ── jefe: DATADIS, el proveedor de datos de consumo y peor enemigo de Clevergy ──
+  // Salta por el escenario y en cada aterrizaje te lanza un requisito nuevo (la foto del DNI por
+  // las dos caras, el CUPS, la API v21…). Cuando se le cae la plataforma (503) es el momento de
+  // pisarle la cabeza.
+  const BOSS_HP = 4;
+  const DEMANDS = ["DNI", "DNI x2", "CUPS??", "API v21", "AUDITORÍA", "SIN ACCESO", "SUBE TODO", "FOTO DNI"];
+  const QUEJAS = [
+    "Datadis: «Hemos cambiado el proceso de integración. Otra vez.»",
+    "Datadis: «Necesitamos la foto del DNI por las dos caras.»",
+    "Datadis: «Indique el CUPS.» (¿Y quién se sabe el CUPS?)",
+    "Datadis: «El cliente le ha retirado el acceso.» Sin avisar.",
+    "Datadis: «Estamos auditando los DNI. Responderemos en 15 días hábiles.»",
+    "Datadis: «Suba toda la documentación a nuestra plataforma.»",
+    "Datadis: «Nueva versión de la API: la v20 ya no funciona.»"
+  ];
+  let bossShots = [];
+  const datadisLogo = (() => {
+    const tex = new THREE.TextureLoader().load("/ui/datadis.svg");
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 0.6), new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthTest: false, depthWrite: false }));
+    const plate = new THREE.Mesh(new THREE.PlaneGeometry(2.9, 0.85), new THREE.MeshBasicMaterial({ color: 0x17357e, depthTest: false, depthWrite: false }));
+    const g = new THREE.Group(); plate.renderOrder = 1; m.renderOrder = 2; m.position.z = 0.01; g.add(plate, m); g.visible = false;
+    overlay.add(g);
+    return g;
+  })();
+  function clearShots() { bossShots.forEach((s) => scene.remove(s.g)); bossShots = []; }
+  function throwDemand(b) {
+    const g = new THREE.Group();
+    box(g, 0, 0, 0, 1.3, 0.85, 0.08, INK.BLACK, { tone: 0.6 }); // el papel
+    const t = inkText(DEMANDS[(Math.random() * DEMANDS.length) | 0], { size: 0.2, ink: INK.RED, weight: 1.3 }); t.position.z = 0.06; g.add(t);
+    scene.add(g);
+    const dir = Math.sign(P.x - b.x) || 1;
+    bossShots.push({ g, x: b.x + dir * 1.2, y: b.y + 2.6, vx: dir * rnd(5.5, 8), vy: rnd(5, 8), life: 3 });
+  }
+  function updateShots(dt) {
+    for (const s of bossShots) {
+      s.life -= dt; s.vy -= 14 * dt; s.x += s.vx * dt; s.y += s.vy * dt;
+      s.g.position.set(s.x, s.y, 0.4); s.g.rotation.z = Math.sin(s.life * 6) * 0.3;
+      if (P.dead <= 0 && Math.abs(s.x - P.x) < 0.9 && s.y > P.y - 0.3 && s.y < P.y + PH + 0.3) { hurt(s.x); s.life = 0; }
+      if (s.y < 1 || solidAt(s.x, s.y)) s.life = 0;
+      if (s.life <= 0) { scene.remove(s.g); spawnInk(s.x, s.y, INK.BLACK, 5, 2); }
+    }
+    bossShots = bossShots.filter((s) => s.life > 0);
+  }
   function startBoss() {
-    boss = { x: L.boss.spawnX, y: 14, vx: 0, vy: 0, hp: 3, state: "intro", t: 0, hops: 0, model: makeBoss(), flash: 0 };
+    boss = { x: L.boss.spawnX, y: 14, vx: 0, vy: 0, hp: BOSS_HP, state: "intro", t: 0, hops: 0, model: makeDatadis(), flash: 0 };
     boss.model.group.scale.setScalar(0.55);
     scene.add(boss.model.group);
     // paredes que cierran la arena
     for (const x of [L.boss.x0 - 1, L.boss.x1 + 1]) for (let y = 2; y < 16; y++) { L.tiles.set(`${x},${y}`, { t: "w" }); bossWalls.push(`${x},${y}`); }
     bossWalls.meshes = [L.boss.x0 - 1, L.boss.x1 + 1].map((x) => box(levelRoot, x + 0.5, 9, 0, 1, 14, 2, INK.RED, { tone: 0.15 }));
     $(".pf-boss").classList.remove("hidden");
-    big("EMAIL CHAIN", "Pisa su cabeza cuando se canse de saltar", 2.2);
+    big("DATADIS", "Tu peor enemigo. Písale la cabeza cuando se le caiga la plataforma", 2.6);
     audio.bossRoar();
   }
   function resetBoss() {
     if (!boss) return;
     boss.x = L.boss.spawnX; boss.y = 12; boss.vx = 0; boss.vy = 0; boss.state = "hop"; boss.t = 0.8; boss.hops = 0;
+    clearShots();
   }
   function hitBoss() {
     if (!boss || boss.state !== "tired") return;
@@ -1259,8 +1303,10 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
       boss.state = "dead";
       bossDone = true;
       P.score += 5000;
-      big("¡INBOX ZERO!", "Has vaciado la cadena de emails", 2.2);
+      big("¡DATOS CONSEGUIDOS!", "Datadis ha caído (y esta vez no es por mantenimiento)", 2.6);
       scene.remove(boss.model.group);
+      datadisLogo.visible = false;
+      clearShots();
       spawnInk(boss.x, boss.y + 2, INK.RED, 60, 12);
       spawnDecal(boss.x, INK.RED);
       bossWalls.forEach((k) => L.tiles.delete(k));
@@ -1287,13 +1333,12 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
         b.t = b.hp === 1 ? 0.45 : 0.75;
         shake(0.7);
         spawnInk(b.x, b.y, INK.RED, 10, 5);
-        if (b.hops % 2 === 0 && enemies.filter((e) => e.alive).length < 8) {
-          enemies.push(spawnEnemy({ type: "flyer", x: b.x - 2, y: b.y + 2 }));
-          enemies.push(spawnEnemy({ type: "flyer", x: b.x + 1, y: b.y + 3 }));
-        }
+        throwDemand(b); // un requisito nuevo en cada aterrizaje
+        if (b.hp <= 2) throwDemand(b);
+        if (b.hops === 1) msg(QUEJAS[(Math.random() * QUEJAS.length) | 0], 2.6);
         if (P.g && Math.abs(P.x - b.x) < 5) hurt(b.x); // salta para esquivar la onda
       } else if (b.t <= 0) {
-        if (b.hops >= 3) { b.state = "tired"; b.t = 2.6; b.hops = 0; msg("¡Está agotado! ¡Písale la cabeza!", 1.6); }
+        if (b.hops >= 3) { b.state = "tired"; b.t = 2.6; b.hops = 0; msg("¡Error 503: se le ha caído la plataforma! ¡Písale la cabeza!", 1.8); }
         else {
           b.hops++;
           const dir = Math.sign(P.x - b.x) || 1;
@@ -1316,7 +1361,16 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     m.top.rotation.z = b.state === "tired" ? Math.sin(performance.now() / 120) * 0.15 : 0;
     m.group.scale.setScalar(0.55 * (b.state === "tired" ? 0.92 + Math.sin(performance.now() / 90) * 0.02 : 1));
     m.group.visible = !(b.flash > 0 && Math.floor(b.flash * 16) % 2);
-    $(".pf-boss-bar i").style.width = `${(b.hp / 3) * 100}%`;
+    // los LEDs parpadean; con la plataforma caída se apagan
+    const now = performance.now();
+    m.leds.forEach((l, i) => (l.visible = b.state !== "tired" && (Math.floor(now / 140 + i * 1.7) % 3 !== 0)));
+    m.bulb.visible = b.state === "tired" ? Math.floor(now / 200) % 2 === 0 : true;
+    datadisLogo.visible = m.group.visible;
+    const sc = m.group.scale.y / 0.55;
+    datadisLogo.scale.setScalar(0.8 * sc);
+    datadisLogo.position.set(b.x, b.y + 2.55 * sc, 1.4); // en el pecho del armario
+    updateShots(dt);
+    $(".pf-boss-bar i").style.width = `${(b.hp / BOSS_HP) * 100}%`;
   }
 
   // ── meta ──
