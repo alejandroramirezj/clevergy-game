@@ -84,11 +84,46 @@
   .fg-lead { font-size: 13px; }
   .fg-hint { display: none; }
   .fg-i-sub { font-size: 14px; }
+  .fg-msg { top: 13% !important; font-size: 18px !important; }
 }
 body.gameboy-mode .fg-check { top: 58px; font-size: 12px; }
 body.gameboy-mode .fg-round b { font-size: 20px; }
 body.gameboy-mode .fg-qual { top: 46px; }
 body.gameboy-mode .fg-lead { display: none; }
+
+/* Móvil en vertical y modo retrato (pantalla de lobby corregida) */
+@media (orientation: portrait), (max-width: 680px) {
+  .fg-lobby { padding: 8px !important; align-items: center; }
+  .fg-card {
+    display: flex !important;
+    flex-direction: column !important;
+    width: min(480px, calc(100vw - 16px)) !important;
+    max-height: calc(100dvh - 16px) !important;
+    overflow-y: auto !important;
+    padding: 12px 14px !important;
+    gap: 8px !important;
+  }
+  .fg-card .rk-col { display: contents !important; }
+  .fg-card .dd-kicker { order: 1; font-size: 13px; letter-spacing: 2px; margin: 0; }
+  .fg-card .rk-title { order: 2; font-size: clamp(32px, 7vw, 42px); margin: 0; line-height: 1; }
+  .fg-card .rk-place { order: 3; font-size: 13px; margin-bottom: 2px; }
+  .fg-card .fg-picker { order: 4; margin: 2px 0 4px; justify-content: center; }
+  .fg-card .fg-picker .rk-sticker { height: 68px; }
+  .fg-card .fg-picker .cf-pname { font-size: 22px; }
+  .fg-card .fg-solo { order: 5; font-size: 18px; padding: 7px 12px; width: 100%; box-sizing: border-box; margin: 2px 0 4px; }
+  .fg-card .rk-online { order: 6; width: 100%; box-sizing: border-box; padding: 8px 10px; margin: 2px 0 4px; }
+  .fg-card .dd-mp-head { font-size: 13px; margin-bottom: 4px; }
+  .fg-card .fg-lobbyrow { display: flex; gap: 6px; align-items: center; justify-content: space-between; }
+  .fg-card .fg-lobbyrow .fg-create { font-size: 13px; padding: 4px 8px; white-space: nowrap; flex: 0 0 auto; }
+  .fg-card .fg-lobbyrow .fg-code { flex: 1 1 auto; min-width: 60px; max-width: 100px; font-size: 15px; padding: 4px 6px; text-align: center; }
+  .fg-card .fg-lobbyrow .fg-join { font-size: 13px; padding: 4px 8px; white-space: nowrap; flex: 0 0 auto; }
+  .fg-card .fg-rounds { order: 7; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 12px; margin: 2px 0 4px; }
+  .fg-card .fg-rounds li { padding: 3px 6px; font-size: 12px; }
+  .fg-card .fg-rounds b { font-size: 16px; }
+  .fg-card .fg-lead { order: 8; font-size: 12px; line-height: 1.25; margin: 2px 0; }
+  .fg-card .rk-help { order: 9; font-size: 11px; line-height: 1.2; opacity: 0.8; margin: 2px 0; }
+  .fg-card .rk-exit { order: 10; font-size: 15px; padding: 5px 14px; align-self: center; margin-top: 4px; }
+}
 
 /* espectador: a quién sigues y flechas para cambiar */
 .fg-follow { pointer-events: auto; position: absolute; left: 50%; bottom: max(14px, env(safe-area-inset-bottom)); transform: translateX(-50%); display: flex; align-items: center; gap: 8px;

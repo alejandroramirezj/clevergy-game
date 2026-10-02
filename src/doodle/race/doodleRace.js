@@ -1086,7 +1086,9 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
 
   function triggerVoice() {
     const cId = (me && me.charId) ? me.charId : myChar;
+    const nearAlvaro = (me && racers) ? racers.some(other => other !== me && (other.charId === "alvaroP" || other.charId === "alvaro") && Math.hypot(other.x - me.x, other.z - me.z) < 18) : false;
     speakCharacter(cId, {
+      nearAlvaro,
       onBroadcast: ({ phrase }) => {
         tx({ t: "voice", id: myId(), charId: cId, phrase });
       }

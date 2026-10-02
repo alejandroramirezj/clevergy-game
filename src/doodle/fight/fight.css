@@ -147,7 +147,29 @@
   .sb-timer span { font-size: 24px; }
 }
 
-/* vertical (pantalla de arriba del deck Game Boy) */
+/* vertical (pantalla del deck Game Boy y móvil en vertical) */
+@media (orientation: portrait), (max-width: 680px) {
+  .cf-card {
+    display: flex !important;
+    flex-direction: column !important;
+    width: min(480px, calc(100vw - 16px)) !important;
+    max-height: calc(100dvh - 16px) !important;
+    overflow-y: auto !important;
+    padding: 12px 14px !important;
+    gap: 8px !important;
+  }
+  .cf-card .cf-col { display: contents !important; }
+  .cf-card .dd-kicker { order: 1; font-size: 13px; margin: 0; }
+  .cf-card .cf-title { order: 2; font-size: clamp(32px, 7vw, 42px); margin: 0; line-height: 1; }
+  .cf-card .cf-place { order: 3; font-size: 13px; margin-bottom: 2px; }
+  .cf-card .cf-picker { order: 4; margin: 2px 0 4px; justify-content: center; }
+  .cf-card .cf-sticker { height: 68px; }
+  .cf-card .cf-pname { font-size: 22px; }
+  .cf-card .cf-solo { order: 5; font-size: 18px; padding: 7px 12px; width: 100%; box-sizing: border-box; }
+  .cf-card .cf-online { order: 6; width: 100%; box-sizing: border-box; padding: 8px 10px; margin: 2px 0 4px; }
+  .cf-card .cf-help { order: 7; font-size: 11px; line-height: 1.2; opacity: 0.8; margin: 2px 0; }
+  .cf-card .cf-exit { order: 8; font-size: 15px; padding: 5px 14px; align-self: center; margin-top: 4px; }
+}
 body.gameboy-mode .cf-card { grid-template-columns: 1fr; gap: 8px; }
 body.gameboy-mode .cf-title { font-size: 32px; }
 body.gameboy-mode .cf-sticker { height: 88px; }

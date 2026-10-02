@@ -27,6 +27,7 @@ function fitCanvas() {
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const iw = window.innerWidth, ih = window.innerHeight;
   const isPortrait = ih > iw;
+  document.body.classList.toggle("is-portrait", isPortrait);
   const useDeck = isPortrait && GameState.inPlay;
 
   if (useDeck) {

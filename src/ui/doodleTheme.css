@@ -1893,6 +1893,90 @@ body.doodle-mode:not(.world-office) #gbTouchBarContainer { display: none !import
   border-top: 12px solid #ffffff;
 }
 
+/* =============================================================================
+   Móvil en horizontal (Landscape): no tapar la visión del juego ni al personaje
+   Se coloca debajo (compacto, pill discreta) o si la pantalla es muy pequeña
+   se oculta el texto y sólo se escucha el audio.
+   ============================================================================= */
+@media (orientation: landscape) and (max-height: 520px) {
+  .doodle-speech-bubble {
+    /* Colocado abajo, discreto y sin tapar al personaje ni los obstáculos */
+    top: auto;
+    bottom: max(6px, env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%) scale(0.95);
+    max-width: min(440px, calc(100vw - 360px));
+    padding: 3px 12px 4px;
+    border: 2px solid var(--nb-ink, #1f38b8);
+    border-radius: 18px;
+    box-shadow: 2px 3px 0 rgba(31, 56, 184, 0.25);
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(4px);
+  }
+
+  .doodle-speech-bubble.dsb-pop {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+
+  .doodle-speech-bubble.dsb-fadeout {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.9) translateY(6px);
+  }
+
+  .doodle-speech-bubble .dsb-header {
+    margin-bottom: 0;
+    gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .doodle-speech-bubble .dsb-emoji {
+    font-size: 16px;
+  }
+
+  .doodle-speech-bubble .dsb-name {
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+
+  .doodle-speech-bubble .dsb-text {
+    font-size: 13px;
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-weight: 600;
+  }
+
+  /* Si se juega sin controles táctiles (teclado/mando), abajo a la izquierda */
+  body:not(.dd-is-touch) .doodle-speech-bubble {
+    left: max(16px, env(safe-area-inset-left));
+    transform: scale(0.95);
+  }
+  body:not(.dd-is-touch) .doodle-speech-bubble.dsb-pop {
+    transform: scale(1);
+  }
+  body:not(.dd-is-touch) .doodle-speech-bubble.dsb-fadeout {
+    transform: scale(0.9) translateY(6px);
+  }
+
+  /* En horizontal quitamos el pico grande */
+  .doodle-speech-bubble .dsb-tip {
+    display: none !important;
+  }
+}
+
+/* Si la pantalla es muy pequeña en horizontal (alto <= 330px o ancho <= 560px),
+   no cabe bien: se oculta el bocadillo en texto y queda sólo el audio (Opción 2) */
+@media (orientation: landscape) and (max-height: 330px), (orientation: landscape) and (max-width: 560px) {
+  .doodle-speech-bubble {
+    display: none !important;
+  }
+}
+
 /* Botón de voz en el GameBoy Deck vertical */
 .gb-voice-col {
   display: flex;

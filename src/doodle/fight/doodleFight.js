@@ -1597,7 +1597,9 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
   function triggerVoice() {
     const f = (mySlot !== null && F[mySlot]) ? F[mySlot] : null;
     const cId = f ? f.char.id : myChar;
+    const nearAlvaro = f ? F.some(other => other && other !== f && (other.char?.id === "alvaroP" || other.char?.id === "alvaro") && Math.hypot(other.x - f.x, other.y - f.y) < 220) : false;
     speakCharacter(cId, {
+      nearAlvaro,
       onBroadcast: ({ phrase }) => {
         if (online.on) {
           const msg = { t: "voice", s: mySlot, charId: cId, phrase };

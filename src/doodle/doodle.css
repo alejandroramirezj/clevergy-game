@@ -129,9 +129,9 @@
 .dd-is-touch .dd-dash { display: none; }
 .dd-is-touch .dd-score { right: auto; left: 50%; transform: translateX(-50%) rotate(-3deg); top: 6px; font-size: 32px; }
 .dd-is-touch .dd-boss { top: 48px; width: min(420px, 60%); }
-@media (max-height: 460px) {
-  .dd-is-touch .dd-msg { top: 18%; font-size: 48px; }
-  .dd-is-touch .dd-sub { top: calc(18% + 54px); font-size: 19px; }
+@media (max-height: 480px) {
+  .dd-msg, .dd-is-touch .dd-msg { top: 12% !important; font-size: 34px !important; }
+  .dd-sub, .dd-is-touch .dd-sub { top: calc(12% + 38px) !important; font-size: 16px !important; }
 }
 /* vertical (pantalla del deck Game Boy): todo más compacto */
 body.gameboy-mode .dd-tl { font-size: 15px; top: 10px; }
@@ -178,6 +178,17 @@ body.gameboy-mode .dd-ammo { top: 96px; }
 .dd-end-stats div { display: flex; justify-content: space-between; border-bottom: 2px dashed rgba(39, 42, 54, 0.3); }
 .dd-end-stats b { color: var(--dd-ink); }
 .dd-rank { font-family: "Caveat", cursive; font-size: 30px; color: var(--dd-red) !important; line-height: 0.9; }
+
+@media (orientation: portrait), (max-width: 680px) {
+  .dd-ov { padding: 8px; }
+  .dd-card { padding: 12px 14px; width: min(520px, calc(100vw - 16px)); max-height: calc(100dvh - 16px); }
+  .dd-card h1 { font-size: 38px; }
+  .dd-card h2 { font-size: 32px; }
+  .dd-lead { font-size: 15px; margin: 2px 0 8px; }
+  .dd-controls { font-size: 13px; margin-bottom: 8px; gap: 2px 10px; }
+  .dd-btn { font-size: 18px; padding: 6px 14px; }
+  .dd-end-stats { font-size: 15px; margin: 6px 0 10px; }
+}
 
 body.gameboy-mode .dd-ov { padding: 8px; }
 body.gameboy-mode .dd-card { padding: 12px 14px; }

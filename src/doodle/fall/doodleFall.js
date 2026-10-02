@@ -962,9 +962,15 @@ export function startDoodleFall({ charId, onPickChar, onExit, onVictory, onScore
     }
     if (e.code === "KeyM") audio.toggleMusic();
   }
+  function isAlvaroNear() {
+    if (!me || !cs || !cs.length) return false;
+    return cs.some(other => other !== me && (other.c === "alvaroP" || other.c === "alvaro") && Math.hypot(other.x - me.x, other.z - me.z) < 10);
+  }
   function triggerVoice() {
     const cId = (me && me.c) ? me.c : myChar;
+    const nearAlvaro = isAlvaroNear();
     speakCharacter(cId, {
+      nearAlvaro,
       onBroadcast: ({ phrase }) => {
         tx({ t: "voice", id: myId(), charId: cId, phrase });
       }

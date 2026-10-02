@@ -94,8 +94,33 @@
   .rk-ping { top: 108px; }
   .rk-results { margin: 4px 0 10px; }
   .rk-row { font-size: 15px; }
+  .rk-msg { top: 13% !important; font-size: 18px !important; }
 }
-/* vertical (pantalla del deck Game Boy) */
+/* vertical (pantalla del deck Game Boy y móvil en vertical) */
+@media (orientation: portrait), (max-width: 680px) {
+  .rk-card {
+    display: flex !important;
+    flex-direction: column !important;
+    width: min(480px, calc(100vw - 16px)) !important;
+    max-height: calc(100dvh - 16px) !important;
+    overflow-y: auto !important;
+    padding: 12px 14px !important;
+    gap: 8px !important;
+  }
+  .rk-card .rk-col { display: contents !important; }
+  .rk-card .dd-kicker { order: 1; font-size: 13px; margin: 0; }
+  .rk-card .rk-title { order: 2; font-size: clamp(32px, 7vw, 42px); margin: 0; line-height: 1; }
+  .rk-card .rk-place { order: 3; font-size: 13px; margin-bottom: 2px; }
+  .rk-card .rk-picker { order: 4; margin: 2px 0 4px; justify-content: center; }
+  .rk-card .rk-sticker { height: 68px; }
+  .rk-card .rk-pname { font-size: 22px; }
+  .rk-card .rk-solo { order: 5; font-size: 18px; padding: 7px 12px; width: 100%; box-sizing: border-box; }
+  .rk-card .rk-online { order: 6; width: 100%; box-sizing: border-box; padding: 8px 10px; margin: 2px 0 4px; }
+  .rk-card .rk-circuits { order: 7; font-size: 13px; margin: 2px 0; }
+  .rk-card .rk-lead { order: 8; font-size: 12px; line-height: 1.25; margin: 2px 0; }
+  .rk-card .rk-help { order: 9; font-size: 11px; line-height: 1.2; opacity: 0.8; margin: 2px 0; }
+  .rk-card .rk-exit { order: 10; font-size: 15px; padding: 5px 14px; align-self: center; margin-top: 4px; }
+}
 body.gameboy-mode .rk-card { grid-template-columns: 1fr; gap: 6px; }
 body.gameboy-mode .rk-title { font-size: 34px; }
 body.gameboy-mode .rk-sticker { height: 80px; }
