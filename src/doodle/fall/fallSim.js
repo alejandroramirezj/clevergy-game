@@ -87,6 +87,13 @@ export function createSim(E) {
         if (!s.active || k > b.on - 0.3) { tz = c.z; tx = c.x; waiting = true; }
       }
     }
+    // barreras que se abren y cierran: espera delante mientras estén cerradas (o a punto de cerrarse)
+    for (const s of E.K.blocks) {
+      const ahead = s.z0 - c.z;
+      if (ahead < -0.3 || ahead > 2.4 || c.x < s.x0 - 0.5 || c.x > s.x1 + 0.5) continue;
+      const bl = s.blink, per = bl.on + bl.off, k = (((E.t + bl.ph) % per) + per) % per;
+      if (k < bl.on || k > per - 0.4) { tz = c.z; tx = c.x; waiting = true; b.stuckT = 0; b.lastBest = c.z; }
+    }
     let dx = tx - c.x, dz = tz - c.z;
     const l = Math.hypot(dx, dz) || 1;
     dx /= l; dz /= l;
@@ -285,6 +292,9 @@ export function createSim(E) {
       }
       if (g.fall && g.fall.state === 0) { g.fall.state = 1; g.fall.t = 0; }
       if (g.slow) c.slowF = g.slow;
+    } else if (!g) {
+      // saltar por encima de la cola no te la salta: también frena en el aire
+      for (const s of E.K.slows) if (c.x > s.x0 && c.x < s.x1 && c.z > s.z0 && c.z < s.z1 && c.y < s.y1 + 3.2) { c.slowF = s.slow; break; }
     }
     if (c.ground) { c.lastSafeZ = c.z; c.lastGroundY = c.y; }
     // obstáculos

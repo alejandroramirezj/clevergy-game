@@ -670,7 +670,7 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
     },
     9: {
       place: "Un plató de concurso a boli, flotando sobre un mar de datos.",
-      steps: ["Ronda 1: crea el usuario (nombre, apellidos, DNI y notificaciones) y la casa (CUPS, dirección por partes y código postal) entre ruletas y agujeros", "Ronda 2: el consumo por Datadis (recto pero todo frena), por FTP según la distribuidora (el suelo se cae y CIDE no lleva a ningún sitio) o por API", "Ronda 3: la puerta del inversor (Huawei, Fronius, GoodWe, Sungrow o Sigenergy), la documentación, los endpoints, el modelo de Clevergy y vincular la instalación", "Final: cómo funciona una batería y el mercado de flexibilidad, y la torre con una sola batería arriba"],
+      steps: ["Ronda 1: crea el usuario (nombre, apellidos, DNI y notificaciones) y la casa (CUPS, dirección por partes y código postal) entre ruletas y agujeros", "Ronda 2: el consumo por Datadis (recto pero todo frena, aunque saltes, y al final «proceso bloqueado por Datadis»), por FTP según la distribuidora (el suelo se cae y CIDE no lleva a ningún sitio) o por API", "Ronda 3: la puerta del inversor (Huawei, Fronius, GoodWe, Sungrow o Sigenergy), la documentación, los endpoints, el modelo de Clevergy y vincular la instalación", "Final: cómo funciona una batería y el mercado de flexibilidad, y la torre con una sola batería arriba"],
       goal: "Clasifícate en cada ronda y sé el primero en saltar y coger la batería."
     }
   };

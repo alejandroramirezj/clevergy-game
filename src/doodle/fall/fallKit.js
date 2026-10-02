@@ -30,6 +30,7 @@ export function createKit(scene) {
   const root = new THREE.Group();
   scene.add(root);
   const solids = [], hazards = [], discs = [], ramps = [], gates = [], checkpoints = [], anims = [];
+  const slows = [], blocks = []; // suelos que frenan (también si los saltas) y barreras que cortan el paso
 
   // ── mallas ──
   function mesh(geo, ink, o, sx, sy, sz, x, y, z, parent = root) {
@@ -91,6 +92,7 @@ export function createKit(scene) {
     g.position.set(0, 0, 0);
     s.ox = 0; s.oy = 0; s.oz = 0;
     solids.push(s);
+    if (s.slow) slows.push(s);
     return s;
   }
   /** caja sólida cualquiera (muros, vallas, obstáculos bajos) */
@@ -193,6 +195,21 @@ export function createKit(scene) {
       t.rotation.y = Math.PI;
       s.g.add(t);
     }
+    return s;
+  }
+
+  /** barrera alta (no se salta) que corta el paso `on` s y se abre `off` s; parpadea justo antes de abrirse */
+  function blocker(x0, x1, z, h, on, off, ph = 0, o = {}) {
+    const y = o.y ?? 0;
+    const s = blink(wall(x0, x1, z - 0.3, z + 0.3, y, y + h, o.ink ?? INK.RED, { tone: 0.12 }), on, off, ph);
+    s.block = true;
+    if (o.label) {
+      const t = inkText(o.label, { size: o.size ?? 0.36, ink: INK.BLACK, weight: 1.3 });
+      t.position.set((x0 + x1) / 2, y + h * 0.6, z - 0.32);
+      t.rotation.y = Math.PI;
+      s.g.add(t);
+    }
+    blocks.push(s);
     return s;
   }
 
@@ -334,8 +351,8 @@ export function createKit(scene) {
   }
 
   return {
-    root, solids, hazards, discs, ramps, gates, checkpoints, anims,
-    boxMesh, mesh, sign, plat, wall, mover, sine, fallTile, blink, ramp, disc, bar, pendulum, pusher, door, gate, checkpoint,
+    root, solids, hazards, discs, ramps, gates, checkpoints, anims, slows, blocks,
+    boxMesh, mesh, sign, plat, wall, mover, sine, fallTile, blink, blocker, ramp, disc, bar, pendulum, pusher, door, gate, checkpoint,
     update, groundAt, dispose, bake, _p
   };
 }

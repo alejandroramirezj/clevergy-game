@@ -142,8 +142,8 @@ function level2(K, seed) {
   // ── DATADIS: recto pero todo te frena ──
   K.plat(-7.3, 7.3, 12, 120, 0, { ink: INK.RED, tone: 0.36 });
   K.sign("DATADIS", 0, 4.4, 13, { size: 0.8, ink: INK.RED });
-  const slows = [[18, 24, "COLA DE PETICIONES"], [44, 50, "VALIDANDO DNI…"], [78, 85, "AUDITORÍA"]];
-  for (const [z0, z1, label] of slows) {
+  const slowZones = [[18, 24, "COLA DE PETICIONES"], [44, 50, "VALIDANDO DNI…"], [78, 85, "AUDITORÍA"]];
+  for (const [z0, z1, label] of slowZones) {
     K.plat(-6, 6, z0, z1, 0.06, { ink: INK.PURPLE, tone: 0.18, t: 0.1, flags: { slow: 0.42 } });
     K.sign(label, 0, 2.6, z0, { size: 0.34, ink: INK.PURPLE });
   }
@@ -158,6 +158,9 @@ function level2(K, seed) {
   K.pendulum(0, 7.5, 97, 6, 0.95, 1.2, { ink: INK.PURPLE, hammer: true, label: "401", ph: 2 });
   K.plat(-6, 6, 102, 110, 0.06, { ink: INK.BLACK, tone: 0.25, t: 0.1, flags: { belt: { vx: 0, vz: -3.2 } } });
   K.sign("SUBE LA FOTO DEL DNI\nPOR LAS DOS CARAS", 0, 2.9, 102, { size: 0.3, ink: INK.BLACK });
+  // al final, Datadis te bloquea el proceso: 5,5 s cerrado y 2 s abierto (no se puede saltar)
+  K.blocker(-7.3, 7.3, 114, 4.4, 5.5, 2, 0, { label: "PROCESO BLOQUEADO POR DATADIS", size: 0.4 });
+  K.sign("ESPERA A QUE SE DESBLOQUEE", 0, 5.4, 113.6, { size: 0.34, ink: INK.RED });
   K.checkpoint(56, -6, 6, { x0: -4, x1: 4, z: 56.5, y: 0 });
   K.checkpoint(86, -6, 6, { x0: -4, x1: 4, z: 87, y: 0 });
 
@@ -243,7 +246,7 @@ function level2(K, seed) {
     checklist: ["Fuente de datos", "Consumo"],
     finish: { z: 132, x0: -28, x1: 26, y: 0 },
     killY: -9, time: 160, qualify: 0.78, ink: INK.GREEN,
-    tip: "Datadis es recto pero te frena; en el FTP el suelo se cae y CIDE no lleva a ningún sitio",
+    tip: "Datadis es recto pero te frena (aunque saltes) y al final te bloquea el proceso; en el FTP el suelo se cae y CIDE no lleva a ningún sitio",
     ftpTiles,
     path: [
       W([{ x: 0, z: -2 }, { x: 0, z: 4 }]),
