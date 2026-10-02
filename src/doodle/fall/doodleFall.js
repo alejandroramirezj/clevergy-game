@@ -29,7 +29,7 @@ import "../race/race.css";
 import "./fall.css";
 
 const STEP = 1 / 60;
-const PLAYERS = 12; // concursantes mínimos (se rellena con CPU)
+const PLAYERS = 20; // concursantes mínimos (se rellena con CPU)
 const MAX_ONLINE = 20;
 const INTRO_MS = 5200; // presentación de la ronda: la cámara vuela de la meta a la salida
 const SEND_HZ = 20;
@@ -72,7 +72,7 @@ const TEMPLATE = `
       </div>
       <button class="dd-btn rk-solo fg-solo">🎪 Show contra la CPU</button>
       <div class="dd-mp rk-online">
-        <div class="dd-mp-head">📱 <b>Online</b> <small>hasta 20 · CPUs si sois menos de 12</small></div>
+        <div class="dd-mp-head">📱 <b>Online</b> <small>hasta 20 jugadores · CPUs si sois menos</small></div>
         <div class="dd-mp-row fg-lobbyrow">
           <button class="dd-btn dd-mini fg-create">Crear sala</button>
           <input class="dd-mp-code fg-code" maxlength="5" placeholder="CÓDIGO" autocomplete="off" autocapitalize="characters" spellcheck="false" />
@@ -251,7 +251,7 @@ export function startDoodleFall({ charId, onPickChar, onExit, onVictory, onScore
   // ── ronda ──
   function spawnPoint(c, idx) {
     const sp = K.checkpoints[0].spawn;
-    const cols = cs.length > 12 || idx >= 12 ? 6 : 4, row = Math.floor(idx / cols), col = idx % cols;
+    const cols = cs.length > 15 || idx >= 15 ? 6 : 4, row = Math.floor(idx / cols), col = idx % cols;
     const w = sp.x1 - sp.x0;
     c.x = sp.x0 + ((col + 0.5) / cols) * w + (((idx * 37) % 7) - 3) * 0.08;
     c.z = sp.z - row * (cols > 4 ? 1.35 : 1.8);
