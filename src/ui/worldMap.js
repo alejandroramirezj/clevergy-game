@@ -298,6 +298,13 @@ function artKart(hero) {
 
 // ── Inicializador y controlador del selector de mundos ─────────────────────
 
+/** dibujo del mundo (el de su carta del mapa), con tu personaje */
+export function worldArt(w) {
+  const hero = getCharacterAvatar((CHARS[GameState.charIdx] || CHARS[0]).id);
+  const rival = getCharacterAvatar(CHARS[(GameState.charIdx + 5) % CHARS.length].id);
+  return w.theme === "mario" ? artMario(hero) : w.theme === "arena" ? artArena(hero, rival) : w.theme === "kart" ? artKart(hero) : w.theme === "fall" ? artFall(hero) : artDoodle(hero);
+}
+
 export function initWorldMap({ onSelectWorld }) {
   const mapOv = document.getElementById("worldMapOv");
   const grid = document.getElementById("wsGrid");

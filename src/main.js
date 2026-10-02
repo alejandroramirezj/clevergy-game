@@ -179,7 +179,22 @@ initSprites();
 fitCanvas();
 
 const worldMap = initWorldMap({ onSelectWorld: (worldId) => startGame(worldId) });
-const { updateSpotlight } = initOverlays({ onStartGame: () => worldMap.showWorldMap(), onOpenMap: () => worldMap.showWorldMap(), onPlayWorld: (id) => { document.getElementById("menuOv")?.classList.add("hidden"); startGame(id); } });
+const { updateSpotlight } = initOverlays({
+  onStartGame: () => worldMap.showWorldMap(), onOpenMap: () => worldMap.showWorldMap(),
+  onPlayWorld: (id) => { document.getElementById("menuOv")?.classList.add("hidden"); startGame(id); },
+  // Historia y personajes → Mundos → Explorar: el escenario con cámara libre
+  onExploreWorld: async (id, back) => {
+    stopMusic();
+    const menu = document.getElementById("menuOv");
+    const menuWasOpen = menu && !menu.classList.contains("hidden");
+    if (menu) menu.classList.add("hidden");
+    const done = () => { fitCanvas(); if (menuWasOpen) menu.classList.remove("hidden"); back(); };
+    try {
+      const { openWorldViewer } = await import("./doodle/worldViewer.js");
+      await openWorldViewer(id, { onClose: done });
+    } catch (err) { console.error("No se pudo abrir el observador", err); done(); }
+  }
+});
 // en vertical, el mando Game Boy también maneja los menús (A pulsa, B vuelve)
 initDeckNav();
 // cuenta de Google (opcional): guarda progreso y ranking y fija "tu" personaje

@@ -1,12 +1,13 @@
 import { CHARS, POWER_INFO } from "../config/characters.js";
-import { VISIBLE_WORLDS } from "../config/worlds.js";
+import { VISIBLE_WORLDS, worldRetos, loadWorldProgress } from "../config/worlds.js";
+import { worldArt } from "./worldMap.js";
 import { GameState, switchToChar } from "../game/state.js";
 import { sfx } from "../engine/audio.js";
 import { ANIM, SPR, getCharacterAvatar } from "../engine/sprites.js";
 import { fetchGlobalLeaderboard } from "../game/leaderboard.js";
 import { GOOGLE_G } from "../game/auth.js";
 
-export function initOverlays({ onStartGame, onOpenMap, onPlayWorld }) {
+export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWorld }) {
   // Elements
   const menuOv = document.getElementById("menuOv");
   const nameInput = document.getElementById("nameInput");
@@ -658,19 +659,95 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld }) {
   function renderCompendiumWorlds() {
     if (!compWorldsGrid) return;
     compWorldsGrid.innerHTML = VISIBLE_WORLDS.map((w, i) => `
-      <article class="comp2-world comp2-acc-${i % 4}">
+      <article class="comp2-world comp2-acc-${i % 4} comp2-enter" data-world="${w.id}" role="button" tabindex="0" aria-label="Entrar en ${w.name}">
         <div class="comp2-world-num">${w.num}</div>
         <div class="comp2-world-body">
           <small>${w.genre || ""}</small>
           <h3>${w.name}</h3>
           <div class="comp2-world-sub">${w.subtitle || ""}</div>
-          ${WORLD_LORE[w.id] ? `<p class="comp2-place">📍 ${WORLD_LORE[w.id].place}</p>
-          <ol class="comp2-steps">${WORLD_LORE[w.id].steps.map((t) => `<li>${t}</li>`).join("")}</ol>
-          <p class="comp2-goal">🏁 ${WORLD_LORE[w.id].goal}</p>` : `<p>${w.desc}</p>`}
+          <p class="comp2-blurb">${w.blurb || ""}</p>
           <div class="comp2-tags">${(w.chips || []).map((c) => `<span>${c}</span>`).join("")}</div>
+          <div class="comp2-actions"><span class="comp2-go">Entrar en el mundo →</span></div>
         </div>
       </article>`).join("");
   }
+  // ── pantalla de detalles de un mundo (resumen en la tarjeta; aquí, todo) ──
+  let worldDetailEl = null;
+  function openWorldDetail(id) {
+    const w = VISIBLE_WORLDS.find((x) => x.id === id);
+    if (!w || !compWorldsGrid) return;
+    if (!worldDetailEl) {
+      worldDetailEl = document.createElement("div");
+      worldDetailEl.className = "comp2-wdetail hidden";
+      compWorldsGrid.after(worldDetailEl);
+      worldDetailEl.addEventListener("click", (e) => {
+        const t = e.target.closest("button");
+        if (!t) return;
+        if (t.classList.contains("wd-back")) return closeWorldDetail();
+        if (t.classList.contains("wd-other")) return openWorldDetail(Number(t.dataset.world));
+        const wid = Number(t.dataset.world);
+        if (t.classList.contains("wd-explore") && onExploreWorld) { compendiumOv.classList.add("hidden"); onExploreWorld(wid, () => compendiumOv.classList.remove("hidden")); }
+        if (t.classList.contains("wd-play") && onPlayWorld) { closeWorldDetail(); compendiumOv.classList.add("hidden"); onPlayWorld(wid); }
+      });
+    }
+    const lore = WORLD_LORE[id];
+    const retos = worldRetos(id, loadWorldProgress());
+    const others = VISIBLE_WORLDS.filter((x) => x.id !== id);
+    worldDetailEl.innerHTML = `
+      <nav class="wd-crumbs"><button class="wd-back">← Mundos</button><span>›</span><b>${w.name}</b></nav>
+      <article class="wd-card" style="--acc:${w.color}">
+        <div class="wd-side">
+          <figure class="wd-shot">
+            <img src="/ui/previews/world-${id}.webp" alt="Vista de ${w.name}" loading="lazy" onerror="this.parentNode.classList.add('noimg')">
+            <div class="wd-art">${worldArt(w)}</div>
+            <span class="wd-num">${w.num}</span>
+            <span class="wd-shot-tag">📸 Así es el mundo</span>
+            ${onExploreWorld ? `<button class="wd-explore wd-explore-big" data-world="${id}" aria-label="Ver el mundo en 3D"><i>👁</i><span>Ver el mundo en 3D</span></button>` : ""}
+          </figure>
+          ${onPlayWorld ? `<button class="wd-play" data-world="${id}">▶ Jugar este mundo</button>` : ""}
+        </div>
+        <div class="wd-body">
+          <small class="wd-genre" style="background:${w.genreBg};color:${w.genreColor}">${w.genre}</small>
+          <h3>${w.name}</h3>
+          <div class="comp2-world-sub">${w.subtitle || ""}</div>
+          <div class="comp2-tags">${(w.chips || []).map((c) => `<span>${c}</span>`).join("")}</div>
+          <p class="wd-desc">${w.desc}</p>
+          ${lore ? `<h4>📍 Dónde</h4><p>${lore.place}</p>
+          <h4>🗺️ El recorrido</h4><ol class="comp2-steps">${lore.steps.map((t) => `<li>${t}</li>`).join("")}</ol>
+          <h4>🏁 Objetivo</h4><p>${lore.goal}</p>` : ""}
+          <h4>⭐ Retos</h4>
+          <ul class="wd-retos">${retos.map((r) => `<li class="${r.done ? "done" : ""}">${r.done ? "✔" : "○"} ${r.txt}</li>`).join("")}</ul>
+          <div class="wd-others"><span>Otros mundos:</span>${others.map((x) => `<button class="wd-other" data-world="${x.id}" style="--acc:${x.color}">${x.num} · ${x.name}</button>`).join("")}</div>
+        </div>
+      </article>`;
+    if (!compendiumOv.classList.contains("wd-mode")) wdPrevScroll = compScrollEl ? compScrollEl.scrollTop : 0;
+    compendiumOv.classList.add("wd-mode");
+    worldDetailEl.classList.remove("hidden");
+    if (compScrollEl) compScrollEl.scrollTop = 0;
+  }
+  let wdPrevScroll = 0;
+  const compScrollEl = document.getElementById("compScroll");
+  function closeWorldDetail() {
+    if (!worldDetailEl || !compendiumOv.classList.contains("wd-mode")) return;
+    compendiumOv.classList.remove("wd-mode");
+    worldDetailEl.classList.add("hidden");
+    if (compScrollEl) compScrollEl.scrollTop = wdPrevScroll;
+  }
+
+  compWorldsGrid?.addEventListener("keydown", (e) => {
+    const card = e.target.closest(".comp2-enter");
+    if (card && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openWorldDetail(Number(card.dataset.world)); }
+  });
+  // modo observador: recorre el escenario con cámara libre
+  compWorldsGrid?.addEventListener("click", (e) => {
+    const card = e.target.closest(".comp2-enter");
+    if (card) return openWorldDetail(Number(card.dataset.world));
+    const b = e.target.closest(".comp2-explore");
+    if (!b || !onExploreWorld) return;
+    const id = Number(b.dataset.world);
+    compendiumOv.classList.add("hidden");
+    onExploreWorld(id, () => compendiumOv.classList.remove("hidden"));
+  });
   const miniCard = (e) => `
     <article class="comp2-card${e.boss ? " boss" : ""}">
       <div class="comp2-card-icon">${e.img ? `<img src="${e.img}" alt="" style="width:100%;height:100%;object-fit:contain">` : e.icon}</div>
@@ -690,6 +767,8 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld }) {
     renderCompendiumWorlds();
     renderCompendiumEnemies();
     renderCompendiumItems();
+    compendiumOv.classList.remove("wd-mode");
+    if (worldDetailEl) worldDetailEl.classList.add("hidden");
     compendiumOv.classList.remove("hidden");
     const sc = document.getElementById("compScroll");
     if (sc) sc.scrollTop = 0;
@@ -707,6 +786,7 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld }) {
     const sc = document.getElementById("compScroll");
     const tabBtns = compendiumOv.querySelectorAll(".comp-tab-btn");
     tabBtns.forEach((btn) => btn.addEventListener("click", () => {
+      if (compendiumOv.classList.contains("wd-mode")) closeWorldDetail();
       const sec = document.getElementById(`compTab-${btn.dataset.tab}`);
       if (sec && sc) sc.scrollTo({ top: sec.offsetTop - 6, behavior: "smooth" });
       sfx(600, 0.04);
@@ -723,7 +803,8 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld }) {
   }
 
   if (btnOpenCompendium) btnOpenCompendium.addEventListener("click", openCompendium);
-  if (btnCloseCompendium) btnCloseCompendium.addEventListener("click", closeCompendium);
+  // ↩ dentro de la página de un mundo vuelve a la lista; fuera, cierra la historia
+  if (btnCloseCompendium) btnCloseCompendium.addEventListener("click", () => (compendiumOv.classList.contains("wd-mode") ? closeWorldDetail() : closeCompendium()));
 
   // Start game from Menu: Opens the 5-World Adventure Map!
   function triggerStart() {

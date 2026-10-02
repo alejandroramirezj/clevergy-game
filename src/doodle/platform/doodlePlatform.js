@@ -22,6 +22,8 @@ import { CHARS, POWER_INFO } from "../../config/characters.js";
 import { getCharacterAvatar } from "../../engine/sprites.js";
 import { makeLevel, LEVEL_W, LEVEL_H } from "./platformLevel.js";
 import { buzz } from "../haptics.js";
+import { createObserver, observerBar } from "../observer.js";
+import "../observer.css";
 import "../doodle.css";
 import "../fight/fight.css";
 import "./platform.css";
@@ -121,7 +123,7 @@ const TEMPLATE = `
   </div>
 </div>`;
 
-export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar, onExit, onVictory, onScore } = {}) {
+export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar, onExit, onVictory, onScore, observer = false } = {}) {
   const root = document.createElement("div");
   root.id = "doodleRoot";
   root.className = "pf-root";
@@ -1771,7 +1773,8 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
       while (acc >= STEP) { stepSim(STEP); acc -= STEP; }
       updateFx(dt);
     } else acc = 0;
-    if (screen === "start") {
+    if (obs) obs.update(dt);
+    else if (screen === "start") {
       // presentación: la cámara recorre el nivel despacio
       const x = 12 + (Math.sin(wall * 0.04) * 0.5 + 0.5) * (LEVEL_W - 30);
       const y = surfaceAt(x) + 3;
@@ -1779,7 +1782,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
       camera.position.set(x, camY + 2, 22);
       camera.lookAt(x, camY, 0);
     } else updateCamera(dt);
-    drawPlayer(screen === "play" ? dt : 0);
+    if (!obs) drawPlayer(screen === "play" ? dt : 0);
     updateHud(dt);
     R.render(scene, camera, { time: wall, hurt: P.flash > 0 ? 0.4 : 0, lowHp: screen === "play" && P.hearts === 1 ? 1 : 0, flash: 0 }, overlay);
   }
@@ -1798,6 +1801,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     relabels.forEach(([el, t]) => (el.textContent = t));
     document.body.classList.remove("doodle-mode");
     sticker.dispose();
+    if (obs) obs.dispose();
     if (touchPad) touchPad.destroy();
     audio.destroy();
     R.dispose();
@@ -1807,6 +1811,16 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
   function exit() { if (screen === "play" || screen === "pause") reportScore(false); destroy(); if (onExit) onExit(); }
   if (import.meta.env && import.meta.env.DEV) window.__plat = { P, step: (n = 1) => { for (let i = 0; i < n; i++) stepSim(STEP); }, setChar: (id) => { devChar = true; setChar(charById(id)); }, get prints() { return prints; }, get minions() { return minions; }, get L() { return L; }, get boss() { return boss; }, get enemies() { return enemies; }, get screen() { return screen; } };
 
-  showOv("start");
+  // modo observador (Historia y personajes → Explorar): sin partida, cámara libre por el nivel
+  let obs = null;
+  if (observer) {
+    screen = "observer";
+    root.classList.add("pf-observer");
+    sticker.setVisible(false);
+    shadow.visible = false;
+    getChar = null;
+    obs = createObserver(root, camera, { pos: { x: 14, y: 7, z: 26 }, yaw: 0, pitch: -0.12, speed: 12 });
+    observerBar(root, { title: "La Oficina", sub: "Campus · Wayra · CINK", onClose: exit });
+  } else showOv("start");
   return { destroy, exit };
 }

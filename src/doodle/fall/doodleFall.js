@@ -31,6 +31,7 @@ import "./fall.css";
 const STEP = 1 / 60;
 const PLAYERS = 12; // concursantes mínimos (se rellena con CPU)
 const MAX_ONLINE = 20;
+const INTRO_MS = 5200; // presentación de la ronda: la cámara vuela de la meta a la salida
 const SEND_HZ = 20;
 const INTERP_MS = 110;
 
@@ -283,9 +284,9 @@ export function startDoodleFall({ charId, onPickChar, onExit, onVictory, onScore
     sea.material = mat(L.ink, { tone: 0.42 });
     camInit = false;
     // la intro, la cuenta atrás y la salida van con el reloj del anfitrión
-    RC.at = at; RC.goAt = at + 3600 + 3300; RC.events = [];
+    RC.at = at; RC.goAt = at + INTRO_MS + 3300; RC.events = [];
     showIntro();
-    schedule(at + 3600, () => { if (screen === "intro") { showOv(paused ? "pause" : null); screen = "play"; syncPad(); } });
+    schedule(at + INTRO_MS, () => { if (screen === "intro") { showOv(paused ? "pause" : null); screen = "play"; syncPad(); } });
     [3, 2, 1].forEach((n) => schedule(RC.goAt - n * 1000, () => { flash(String(n), "", 0.8); sfx.beep(false); }));
     schedule(RC.goAt, () => { phase = "race"; flash("¡YA!", "", 0.8); sfx.beep(true); });
   }
@@ -798,7 +799,26 @@ export function startDoodleFall({ charId, onPickChar, onExit, onVictory, onScore
   $(".fg-fnext").addEventListener("pointerdown", (e) => { e.preventDefault(); e.stopPropagation(); switchSpec(1); });
   const camPos = new THREE.Vector3(), camLook = new THREE.Vector3(), _look = new THREE.Vector3();
   let camInit = false;
+  // vuelo de presentación (como en Fall Guys): de la meta hacia la salida, mirando al recorrido
+  function flyover() {
+    const k = clamp((hostNow() - RC.at) / INTRO_MS, 0, 1);
+    const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2; // suave al salir y al llegar
+    const endZ = L.finish ? L.finish.z + 4 : L.battery ? L.battery.z + 2 : 120;
+    const sp = K.checkpoints[0].spawn;
+    const startZ = (me ? me.z : sp.z) - 9.2, startX = (me ? me.x : 0) * 0.9;
+    const z = endZ + (startZ - endZ) * e;
+    const ground = Math.max(sp.y, K.groundAt(0, z + 8, 60));
+    const h = 15 + (5.4 - 15) * e;
+    camPos.set(startX * e, Math.max(ground, (me ? me.y : sp.y) * e) + h, z);
+    camLook.set(startX * e, ground + 1.2 * e, z + 22 - 16 * e);
+    camInit = true;
+    camera.position.copy(camPos);
+    camera.lookAt(camLook);
+    const fov = root.clientWidth < root.clientHeight ? 78 : 62;
+    if (Math.abs(camera.fov - fov) > 0.1) { camera.fov = fov; camera.updateProjectionMatrix(); }
+  }
   function updateCamera(dt) {
+    if (screen === "intro" && K && L) return flyover();
     const watching = !me || me.finished ? specTarget() : null;
     const f = watching || (me && me.respawnT <= 0 ? me : null);
     // espectador: sigue al que va primero

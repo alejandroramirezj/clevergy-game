@@ -100,3 +100,18 @@ body.gameboy-mode .fg-lead { display: none; }
 
 /* mando táctil: AGARRAR bien separado de SALTO (arriba a la izquierda del botón grande) */
 .fg-root .dd-act.slot-1 { right: 118px; bottom: 96px; }
+
+/* la presentación de la ronda es una franja abajo: el escenario se ve mientras vuela la cámara */
+.fg-intro { align-items: end; background: none; backdrop-filter: none; pointer-events: none; padding-bottom: max(10px, env(safe-area-inset-bottom)); }
+.fg-introcard { width: min(620px, 100%); padding: 8px 18px 10px; animation: fg-slide 0.5s cubic-bezier(0.2, 1.4, 0.4, 1); }
+.fg-introcard .fg-i-title { font-size: clamp(32px, 6vw, 52px); }
+.fg-introcard .fg-i-sub { margin: 0 0 4px; font-size: 15px; }
+.fg-introcard .fg-i-qual { margin-top: 2px; font-size: 24px; }
+@keyframes fg-slide { from { transform: translateY(120%) rotate(-0.8deg); } }
+@media (max-height: 480px) {
+  .fg-introcard { padding: 4px 14px 6px; }
+  .fg-introcard .fg-i-title { font-size: 30px; }
+  .fg-introcard .fg-i-sub { font-size: 12px; }
+  .fg-introcard .fg-i-tip { font-size: 13px; }
+  .fg-introcard .fg-i-qual { font-size: 19px; }
+}
