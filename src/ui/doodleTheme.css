@@ -498,6 +498,22 @@ html body #worldMapOv .ws-hero-thumb img {
   object-fit: contain !important;
   filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.2)) !important;
 }
+html body #worldMapOv .ws-hero-arrow {
+  background: none !important;
+  border: none !important;
+  color: #232738 !important;
+  font-size: 11px !important;
+  cursor: pointer !important;
+  padding: 2px 4px !important;
+  line-height: 1 !important;
+  display: grid !important;
+  place-items: center !important;
+  transition: transform 0.08s ease !important;
+  box-shadow: none !important;
+}
+html body #worldMapOv .ws-hero-arrow:active {
+  transform: scale(0.85) !important;
+}
 
 /* ── Rejilla horizontal de 4 mundos ── */
 html body #worldMapOv .ws-grid {
@@ -1936,9 +1952,7 @@ html body #menuOv .lobby-header-row { height: 96px !important; }
 }
 @media (orientation: portrait), (max-width: 560px) { .en-card { grid-template-columns: 1fr; } .en-side { position: static; } }
 
-/* en los mundos que no son La Oficina no se cambia de personaje: fuera las flechas del selector y la barra táctil del Game Boy */
-body.char-locked .doodle-root .cf-arrow,
-body.char-locked #doodleRoot .cf-arrow,
+/* sólo en La Oficina se cambia de personaje dentro de la partida en vivo; en los demás se elige antes de empezar en el lobby */
 body.char-locked #gbTouchBarContainer,
 body.doodle-mode:not(.world-office) #gbTouchBarContainer { display: none !important; }
 .lb2-fun { margin: 4px 0 6px; padding: 4px 10px; font: 15px var(--nb-hand); color: var(--nb-pen); background: #fff8d6; border: 2px dashed var(--acc, #1f38b8); border-radius: 10px 7px 11px 8px; transform: rotate(-0.4deg); }

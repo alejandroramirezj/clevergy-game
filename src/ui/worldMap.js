@@ -556,6 +556,18 @@ export function initWorldMap({ onSelectWorld }) {
     }, 90);
   });
 
+  function stepHero(dir) {
+    GameState.charIdx = (GameState.charIdx + dir + CHARS.length) % CHARS.length;
+    renderMap();
+    try { sfx(650, 0.05, "triangle"); } catch (e) {}
+  }
+  document.getElementById("btnMapHeroPrev")?.addEventListener("click", (e) => { e.stopPropagation(); stepHero(-1); });
+  document.getElementById("btnMapHeroNext")?.addEventListener("click", (e) => { e.stopPropagation(); stepHero(1); });
+  document.querySelector(".ws-hero-pill")?.addEventListener("click", (e) => {
+    if (e.target.closest("button")) return;
+    stepHero(1);
+  });
+
   btnCloseMap?.addEventListener("click", () => {
     hideWorldMap();
     document.getElementById("menuOv")?.classList.remove("hidden");

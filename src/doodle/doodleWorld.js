@@ -197,7 +197,8 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onPickChar, onEx
 
   // personaje en tercera persona (pegatina) + sombra de tinta en el suelo
   const overlay = new THREE.Scene(); // pegatinas (tú y tus compañeros), pintadas encima del dibujo
-  const sticker = createSticker(overlay);
+  const STICKER_OPTS = { poseOverrides: { alejandro: { attack: "/sprites/alejandro/shoot.png" } } };
+  const sticker = createSticker(overlay, STICKER_OPTS);
 
   // la foto de la pared de la pizarra de Clevergy: una polaroid con sus colores reales
   // (el render de boli no pinta texturas, así que va en la capa de encima y se oculta si una pared la tapa)
@@ -605,7 +606,7 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onPickChar, onEx
         id, name: st.n || "?", emoji: st.e || "", charId: null,
         pos: new THREE.Vector3(st.x || 0, st.y || 0, st.z || 0), tgt: new THREE.Vector3(st.x || 0, st.y || 0, st.z || 0),
         vx: 0, vz: 0, g: true, f: false, hp: 100, d: false, mx: 0, seen: performance.now(), raw: null,
-        sticker: createSticker(overlay), shadow: new THREE.Mesh(GEO.disc, mat(INK.BLACK, { fill: true })), label: document.createElement("div")
+        sticker: createSticker(overlay, STICKER_OPTS), shadow: new THREE.Mesh(GEO.disc, mat(INK.BLACK, { fill: true })), label: document.createElement("div")
       };
       r.shadow.rotation.x = -Math.PI / 2;
       r.shadow.scale.set(0.9, 0.55, 1);

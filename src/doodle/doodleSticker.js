@@ -137,7 +137,20 @@ export function createSticker(targetScene, opts = {}) {
     if (rec && rec.type === "poses" && rec.images) {
       faceRight = rec.faceRight !== false;
       relScale = !!rec.relScale;
-      for (const [k, list] of Object.entries(rec.images)) if (list && list[0]) sources.push([k, list[0], false]);
+      for (const [k, list] of Object.entries(rec.images)) {
+        let img = list && list[0];
+        if (opts.poseOverrides && opts.poseOverrides[charId] && opts.poseOverrides[charId][k]) {
+          const ov = opts.poseOverrides[charId][k];
+          if (typeof ov === "string") {
+            const im = new Image();
+            im.src = ov;
+            img = im;
+          } else {
+            img = ov;
+          }
+        }
+        if (img) sources.push([k, img, false]);
+      }
     }
     if (!sources.some(([k]) => k === "idle") && SPR[charId] && SPR[charId].img) sources.push(["idle", SPR[charId].img, true]);
     for (const [k, img, pixel] of sources) {
