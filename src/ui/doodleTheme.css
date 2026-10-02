@@ -485,6 +485,8 @@ html body #worldMapOv .ws-hero-pill {
   font-size: 13px !important;
   color: #232738 !important;
   white-space: nowrap !important;
+  cursor: default !important;
+  user-select: none !important;
 }
 html body #worldMapOv .ws-hero-thumb {
   width: 28px !important;
@@ -497,22 +499,6 @@ html body #worldMapOv .ws-hero-thumb img {
   height: 28px !important;
   object-fit: contain !important;
   filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.2)) !important;
-}
-html body #worldMapOv .ws-hero-arrow {
-  background: none !important;
-  border: none !important;
-  color: #232738 !important;
-  font-size: 11px !important;
-  cursor: pointer !important;
-  padding: 2px 4px !important;
-  line-height: 1 !important;
-  display: grid !important;
-  place-items: center !important;
-  transition: transform 0.08s ease !important;
-  box-shadow: none !important;
-}
-html body #worldMapOv .ws-hero-arrow:active {
-  transform: scale(0.85) !important;
 }
 
 /* ── Rejilla horizontal de 4 mundos ── */
