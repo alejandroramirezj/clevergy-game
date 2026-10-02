@@ -1,0 +1,1 @@
+import{l as e,n as o,o as r,p as s,q as n,r as t}from"./doodleRender-BJ7zCah_.js";const y={box:new e(1,1,1),cyl:new t(.5,.5,1,14),sph:new o(.5,14,10),cone:new r(.5,1,12),torus:new n(.5,.12,8,18),disc:new s(.5,14)};export{y as G};

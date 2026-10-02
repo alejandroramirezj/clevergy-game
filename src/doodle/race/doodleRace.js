@@ -64,7 +64,7 @@ const TEMPLATE = `
   <div class="rk-time">0:00.00</div>
   <div class="rk-item"><span></span></div>
   <canvas class="rk-map" width="240" height="240"></canvas>
-  <div class="rk-speed"><b>0</b> km/h</div>
+  <div class="rk-speed"><span class="rk-turbobadge">⚡ TURBO</span><b>0</b> km/h</div>
   <div class="rk-speedlines"></div>
   <div class="rk-big"></div>
   <div class="rk-msg"></div>
@@ -152,7 +152,7 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
   const camera = new THREE.PerspectiveCamera(68, 1, 0.3, 1400);
   scene.add(camera);
   const track = buildTrack();
-  const world = buildRaceWorld(scene, track);
+  const world = buildRaceWorld(scene, track, overlay);
 
   // ── estado ──
   let screen = "lobby"; // lobby | race | end
@@ -177,55 +177,263 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
   const tx = (m) => (net.isHost ? net.broadcast(m) : net.send(m));
   const isAuthority = () => mode === "solo" || net.isHost;
 
-  // ── sonido: motor continuo + efectos ──
-  let engine = null;
-  function startEngine() {
-    if (engine || !audio.ctx) return;
+  // ── AUDIO MARIO KART: BSO ESTILO PANTANO + EFECTOS DISCRETOS (CERO OSCILADORES CONTINUOS) ──
+  // En Mario Kart y juegos acuáticos no hay un zumbador continuo de motor; el audio se centra
+  // en la banda sonora animada, chapoteos de agua (splash), turbos melódicos y derrapes.
+  function startEngine() {}
+  function updateEngine(v, boost) {}
+  function stopEngine() {}
+
+  // Sintetizador Web Audio estilo Mario Kart para el Pantano
+  let raceMusic = null;
+  function startRaceMusic() {
+    if (raceMusic || !audio.ctx) return;
     const c = audio.ctx;
-    const o1 = c.createOscillator(), o2 = c.createOscillator(), f = c.createBiquadFilter(), g = c.createGain();
-    o1.type = "sawtooth"; o2.type = "square";
-    f.type = "lowpass"; f.frequency.value = 600;
-    g.gain.value = 0;
-    o1.connect(f); o2.connect(f); f.connect(g).connect(audio.master);
-    o1.start(); o2.start();
-    engine = { o1, o2, f, g };
+    const mGain = c.createGain();
+    mGain.gain.value = 0.11;
+    mGain.connect(audio.master);
+
+    let step = 0;
+    let bpm = 132;
+    let stepInterval = (60 / bpm) / 4;
+
+    const N = {
+      G2: 98, C3: 130.8, D3: 146.8, E3: 164.8, G3: 196, A3: 220, B3: 246.9,
+      C4: 261.6, D4: 293.7, E4: 329.6, Fs4: 370.0, G4: 392.0, A4: 440.0, B4: 493.9,
+      C5: 523.3, D5: 587.3, E5: 659.3, G5: 784.0
+    };
+
+    const melody = [
+      N.G4, 0, N.B4, 0, N.D5, 0, N.B4, N.D5,
+      N.E5, 0, N.D5, 0, N.B4, 0, N.A4, 0,
+      N.G4, 0, N.A4, N.B4, 0, N.D5, 0, N.B4,
+      N.A4, 0, N.G4, 0, N.E4, 0, N.G4, 0
+    ];
+
+    const bass = [
+      N.G2, 0, N.G2, 0, N.D3, 0, N.G2, 0,
+      N.E3, 0, N.E3, 0, N.B3, 0, N.E3, 0,
+      N.C3, 0, N.C3, 0, N.G3, 0, N.C3, 0,
+      N.D3, 0, N.D3, 0, N.A3, 0, N.D3, 0
+    ];
+
+    let timer = null;
+    function playNote(freq, dur, type, vol, out) {
+      if (!freq) return;
+      const t = c.currentTime;
+      const o = c.createOscillator();
+      o.type = type;
+      o.frequency.setValueAtTime(freq, t);
+      const g = c.createGain();
+      g.gain.setValueAtTime(vol, t);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.connect(g).connect(out);
+      o.start(t);
+      o.stop(t + dur + 0.05);
+    }
+
+    function tick() {
+      if (paused || screen !== "race") return;
+      const s = step % 32;
+
+      // Ritmo percusión: hi-hat constante, caja en 4 y 12
+      if (s % 2 === 0) {
+        audio.noise({ dur: 0.025, gain: 0.03, filter: "highpass", freq: 7500, out: mGain });
+      }
+      if (s % 8 === 4) {
+        audio.noise({ dur: 0.07, gain: 0.06, filter: "bandpass", freq: 1900, q: 1, out: mGain });
+      }
+      if (s % 16 === 0) {
+        playNote(85, 0.12, "sine", 0.15, mGain);
+      }
+
+      // Bajo funk saltarín
+      if (bass[s]) {
+        playNote(bass[s], 0.22, "triangle", 0.13, mGain);
+      }
+
+      // Melodía alegre y tropical
+      if (melody[s]) {
+        playNote(melody[s], 0.18, "sine", 0.09, mGain);
+      }
+
+      step++;
+    }
+
+    timer = setInterval(tick, stepInterval * 1000);
+
+    raceMusic = {
+      mGain,
+      setFinalLap: () => {
+        bpm = 152;
+        stepInterval = (60 / bpm) / 4;
+        clearInterval(timer);
+        timer = setInterval(tick, stepInterval * 1000);
+      },
+      stop: () => {
+        if (timer) clearInterval(timer);
+        try { mGain.disconnect(); } catch (e) {}
+        raceMusic = null;
+      }
+    };
   }
-  function updateEngine(v, boost) {
-    if (!engine) return;
-    const t = audio.ctx.currentTime, k = clamp(v / 34, 0, 1.3);
-    engine.o1.frequency.setTargetAtTime(55 + k * 85 + (boost ? 25 : 0), t, 0.08);
-    engine.o2.frequency.setTargetAtTime(27 + k * 42, t, 0.08);
-    engine.f.frequency.setTargetAtTime(380 + k * 900, t, 0.1);
-    engine.g.gain.setTargetAtTime(screen === "race" && !paused ? 0.035 + k * 0.03 : 0, t, 0.1);
-  }
+
   const sfx = {
-    beep: (hi) => audio.tone({ freq: hi ? 1320 : 660, dur: hi ? 0.45 : 0.14, type: "square", gain: 0.12 }),
-    boost: () => audio.noise({ dur: 0.45, gain: 0.3, filter: "bandpass", freq: 500, to: 3200, q: 0.8 }),
-    splash: () => audio.noise({ dur: 0.35, gain: 0.3, filter: "lowpass", freq: 1400, to: 200 }),
-    bump: () => { audio.tone({ freq: 120, to: 60, dur: 0.15, type: "square", gain: 0.12 }); audio.noise({ dur: 0.1, gain: 0.15, filter: "lowpass", freq: 700 }); },
-    box: () => audio.tone({ freq: 880, to: 1320, dur: 0.12, type: "triangle", gain: 0.12 }),
-    roll: () => audio.tone({ freq: rnd(900, 1400), dur: 0.03, type: "square", gain: 0.04 }),
-    spin: () => { audio.tone({ freq: 700, to: 140, dur: 0.6, type: "sawtooth", gain: 0.12 }); audio.noise({ dur: 0.4, gain: 0.25, filter: "bandpass", freq: 1200, q: 1 }); },
-    throw: () => audio.noise({ dur: 0.15, gain: 0.2, filter: "highpass", freq: 1800 }),
-    lap: () => [72, 76, 79].forEach((n, i) => audio.tone({ freq: 440 * Math.pow(2, (n - 69) / 12), dur: 0.18, type: "triangle", gain: 0.13, delay: i * 0.1 })),
-    drift: (lvl) => audio.tone({ freq: lvl === 2 ? 1500 : 1000, dur: 0.07, type: "triangle", gain: 0.06 })
+    countdown: (hi) => {
+      if (!hi) {
+        audio.tone({ freq: 698, dur: 0.18, type: "triangle", gain: 0.16 });
+      } else {
+        [932, 1174, 1396].forEach((f, idx) => {
+          audio.tone({ freq: f, dur: 0.55, type: "triangle", gain: 0.14, delay: idx * 0.015 });
+        });
+        audio.noise({ dur: 0.45, gain: 0.16, filter: "bandpass", freq: 1200, to: 3400 });
+      }
+    },
+    beep: (hi) => audio.tone({ freq: hi ? 1320 : 660, dur: hi ? 0.4 : 0.12, type: "triangle", gain: 0.12 }),
+    boost: () => {
+      audio.noise({ dur: 0.22, gain: 0.12, filter: "bandpass", freq: 900, to: 2800, q: 0.8 });
+      [523, 659, 784, 1046].forEach((f, idx) => {
+        audio.tone({ freq: f, dur: 0.12, type: "triangle", gain: 0.1, delay: idx * 0.03 });
+      });
+    },
+    splash: () => {
+      audio.noise({ dur: 0.22, gain: 0.16, filter: "lowpass", freq: 1400, to: 280 });
+      audio.tone({ freq: 160, to: 80, dur: 0.12, type: "sine", gain: 0.07 });
+    },
+    bump: () => {
+      audio.tone({ freq: 150, to: 75, dur: 0.14, type: "triangle", gain: 0.12 });
+      audio.noise({ dur: 0.1, gain: 0.12, filter: "lowpass", freq: 800 });
+    },
+    box: () => {
+      [1046, 1318, 1568, 2093].forEach((f, idx) => {
+        audio.tone({ freq: f, dur: 0.16, type: "triangle", gain: 0.12, delay: idx * 0.03 });
+      });
+    },
+    roll: () => audio.tone({ freq: rnd(980, 1600), dur: 0.035, type: "triangle", gain: 0.06 }),
+    spin: () => {
+      audio.tone({ freq: 880, to: 160, dur: 0.65, type: "sawtooth", gain: 0.12 });
+      audio.noise({ dur: 0.45, gain: 0.22, filter: "bandpass", freq: 1100, q: 1 });
+    },
+    throw: () => audio.noise({ dur: 0.16, gain: 0.22, filter: "highpass", freq: 2200 }),
+    lap: () => {
+      [523, 659, 784, 1046].forEach((f, idx) => {
+        audio.tone({ freq: f, dur: 0.22, type: "triangle", gain: 0.15, delay: idx * 0.08 });
+      });
+    },
+    finalLap: () => {
+      [659, 784, 987, 1318].forEach((f, idx) => {
+        audio.tone({ freq: f, dur: 0.35, type: "triangle", gain: 0.18, delay: idx * 0.07 });
+      });
+    },
+    drift: (lvl) => {
+      const baseFreq = lvl === 2 ? 1480 : 1050;
+      audio.tone({ freq: baseFreq, dur: 0.06, type: "triangle", gain: 0.09 });
+      audio.tone({ freq: baseFreq * 1.25, dur: 0.08, type: "triangle", gain: 0.07, delay: 0.02 });
+    },
+    trick: () => {
+      audio.tone({ freq: 440, to: 880, dur: 0.22, type: "triangle", gain: 0.16 });
+      audio.noise({ dur: 0.25, gain: 0.2, filter: "bandpass", freq: 1200, to: 2800 });
+    }
   };
 
-  // ── motos ──
+  // ── MOTOS DE AGUA DE COMPETICIÓN (ESTILO WAVE RACE / MARIO KART) ──
   function makeBoat(ink) {
     const g = new THREE.Group();
     const body = new THREE.Group();
     g.add(body);
-    const put = (geo, i, o, s, p, rot) => { const m = new THREE.Mesh(geo, mat(i, o)); m.scale.set(...s); m.position.set(...p); if (rot) m.rotation.set(...rot); body.add(m); return m; };
-    put(GEO.box, ink, { tone: 0.05 }, [1.5, 0.6, 3.0], [0, 0.35, -0.2]);
-    put(GEO.cone, ink, { tone: 0.05 }, [1.5, 1.3, 0.6], [0, 0.35, 1.9], [Math.PI / 2, 0, 0]);
-    put(GEO.box, INK.BLACK, { tone: -0.1 }, [0.9, 0.35, 1.3], [0, 0.8, -0.5]);
-    put(GEO.box, ink, { fill: true }, [1.52, 0.12, 3.02], [0, 0.45, -0.2]);
-    put(GEO.box, INK.BLACK, { fill: true }, [1.1, 0.08, 0.08], [0, 1.25, 0.55]);
-    put(GEO.box, INK.BLACK, {}, [0.12, 0.5, 0.12], [0, 1.0, 0.55]);
-    put(GEO.box, INK.BLACK, { tone: 0.2 }, [0.8, 0.5, 0.06], [0, 1.05, 0.95], [-0.5, 0, 0]);
+    const put = (geo, i, o, s, p, rot) => {
+      const m = new THREE.Mesh(geo, mat(i, o));
+      m.scale.set(...s);
+      m.position.set(...p);
+      if (rot) m.rotation.set(...rot);
+      body.add(m);
+      return m;
+    };
+
+    // 1. Quilla y casco inferior en V (para cortar el agua y planear)
+    put(GEO.box, INK.BLACK, { fill: true }, [1.35, 0.32, 3.2], [0, 0.16, 0.1]);
+    put(GEO.cone, INK.BLACK, { fill: true }, [1.35, 1.2, 0.32], [0, 0.22, 2.05], [Math.PI / 2, 0, 0]);
+
+    // 2. Casco superior principal con color del piloto
+    put(GEO.box, ink, { tone: 0.08 }, [1.55, 0.55, 3.1], [0, 0.42, 0]);
+    put(GEO.cone, ink, { tone: 0.08 }, [1.55, 1.45, 0.65], [0, 0.45, 1.95], [Math.PI / 2, 0, 0]);
+
+    // 3. Tomas de aire deportivas (air scoops) y franja racing
+    put(GEO.box, INK.BLACK, { fill: true }, [0.32, 0.12, 0.85], [-0.42, 0.68, 1.3]);
+    put(GEO.box, INK.BLACK, { fill: true }, [0.32, 0.12, 0.85], [0.42, 0.68, 1.3]);
+    put(GEO.box, INK.RED, { fill: true }, [0.22, 0.08, 2.2], [0, 0.72, 0.7]);
+
+    // 4. Parabrisas / deflector aerodinámico tintado
+    put(GEO.box, INK.BLUE, { tone: 0.4 }, [0.85, 0.45, 0.08], [0, 1.05, 0.95], [-0.48, 0, 0]);
+
+    // 5. Asiento deportivo bicolor con respaldo lumbar
+    put(GEO.box, INK.BLACK, { tone: -0.15 }, [0.92, 0.38, 1.4], [0, 0.78, -0.45]);
+    put(GEO.box, ink, { fill: true }, [0.88, 0.1, 1.35], [0, 0.98, -0.45]);
+    put(GEO.box, INK.BLACK, { fill: true }, [0.88, 0.32, 0.25], [0, 1.05, -1.05]);
+
+    // 6. Plataformas laterales para los pies (footwells) y sponsons de giro
+    for (const sx of [-0.78, 0.78]) {
+      put(GEO.box, INK.BLACK, { fill: true }, [0.22, 0.08, 1.6], [sx, 0.48, -0.4]);
+      put(GEO.box, ink, { fill: true }, [0.12, 0.22, 0.9], [sx * 1.05, 0.32, -0.9]);
+    }
+
+    // 7. Manillar deportivo orientable (gira con la dirección del kart)
+    const handlebars = new THREE.Group();
+    handlebars.position.set(0, 0.95, 0.65);
+    body.add(handlebars);
+    const stem = new THREE.Mesh(GEO.cyl, mat(INK.BLACK, { fill: true }));
+    stem.scale.set(0.12, 0.45, 0.12);
+    stem.position.set(0, 0.18, -0.05);
+    stem.rotation.x = -0.35;
+    handlebars.add(stem);
+    const bar = new THREE.Mesh(GEO.box, mat(INK.BLACK, { fill: true }));
+    bar.scale.set(1.2, 0.08, 0.08);
+    bar.position.set(0, 0.38, -0.1);
+    handlebars.add(bar);
+    for (const gx of [-0.55, 0.55]) {
+      const grip = new THREE.Mesh(GEO.cyl, mat(ink, { fill: true }));
+      grip.scale.set(0.11, 0.22, 0.11);
+      grip.position.set(gx, 0.38, -0.1);
+      grip.rotation.z = Math.PI / 2;
+      handlebars.add(grip);
+    }
+    const dash = new THREE.Mesh(GEO.box, mat(INK.BLUE, { tone: 0.45 }));
+    dash.scale.set(0.35, 0.18, 0.05);
+    dash.position.set(0, 0.44, -0.08);
+    dash.rotation.x = -0.55;
+    handlebars.add(dash);
+
+    // 8. Popa con toberas dobles hidrojet de propulsión
+    const nozzles = new THREE.Group();
+    nozzles.position.set(0, 0.35, -1.55);
+    body.add(nozzles);
+    for (const nx of [-0.32, 0.32]) {
+      const nzv = new THREE.Mesh(GEO.cyl, mat(INK.BLACK, { fill: true }));
+      nzv.scale.set(0.28, 0.45, 0.28);
+      nzv.rotation.x = Math.PI / 2;
+      nzv.position.set(nx, 0, 0);
+      nozzles.add(nzv);
+      const ring = new THREE.Mesh(GEO.torus, mat(INK.BLACK, { tone: 0.6 }));
+      ring.scale.set(0.29, 0.29, 0.29);
+      ring.position.set(nx, 0, -0.22);
+      nozzles.add(ring);
+    }
+
+    // Efecto de turbina hidrojet al acelerar o turbo
+    const thrusters = new THREE.Group();
+    thrusters.position.set(0, 0.35, -1.85);
+    body.add(thrusters);
+    for (const nx of [-0.32, 0.32]) {
+      const flame = new THREE.Mesh(GEO.cone, mat(INK.ORANGE, { fill: true }));
+      flame.scale.set(0.35, 1.2, 0.35);
+      flame.rotation.x = -Math.PI / 2;
+      flame.position.set(nx, 0, -0.6);
+      thrusters.add(flame);
+    }
+    thrusters.visible = false;
+
     scene.add(g);
-    return { g, body };
+    return { g, body, handlebars, nozzles, thrusters };
   }
   function mkRacer(opt, slot) {
     const cfg = charById(opt.cid);
@@ -380,7 +588,10 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
       if (!r.air && Math.abs(across) < 4.2 && along > 2.5 && along < 5 && r.v > 12) { r.air = true; r.vy = 7 + r.v * 0.12; r.y = Math.max(r.y, 1.6); if (r === me) sfx.boost(); }
     }
     for (const bp of world.boostPads) {
-      if (Math.hypot(r.x - bp.x, r.z - bp.z) < 3.4 && r.boostT < 0.9) { r.boostT = 1.1; if (r === me) { sfx.boost(); flash("¡TURBO!"); } }
+      if (Math.hypot(r.x - bp.x, r.z - bp.z) < 3.4 && r.boostT < 0.9) {
+        r.boostT = 1.1;
+        if (r === me) sfx.boost();
+      }
     }
     for (const b of world.itemBoxes) {
       if (b.cool <= 0 && Math.hypot(r.x - b.x, r.z - b.z) < 2.8) {
@@ -444,15 +655,24 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
     if (r.lap > LAPS && !r.finished) {
       r.finished = true;
       r.finishT = (hostNow() - RC.goAt) / 1000;
-      if (r === me) { flash("¡META!", fmtTime(r.finishT)); audio.victory(); }
+      if (r === me) {
+        flash("¡META!", fmtTime(r.finishT));
+        if (raceMusic) raceMusic.stop();
+        audio.victory();
+      }
       if (online.on) tx({ t: "fin", id: r.id, time: r.finishT });
       if (isAuthority() && !RC.firstFinishAt) RC.firstFinishAt = hostNow();
       return;
     }
     if (r === me && r.lap >= 1) {
-      if (r.lap === LAPS) flash("¡VUELTA FINAL!", "", 2);
-      else if (r.lap > 1) flash(`VUELTA ${r.lap}/${LAPS}`, "", 1.4);
-      if (r.lap > 1) sfx.lap();
+      if (r.lap === LAPS) {
+        flash("¡VUELTA FINAL!", "", 2.2);
+        sfx.finalLap();
+        if (raceMusic) raceMusic.setFinalLap();
+      } else if (r.lap > 1) {
+        flash(`VUELTA ${r.lap}/${LAPS}`, "", 1.4);
+        sfx.lap();
+      }
     }
   }
 
@@ -462,8 +682,8 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
     r.item = null;
     if (r === me) sfx.throw();
     const fx = Math.sin(r.yaw), fz = Math.cos(r.yaw);
-    if (it === "cafe") { r.boostT = 1.5; if (r === me) { sfx.boost(); flash("☕ ¡CAFÉ TURBO!"); } }
-    else if (it === "focus") { r.starT = 6; if (r === me) flash("⭐ ¡MODO FOCUS!", "Nadie te interrumpe durante 6 s"); }
+    if (it === "cafe") { r.boostT = 1.5; if (r === me) sfx.boost(); }
+    else if (it === "focus") { r.starT = 6; if (r === me) sfx.boost(); }
     else if (it === "tinta") spawnPuddle({ id: `${r.id}-${++objSeq}`, x: r.x - fx * 4, z: r.z - fz * 4 }, true);
     else if (it === "email" || it === "reunion") {
       const target = it === "reunion" ? racerAhead(r) : null;
@@ -661,6 +881,18 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
     r.tilt += (lean - r.tilt) * Math.min(1, dt * 8);
     r.boat.body.rotation.z = -r.tilt;
     r.boat.body.rotation.x = r.air ? -0.25 : -Math.min(0.12, r.v / 300) + Math.sin(RC.t * 3 + r.slot) * 0.03;
+
+    // Giro dinámico del manillar deportivo y las toberas hidrojet
+    if (r.boat.handlebars) r.boat.handlebars.rotation.y = -r.steer * 0.45;
+    if (r.boat.nozzles) r.boat.nozzles.rotation.y = r.steer * 0.38;
+    if (r.boat.thrusters) r.boat.thrusters.visible = r.boostT > 0 || r.starT > 0 || (r.v > 28 && Math.random() < 0.4);
+
+    // Chorro de estela de agua potente al acelerar (rooster tail)
+    if (r.v > 16 && !r.air && Math.random() < 0.3) {
+      const fx = Math.sin(r.yaw), fz = Math.cos(r.yaw);
+      spray(r.x - fx * 2.1, r.y + 0.35, r.z - fz * 2.1, INK.BLUE, 1, 1.8);
+    }
+
     // piloto: pegatina sobre la moto (se oculta si queda tapado por un islote)
     _v.set(r.x, r.y + 0.9, r.z);
     let vis = r === me || camera.position.distanceTo(_v) < 260;
@@ -687,24 +919,35 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
     const r = me;
     if (!r) return;
     const fx = Math.sin(r.yaw), fz = Math.cos(r.yaw);
-    const back = 9.5 + r.v * 0.06, up = 4.2 + (r.air ? 1.5 : 0);
-    const wantPos = _v.set(r.x - fx * back, r.y + up, r.z - fz * back);
+    // En saltos y turbos: la cámara se sitúa más alta y despejada
+    // y mira hacia adelante en el canal de agua para no tapar el aterrizaje ni el horizonte
+    const back = 10.4 + r.v * 0.05 + (r.air ? 1.6 : 0);
+    const wy = waveH(r.x, r.z, RC.t);
+    const up = 4.3 + (r.air ? 2.2 : 0);
+    const wantPos = _v.set(r.x - fx * back, Math.max(r.y + up, wy + 4.0), r.z - fz * back);
     if (!camInit) { camPos.copy(wantPos); camInit = true; }
     camPos.lerp(wantPos, Math.min(1, dt * 6));
-    camLook.lerp(new THREE.Vector3(r.x + fx * 7, r.y + 1.6, r.z + fz * 7), Math.min(1, dt * 10));
-    const sh = shakeAmt * shakeAmt * 0.6;
+
+    // Enfocar más adelante en la trayectoria del agua para anticipar curvas y el punto de aterrizaje
+    const lookDist = 15 + (r.air ? 5 : 0);
+    const lookY = r.air ? Math.max(1.8, wy + 1.2) : r.y + 1.4;
+    camLook.lerp(new THREE.Vector3(r.x + fx * lookDist, lookY, r.z + fz * lookDist), Math.min(1, dt * 7));
+
+    const sh = shakeAmt * shakeAmt * 0.35;
     shakeAmt = Math.max(0, shakeAmt - dt * 2.5);
-    camera.position.set(camPos.x + rnd(-sh, sh), Math.max(1.5, camPos.y + rnd(-sh, sh)), camPos.z + rnd(-sh, sh));
+    camera.position.set(camPos.x + rnd(-sh, sh), Math.max(1.8, camPos.y + rnd(-sh, sh)), camPos.z + rnd(-sh, sh));
     camera.lookAt(camLook);
-    const fov = (root.clientWidth < root.clientHeight ? 80 : 68) + (r.boostT > 0 ? 10 : 0) + clamp(r.v - 25, 0, 12) * 0.25;
-    camera.fov += (fov - camera.fov) * Math.min(1, dt * 4);
+
+    // FOV suave: solo +3.5 deg en boost para no deformar ni alejar la pista
+    const targetFov = (root.clientWidth < root.clientHeight ? 78 : 66) + (r.boostT > 0 ? 3.5 : 0) + clamp(r.v - 25, 0, 8) * 0.15;
+    camera.fov += (targetFov - camera.fov) * Math.min(1, dt * 3.5);
     camera.updateProjectionMatrix();
   }
 
   // ── HUD ──
   const hud = {
     pos: $(".rk-pos b"), posOf: $(".rk-pos small"), lap: $(".rk-lap b"), time: $(".rk-time"), item: $(".rk-item span"), itemBox: $(".rk-item"),
-    speed: $(".rk-speed b"), big: $(".rk-big"), msg: $(".rk-msg"), ping: $(".rk-ping"), map: $(".rk-map")
+    speedBox: $(".rk-speed"), speed: $(".rk-speed b"), big: $(".rk-big"), msg: $(".rk-msg"), ping: $(".rk-ping"), map: $(".rk-map")
   };
   const mapCtx = hud.map.getContext("2d");
   const mb = track.bounds, mscale = 200 / Math.max(mb.maxX - mb.minX, mb.maxZ - mb.minZ);
@@ -743,6 +986,7 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
   function updateHud(dt) {
     if (!me) return;
     speedLinesEl.classList.toggle("on", me.boostT > 0 || me.starT > 0);
+    hud.speedBox.classList.toggle("turbo", me.boostT > 0);
     const ranked = racers.slice().sort((a, b) => (b.finished && a.finished ? a.finishT - b.finishT : b.finished ? 1 : a.finished ? -1 : b.prog - a.prog));
     ranked.forEach((r, i) => (r.rank = i + 1));
     hud.pos.textContent = `${me.rank}º`;
@@ -773,10 +1017,17 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
     showOv(null);
     $(".rk-hud").classList.remove("hidden");
     audio.init();
-    audio.startMusic("pantano");
     startEngine();
-    ["3", "2", "1"].forEach((n, i) => schedule(at + 200 + i * 1000, () => { flash(n, i === 0 ? "Pantano de San Juan" : "", 0.9); sfx.beep(false); }));
-    schedule(RC.goAt, () => { phase = "race"; flash("¡YA!", "", 0.9); sfx.beep(true); });
+    ["3", "2", "1"].forEach((n, i) => schedule(at + 200 + i * 1000, () => {
+      flash(n, i === 0 ? "Pantano de San Juan" : "", 0.9);
+      sfx.countdown(false);
+    }));
+    schedule(RC.goAt, () => {
+      phase = "race";
+      flash("¡YA!", "", 0.9);
+      sfx.countdown(true);
+      startRaceMusic();
+    });
     syncPad();
   }
   // el árbitro cierra la carrera: todos los humanos en meta o 25 s después del primero
@@ -793,6 +1044,8 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
   function showResults(list) {
     phase = "done";
     RC.results = list;
+    if (raceMusic) raceMusic.stop();
+    stopEngine();
     setTimeout(() => {
       if (screen !== "race") return;
       screen = "end";
@@ -1069,6 +1322,8 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
   }
   function toLobby() {
     disposeRacers();
+    if (raceMusic) raceMusic.stop();
+    stopEngine();
     screen = "lobby"; phase = "idle"; paused = false;
     RC.events = [];
     $(".rk-hud").classList.add("hidden");
@@ -1192,7 +1447,12 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
       camera.fov = 60;
       camera.updateProjectionMatrix();
     } else updateCamera(dt);
-    world.update(frozen ? RC.t : RC.t || wall, camera.position.x, camera.position.z, frozen ? 0 : dt);
+    const worldRes = world.update(frozen ? RC.t : RC.t || wall, camera.position.x, camera.position.z, frozen ? 0 : dt, me);
+    if (worldRes && worldRes.inWakeDraft && me && !frozen) {
+      me.boostT = Math.max(me.boostT, 1.4);
+      sfx.boost();
+      spray(me.x, me.y + 0.6, me.z, INK.BLUE, 10, 2.2);
+    }
     if (screen === "lobby") RC.t = wall;
     updateHud(dt);
     updateEngine(me ? me.v : 0, me && me.boostT > 0);
@@ -1232,7 +1492,8 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
     document.body.classList.remove("doodle-mode");
     disposeRacers();
     if (touchPad) touchPad.destroy();
-    if (engine) { try { engine.o1.stop(); engine.o2.stop(); } catch (e) {} }
+    if (raceMusic) raceMusic.stop();
+    stopEngine();
     audio.destroy();
     R.dispose();
     root.remove();

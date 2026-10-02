@@ -1,1 +1,0 @@
-import{j as e,k as o,l as r,n as s,o as n,p as t}from"./doodleRender-BiaYNstJ.js";const y={box:new e(1,1,1),cyl:new t(.5,.5,1,14),sph:new o(.5,14,10),cone:new r(.5,1,12),torus:new n(.5,.12,8,18),disc:new s(.5,14)};export{y as G};

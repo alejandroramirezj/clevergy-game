@@ -38,21 +38,34 @@
 }
 .rk-root .dd-hudbtns { right: calc(max(10px, env(safe-area-inset-right)) + 126px); top: 10px; }
 .rk-root .dd-hb { width: 38px; height: 38px; font-size: 14px; }
-.rk-speed { position: absolute; left: 50%; bottom: max(8px, env(safe-area-inset-bottom)); transform: translateX(-50%); font-size: 15px; color: var(--dd-black); text-shadow: 2px 2px 0 var(--dd-paper); }
+.rk-speed {
+  position: absolute; left: 50%; bottom: max(8px, env(safe-area-inset-bottom)); transform: translateX(-50%); font-size: 15px; color: var(--dd-black); text-shadow: 2px 2px 0 var(--dd-paper);
+  display: flex; align-items: center; gap: 6px; pointer-events: none;
+}
 .rk-speed b { font-family: "Caveat", cursive; font-size: 30px; color: var(--dd-ink); }
+.rk-turbobadge {
+  display: none; font-family: "Caveat", cursive; font-size: 15px; font-weight: bold;
+  color: #fff; background: var(--dd-red); border: 1.5px solid var(--dd-black);
+  padding: 1px 7px; border-radius: 6px; box-shadow: 2px 2px 0 var(--dd-ink);
+  letter-spacing: 0.5px;
+}
+.rk-speed.turbo .rk-turbobadge {
+  display: inline-block; animation: rk-tpop 0.3s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+@keyframes rk-tpop { from { transform: scale(0.65); } to { transform: scale(1); } }
 .rk-ping { position: absolute; right: max(12px, env(safe-area-inset-right)); top: 130px; font-size: 12px; opacity: 0.7; }
 
-/* anuncios */
+/* anuncios de carrera (cuenta atrás y meta: elevados arriba para despejar siempre el agua y la pista) */
 .rk-big {
-  position: absolute; left: 0; right: 0; top: 28%; text-align: center; opacity: 0; transition: opacity 0.25s;
-  font-family: "Caveat", cursive; font-size: clamp(54px, 11vw, 120px); line-height: 1; color: var(--dd-ink);
-  text-shadow: 3px 3px 0 var(--dd-paper), -3px -3px 0 var(--dd-paper), 3px -3px 0 var(--dd-paper), -3px 3px 0 var(--dd-paper), 7px 8px 0 rgba(31, 56, 184, 0.25);
+  position: absolute; left: 0; right: 0; top: 13%; text-align: center; opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  font-family: "Caveat", cursive; font-size: clamp(40px, 7.5vw, 72px); line-height: 1; color: var(--dd-ink);
+  text-shadow: 3px 3px 0 var(--dd-paper), -3px -3px 0 var(--dd-paper), 3px -3px 0 var(--dd-paper), -3px 3px 0 var(--dd-paper), 5px 6px 0 rgba(31, 56, 184, 0.22);
 }
-.rk-big.show { opacity: 1; }
-.rk-big.pop { animation: cf-pop 0.45s cubic-bezier(0.2, 1.6, 0.4, 1); }
+.rk-big.show { opacity: 0.95; }
+.rk-big.pop { animation: cf-pop 0.35s cubic-bezier(0.2, 1.6, 0.4, 1); }
 .rk-msg {
-  position: absolute; left: 0; right: 0; top: calc(28% + clamp(58px, 11vw, 124px)); text-align: center; font-size: clamp(17px, 2.8vw, 24px);
-  transition: opacity 0.3s; text-shadow: 2px 2px 0 var(--dd-paper);
+  position: absolute; left: 0; right: 0; top: calc(13% + clamp(42px, 7.5vw, 76px)); text-align: center; font-size: clamp(14px, 2.2vw, 20px);
+  pointer-events: none; transition: opacity 0.3s; text-shadow: 2px 2px 0 var(--dd-paper);
 }
 
 /* menú */
@@ -132,9 +145,12 @@ body.gameboy-mode .rk-map { width: 84px; height: 84px; }
 body.gameboy-mode .rk-root .dd-hudbtns { right: 100px; }
 body.gameboy-mode .rk-item { width: 48px; height: 48px; font-size: 26px; top: 56px; }
 
-/* líneas de velocidad (turbo / modo focus), dibujadas a boli */
-.rk-speedlines { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.2s;
-  background: repeating-conic-gradient(from 0deg at 50% 55%, transparent 0deg 7deg, rgba(31, 56, 184, 0.16) 7deg 7.6deg, transparent 7.6deg 13deg);
-  -webkit-mask: radial-gradient(ellipse at 50% 55%, transparent 38%, #000 70%); mask: radial-gradient(ellipse at 50% 55%, transparent 38%, #000 70%); }
-.rk-speedlines.on { opacity: 1; animation: rk-lines 0.18s steps(2) infinite; }
-@keyframes rk-lines { 50% { transform: rotate(1.5deg) scale(1.02); } }
+/* líneas de velocidad (turbo / modo focus): dibujadas a boli muy suaves y periféricas (el 72% central queda 100% despejado) */
+.rk-speedlines {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.25s;
+  background: repeating-conic-gradient(from 0deg at 50% 60%, transparent 0deg 8deg, rgba(31, 56, 184, 0.16) 8deg 8.8deg, transparent 8.8deg 16deg);
+  -webkit-mask: radial-gradient(ellipse at 50% 60%, transparent 72%, rgba(0, 0, 0, 0.75) 95%);
+  mask: radial-gradient(ellipse at 50% 60%, transparent 72%, rgba(0, 0, 0, 0.75) 95%);
+}
+.rk-speedlines.on { opacity: 0.55; animation: rk-lines 0.2s steps(2) infinite; }
+@keyframes rk-lines { 50% { transform: rotate(1deg) scale(1.01); } }

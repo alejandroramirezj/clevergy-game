@@ -41,7 +41,13 @@ async function getIceServers() {
     if (r.ok) {
       const data = await r.json();
       if (Array.isArray(data.iceServers) && data.iceServers.length) {
-        _cachedIce = data.iceServers;
+        if (data._fallback) {
+          // Si el worker responde con fallback (no hay llaves CF TURN configuradas), mantenemos los servidores TURN de respaldo
+          _cachedIce = FALLBACK_ICE;
+        } else {
+          // Cloudflare Realtime TURN (red Anycast global de baja latencia) + respaldo secundario
+          _cachedIce = [...data.iceServers, ...FALLBACK_ICE.slice(2)];
+        }
         return _cachedIce;
       }
     }

@@ -825,21 +825,6 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
             <span class="wd-shot-tag">📸 Así es el mundo</span>
             ${onExploreWorld ? `<button class="wd-explore wd-explore-big" data-world="${id}" aria-label="Ver el mundo en 3D"><i>👁</i><span>Ver el mundo en 3D</span></button>` : ""}
           </figure>
-          <div class="wd-char-picker" title="Elige con qué personaje empezar este mundo">
-            <div class="wd-char-tag">👤 Personaje inicial</div>
-            <div class="wd-char-box">
-              <button class="wd-char-btn wd-char-prev" aria-label="Personaje anterior">◀</button>
-              <div class="wd-char-preview">
-                <span class="wd-char-av">${avImg(curChar)}</span>
-                <div class="wd-char-meta">
-                  <b class="wd-char-name">${curChar.emoji} ${curChar.name}</b>
-                  <small class="wd-char-form">${curChar.form}</small>
-                </div>
-              </div>
-              <button class="wd-char-btn wd-char-next" aria-label="Personaje siguiente">▶</button>
-            </div>
-          </div>
-          ${onPlayWorld ? `<button class="wd-play" data-world="${id}">▶ Jugar este mundo</button>` : ""}
         </div>
         <div class="wd-body">
           <small class="wd-genre" style="background:${w.genreBg};color:${w.genreColor}">${w.genre}</small>
@@ -855,30 +840,6 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
           <div class="wd-others"><span>Otros mundos:</span>${others.map((x) => `<button class="wd-other" data-world="${x.id}" style="--acc:${x.color}">${x.num} · ${x.name}</button>`).join("")}</div>
         </div>
       </article>`;
-
-    const curCharBox = worldDetailEl.querySelector(".wd-char-box");
-    if (curCharBox) {
-      const updateWdChar = () => {
-        const c = CHARS[GameState.charIdx] || CHARS[0];
-        const avEl = curCharBox.querySelector(".wd-char-av");
-        const nameEl = curCharBox.querySelector(".wd-char-name");
-        const formEl = curCharBox.querySelector(".wd-char-form");
-        if (avEl) avEl.innerHTML = avImg(c);
-        if (nameEl) nameEl.textContent = `${c.emoji} ${c.name}`;
-        if (formEl) formEl.textContent = c.form;
-        updateSpotlight?.();
-      };
-      curCharBox.querySelector(".wd-char-prev")?.addEventListener("click", (e) => {
-        e.preventDefault(); e.stopPropagation();
-        GameState.charIdx = (GameState.charIdx - 1 + CHARS.length) % CHARS.length;
-        updateWdChar();
-      });
-      curCharBox.querySelector(".wd-char-next")?.addEventListener("click", (e) => {
-        e.preventDefault(); e.stopPropagation();
-        GameState.charIdx = (GameState.charIdx + 1) % CHARS.length;
-        updateWdChar();
-      });
-    }
 
     if (!compendiumOv.classList.contains("wd-mode")) wdPrevScroll = compScrollEl ? compScrollEl.scrollTop : 0;
     compendiumOv.classList.add("wd-mode");

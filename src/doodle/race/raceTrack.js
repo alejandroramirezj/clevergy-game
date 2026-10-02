@@ -9,6 +9,8 @@ import * as THREE from "three";
 import { INK, mat } from "../doodleRender.js";
 import { GEO } from "../doodleLevel.js";
 import { inkText } from "../inkText.js";
+import { createSticker } from "../doodleSticker.js";
+import { speakCharacter } from "../../engine/voice.js";
 
 export const TRACK_HALF = 13; // media anchura del canal entre boyas (m)
 export const N_SAMPLES = 900;
@@ -87,7 +89,7 @@ export function buildTrack() {
 }
 
 // ── escenario ────────────────────────────────────────────────────────────────
-export function buildRaceWorld(scene, track) {
+export function buildRaceWorld(scene, track, overlay = null) {
   const root = new THREE.Group();
   scene.add(root);
   const R = rng(20260928);
@@ -118,75 +120,411 @@ export function buildRaceWorld(scene, track) {
   const trackDist = (x, z) => track.nearest(x, z).d;
   const { center } = track;
 
-  // agua lejana (plana) y agua cercana con olas que sigue a la cámara
-  const farWater = new THREE.Mesh(new THREE.PlaneGeometry(5000, 5000), mat(INK.BLUE, { tone: -0.3 }));
+  // ── AGUA DEL EMBALSE Y CANAL DE CARRERAS CLARAMENTE DIFERENCIADO ──
+  // 1. Agua profunda exterior (azul marino oscuro con rayado denso)
+  const farWater = new THREE.Mesh(new THREE.PlaneGeometry(5000, 5000), mat(INK.BLUE, { tone: -0.42 }));
   farWater.rotation.x = -Math.PI / 2;
-  farWater.position.y = -0.25;
+  farWater.position.y = -0.28;
   root.add(farWater);
   const WG = 2, WS = 400; // celdas y tamaño del parche de olas
   const wGeo = new THREE.PlaneGeometry(WS, WS, WG, WG);
   wGeo.rotateX(-Math.PI / 2);
-  const wPos = wGeo.attributes.position; // normales planas: rayado uniforme (sin muaré) aunque haya olas
-  const base = Float32Array.from(wPos.array);
-  const water = new THREE.Mesh(wGeo, mat(INK.BLUE, { tone: -0.3 }));
+  const water = new THREE.Mesh(wGeo, mat(INK.BLUE, { tone: -0.38 }));
   water.frustumCulled = false;
   root.add(water);
   const cell = WS / WG;
-  // el agua se pinta plana (el render calcula la luz por triángulo y las olas darían un rayado a
-  // cuadros): las olas se notan en motos, boyas y en los trazos "~"; y así no hay que recalcular vértices
   function updateWater(camX, camZ) {
     water.position.set(Math.round(camX / cell) * cell, 0, Math.round(camZ / cell) * cell);
   }
 
-  // olas dibujadas a boli: trazos cortos que cabecean sobre el agua
-  const strokes = [];
-  for (let i = 0; i < N_SAMPLES; i += 3) {
+  // 2. Cinta de agua navegable del circuito (aguas claras y cristalinas, tono luminoso)
+  // Permite distinguir perfectamente el canal de la carrera frente al resto del embalse.
+  const ribbonGeo = new THREE.BufferGeometry();
+  const ribbonPos = new Float32Array(N_SAMPLES * 2 * 3);
+  const ribbonIndices = [];
+  const ribbonUVs = new Float32Array(N_SAMPLES * 2 * 2);
+  for (let i = 0; i < N_SAMPLES; i++) {
+    const p = track.at(i);
+    const nx = -p.tz, nz = p.tx;
+    // Vértice izquierdo
+    ribbonPos[i * 6 + 0] = p.x - nx * TRACK_HALF;
+    ribbonPos[i * 6 + 1] = 0.05;
+    ribbonPos[i * 6 + 2] = p.z - nz * TRACK_HALF;
+    ribbonUVs[i * 4 + 0] = 0;
+    ribbonUVs[i * 4 + 1] = i / 10;
+    // Vértice derecho
+    ribbonPos[i * 6 + 3] = p.x + nx * TRACK_HALF;
+    ribbonPos[i * 6 + 4] = 0.05;
+    ribbonPos[i * 6 + 5] = p.z + nz * TRACK_HALF;
+    ribbonUVs[i * 4 + 2] = 1;
+    ribbonUVs[i * 4 + 3] = i / 10;
+    // Triángulos entre i y (i+1)
+    const next = (i + 1) % N_SAMPLES;
+    const i0 = i * 2, i1 = i * 2 + 1, i2 = next * 2, i3 = next * 2 + 1;
+    ribbonIndices.push(i0, i2, i1);
+    ribbonIndices.push(i1, i2, i3);
+  }
+  ribbonGeo.setAttribute("position", new THREE.BufferAttribute(ribbonPos, 3));
+  ribbonGeo.setAttribute("uv", new THREE.BufferAttribute(ribbonUVs, 2));
+  ribbonGeo.setIndex(ribbonIndices);
+  ribbonGeo.computeVertexNormals();
+
+  const trackWater = new THREE.Mesh(ribbonGeo, mat(INK.BLUE, { tone: 0.36 }));
+  trackWater.frustumCulled = false;
+  root.add(trackWater);
+
+  // 3. Estelas de corriente y cáusticas que fluyen a lo largo del circuito
+  const caustics = [];
+  for (let i = 0; i < N_SAMPLES; i += 2) {
     const p = track.at(i);
     for (let k = 0; k < 2; k++) {
-      const lat = (R() - 0.5) * (TRACK_HALF * 2 + 60);
-      strokes.push({ x: p.x - p.tz * lat + (R() - 0.5) * 4, z: p.z + p.tx * lat + (R() - 0.5) * 4, ph: R() * 6, ry: R() * 0.6 - 0.3 + Math.atan2(p.tx, p.tz) + Math.PI / 2, s: 1.2 + R() * 1.6 });
+      const lat = (R() - 0.5) * (TRACK_HALF * 1.8);
+      caustics.push({
+        x: p.x - p.tz * lat,
+        z: p.z + p.tx * lat,
+        tx: p.tx,
+        tz: p.tz,
+        ph: R() * 6,
+        s: 1.4 + R() * 1.8,
+        speed: 1.8 + R() * 1.2
+      });
     }
   }
-  const strokeIM = new THREE.InstancedMesh(GEO.box, mat(INK.BLUE, { fill: true }), strokes.length);
-  strokeIM.frustumCulled = false;
-  root.add(strokeIM);
-  function updateStrokes(t) {
-    strokes.forEach((w, k) => {
-      const y = waveH(w.x, w.z, t) + 0.08, sc = w.s * (0.7 + 0.3 * Math.sin(t * 1.5 + w.ph));
-      tmpE.set(0, w.ry, 0);
+  const causticsIM = new THREE.InstancedMesh(GEO.box, mat(INK.BLUE, { tone: 0.48 }), caustics.length);
+  causticsIM.frustumCulled = false;
+  root.add(causticsIM);
+  function updateCaustics(t) {
+    caustics.forEach((c, k) => {
+      const y = waveH(c.x, c.z, t) + 0.09;
+      const pulse = 0.8 + 0.3 * Math.sin(t * 3.5 + c.ph);
+      const flow = (t * c.speed + c.ph * 2) % 6 - 3;
+      const px = c.x + c.tx * flow, pz = c.z + c.tz * flow;
+      const ry = Math.atan2(c.tx, c.tz) + Math.PI / 2;
+      tmpE.set(0, ry, 0);
       tmpQ.setFromEuler(tmpE);
-      tmpM.compose(tmpP.set(w.x, y, w.z), tmpQ, tmpS.set(sc * 1.6, 0.06, 0.14));
-      strokeIM.setMatrixAt(k, tmpM);
+      tmpM.compose(tmpP.set(px, y, pz), tmpQ, tmpS.set(c.s * pulse * 2.2, 0.05, 0.22));
+      causticsIM.setMatrixAt(k, tmpM);
     });
-    strokeIM.instanceMatrix.needsUpdate = true;
+    causticsIM.instanceMatrix.needsUpdate = true;
   }
 
-  // boyas a ambos lados del canal (rojas y naranjas alternas), con cabeceo
-  const buoys = [];
-  for (let i = 0; i < N_SAMPLES; i += 11) {
+  // 4. Corcheras náuticas continuas (línea de boyarines enlazados en ambos bordes del canal)
+  // Hace que el límite de pista sea continuo y visible en todo momento.
+  const laneFloats = [];
+  const FLOAT_STEP = 3; // cada 3 muestras (~3 metros)
+  for (let i = 0; i < N_SAMPLES; i += FLOAT_STEP) {
     const p = track.at(i);
-    for (const s of [-1, 1]) {
-      buoys.push({ x: p.x - p.tz * TRACK_HALF * s, z: p.z + p.tx * TRACK_HALF * s, ph: R() * 6, red: (i / 11) % 2 === 0 });
-    }
+    const yaw = Math.atan2(p.tx, p.tz);
+    // Borde izquierdo (-TRACK_HALF): naranja / negro
+    laneFloats.push({
+      x: p.x + p.tz * TRACK_HALF,
+      z: p.z - p.tx * TRACK_HALF,
+      yaw,
+      side: -1,
+      color: (i / FLOAT_STEP) % 2 === 0 ? "orange" : "black"
+    });
+    // Borde derecho (+TRACK_HALF): rojo / blanco
+    laneFloats.push({
+      x: p.x - p.tz * TRACK_HALF,
+      z: p.z + p.tx * TRACK_HALF,
+      yaw,
+      side: 1,
+      color: (i / FLOAT_STEP) % 2 === 0 ? "red" : "black"
+    });
   }
-  const reds = buoys.filter((b) => b.red), oranges = buoys.filter((b) => !b.red);
-  const redIM = new THREE.InstancedMesh(GEO.sph, mat(INK.RED, { tone: 0.05 }), reds.length);
-  const orIM = new THREE.InstancedMesh(GEO.sph, mat(INK.ORANGE, { tone: 0.05 }), oranges.length);
-  [redIM, orIM].forEach((im) => { im.frustumCulled = false; root.add(im); });
-  function updateBuoys(t) {
-    const put = (im, list) => {
-      list.forEach((b, k) => {
-        const y = waveH(b.x, b.z, t) + 0.25;
-        tmpE.set(Math.sin(t * 1.7 + b.ph) * 0.2, 0, Math.cos(t * 1.4 + b.ph) * 0.2);
+  const floatsOrange = laneFloats.filter(f => f.color === "orange");
+  const floatsRed = laneFloats.filter(f => f.color === "red");
+  const floatsBlack = laneFloats.filter(f => f.color === "black");
+
+  const orangeFloatsIM = new THREE.InstancedMesh(GEO.cyl, mat(INK.ORANGE, { fill: true }), floatsOrange.length);
+  const redFloatsIM = new THREE.InstancedMesh(GEO.cyl, mat(INK.RED, { fill: true }), floatsRed.length);
+  const blackFloatsIM = new THREE.InstancedMesh(GEO.cyl, mat(INK.BLACK, { fill: true }), floatsBlack.length);
+  [orangeFloatsIM, redFloatsIM, blackFloatsIM].forEach(im => { im.frustumCulled = false; root.add(im); });
+
+  function updateLaneFloats(t) {
+    const applyFloats = (im, list) => {
+      list.forEach((f, k) => {
+        const y = waveH(f.x, f.z, t) + 0.18;
+        tmpE.set(0, f.yaw + Math.PI / 2, 0);
         tmpQ.setFromEuler(tmpE);
-        tmpM.compose(tmpP.set(b.x, y, b.z), tmpQ, tmpS.set(1.3, 1.1, 1.3));
+        tmpM.compose(tmpP.set(f.x, y, f.z), tmpQ, tmpS.set(0.42, 1.25, 0.42));
         im.setMatrixAt(k, tmpM);
       });
       im.instanceMatrix.needsUpdate = true;
     };
-    put(redIM, reds);
-    put(orIM, oranges);
+    applyFloats(orangeFloatsIM, floatsOrange);
+    applyFloats(redFloatsIM, floatsRed);
+    applyFloats(blackFloatsIM, floatsBlack);
   }
+
+  // 5. Grandes boyas marítimas de regata con banderas y mástiles altos (visibles desde lejos)
+  const tallBuoys = [];
+  const BUOY_STEP = 24; // cada 24 muestras (~24 metros)
+  for (let i = 0; i < N_SAMPLES; i += BUOY_STEP) {
+    const p = track.at(i);
+    // Babor (izquierda): boyas azules/verdes con bandera
+    tallBuoys.push({
+      x: p.x + p.tz * (TRACK_HALF + 0.8),
+      z: p.z - p.tx * (TRACK_HALF + 0.8),
+      ph: R() * 6,
+      side: "left"
+    });
+    // Estribor (derecha): boyas rojas con bandera
+    tallBuoys.push({
+      x: p.x - p.tz * (TRACK_HALF + 0.8),
+      z: p.z + p.tx * (TRACK_HALF + 0.8),
+      ph: R() * 6,
+      side: "right"
+    });
+  }
+  const leftBuoys = tallBuoys.filter(b => b.side === "left");
+  const rightBuoys = tallBuoys.filter(b => b.side === "right");
+
+  // Bases cilíndricas flotantes
+  const buoyBaseIM = new THREE.InstancedMesh(GEO.cyl, mat(INK.BLACK, { tone: 0.1 }), tallBuoys.length);
+  // Conos altos de señalización (rojo a la derecha, azul/verde a la izquierda)
+  const buoyConeRightIM = new THREE.InstancedMesh(GEO.cone, mat(INK.RED, { fill: true }), rightBuoys.length);
+  const buoyConeLeftIM = new THREE.InstancedMesh(GEO.cone, mat(INK.BLUE, { fill: true }), leftBuoys.length);
+  // Mástiles con banderín triangular
+  const buoyMastIM = new THREE.InstancedMesh(GEO.cyl, mat(INK.BLACK, { fill: true }), tallBuoys.length);
+  const buoyFlagRightIM = new THREE.InstancedMesh(GEO.cone, mat(INK.RED, { tone: 0.2 }), rightBuoys.length);
+  const buoyFlagLeftIM = new THREE.InstancedMesh(GEO.cone, mat(INK.ORANGE, { tone: 0.2 }), leftBuoys.length);
+
+  [buoyBaseIM, buoyConeRightIM, buoyConeLeftIM, buoyMastIM, buoyFlagRightIM, buoyFlagLeftIM].forEach(im => {
+    im.frustumCulled = false;
+    root.add(im);
+  });
+
+  function updateTallBuoys(t) {
+    let allIdx = 0;
+    // Babor (izquierda)
+    leftBuoys.forEach((b, k) => {
+      const y = waveH(b.x, b.z, t) + 0.35;
+      const roll = Math.sin(t * 1.6 + b.ph) * 0.14, pitch = Math.cos(t * 1.4 + b.ph) * 0.14;
+      tmpE.set(roll, 0, pitch);
+      tmpQ.setFromEuler(tmpE);
+
+      // Base
+      tmpM.compose(tmpP.set(b.x, y, b.z), tmpQ, tmpS.set(2.4, 0.7, 2.4));
+      buoyBaseIM.setMatrixAt(allIdx, tmpM);
+      // Mástil
+      tmpM.compose(tmpP.set(b.x, y + 2.0, b.z), tmpQ, tmpS.set(0.18, 3.4, 0.18));
+      buoyMastIM.setMatrixAt(allIdx, tmpM);
+      allIdx++;
+
+      // Cono
+      tmpM.compose(tmpP.set(b.x, y + 1.1, b.z), tmpQ, tmpS.set(1.6, 1.8, 1.6));
+      buoyConeLeftIM.setMatrixAt(k, tmpM);
+
+      // Banderín
+      tmpE.set(roll, Math.sin(t * 2 + b.ph) * 0.2 + Math.PI / 2, pitch);
+      tmpQ.setFromEuler(tmpE);
+      tmpM.compose(tmpP.set(b.x + 0.6, y + 3.2, b.z), tmpQ, tmpS.set(0.1, 1.2, 0.6));
+      buoyFlagLeftIM.setMatrixAt(k, tmpM);
+    });
+
+    // Estribor (derecha)
+    rightBuoys.forEach((b, k) => {
+      const y = waveH(b.x, b.z, t) + 0.35;
+      const roll = Math.sin(t * 1.6 + b.ph) * 0.14, pitch = Math.cos(t * 1.4 + b.ph) * 0.14;
+      tmpE.set(roll, 0, pitch);
+      tmpQ.setFromEuler(tmpE);
+
+      // Base
+      tmpM.compose(tmpP.set(b.x, y, b.z), tmpQ, tmpS.set(2.4, 0.7, 2.4));
+      buoyBaseIM.setMatrixAt(allIdx, tmpM);
+      // Mástil
+      tmpM.compose(tmpP.set(b.x, y + 2.0, b.z), tmpQ, tmpS.set(0.18, 3.4, 0.18));
+      buoyMastIM.setMatrixAt(allIdx, tmpM);
+      allIdx++;
+
+      // Cono
+      tmpM.compose(tmpP.set(b.x, y + 1.1, b.z), tmpQ, tmpS.set(1.6, 1.8, 1.6));
+      buoyConeRightIM.setMatrixAt(k, tmpM);
+
+      // Banderín
+      tmpE.set(roll, Math.sin(t * 2 + b.ph) * 0.2 + Math.PI / 2, pitch);
+      tmpQ.setFromEuler(tmpE);
+      tmpM.compose(tmpP.set(b.x + 0.6, y + 3.2, b.z), tmpQ, tmpS.set(0.1, 1.2, 0.6));
+      buoyFlagRightIM.setMatrixAt(k, tmpM);
+    });
+
+    buoyBaseIM.instanceMatrix.needsUpdate = true;
+    buoyConeRightIM.instanceMatrix.needsUpdate = true;
+    buoyConeLeftIM.instanceMatrix.needsUpdate = true;
+    buoyMastIM.instanceMatrix.needsUpdate = true;
+    buoyFlagRightIM.instanceMatrix.needsUpdate = true;
+    buoyFlagLeftIM.instanceMatrix.needsUpdate = true;
+  }
+
+  // 6. Paneles flotantes de curvas cerradas (Chevrons estilo Mario Kart >>> / <<<)
+  // Ubicados en las 7 curvas principales para avisar al piloto y evitar salidas de pista
+  const CHEVRON_TURNS = [
+    { i: 85, dir: ">>>", signSide: -1 }, // Curva hacia la presa
+    { i: 205, dir: ">>>", signSide: -1 }, // Horquilla de rocas
+    { i: 335, dir: ">>>", signSide: -1 }, // Curva abierta sur
+    { i: 470, dir: "<<<", signSide: 1 }, // Entrada a chicane
+    { i: 590, dir: ">>>", signSide: -1 }, // Rodeo del islote
+    { i: 715, dir: ">>>", signSide: -1 }, // Curva hacia la playa
+    { i: 825, dir: "<<<", signSide: 1 }  // S final antes de meta
+  ];
+  const chevronSigns = [];
+  CHEVRON_TURNS.forEach(ch => {
+    const p = track.at(ch.i);
+    const yaw = Math.atan2(p.tx, p.tz);
+    const sideDist = (TRACK_HALF + 4.5) * ch.signSide;
+    const sx = p.x - p.tz * sideDist, sz = p.z + p.tx * sideDist;
+    const g = new THREE.Group();
+    g.position.set(sx, 0, sz);
+    g.rotation.y = yaw + (ch.signSide > 0 ? 0.35 : -0.35);
+
+    // Flotadores dobles de anclaje
+    for (const fx of [-2.6, 2.6]) {
+      const buoy = new THREE.Mesh(GEO.cyl, mat(INK.ORANGE, { fill: true }));
+      buoy.scale.set(1.4, 0.7, 1.4);
+      buoy.position.set(fx, 0.35, 0);
+      g.add(buoy);
+      const post = new THREE.Mesh(GEO.cyl, mat(INK.BLACK, { fill: true }));
+      post.scale.set(0.18, 3.2, 0.18);
+      post.position.set(fx, 2.0, 0);
+      g.add(post);
+    }
+    // Panel de madera / cartel reflectante
+    const board = new THREE.Mesh(GEO.box, mat(INK.BLACK, { tone: 0.65 }));
+    board.scale.set(6.8, 2.2, 0.25);
+    board.position.set(0, 3.2, 0);
+    g.add(board);
+
+    // Flechas de dirección en tinta naranja/roja llamativa
+    const arrows = inkText(ch.dir, { size: 1.6, ink: INK.RED, weight: 1.8 });
+    arrows.position.set(0, 3.2, 0.16);
+    g.add(arrows);
+
+    root.add(g);
+    chevronSigns.push({ g, x: sx, z: sz, arrows });
+  });
+
+  // ── LANCHA DE BELTRÁN Y ESQUÍ ACUÁTICO CON TABLA DE SURF (ELEMENTO INTERACTIVO) ──
+  const beltranGroup = new THREE.Group();
+  root.add(beltranGroup);
+
+  // 1. La lancha motora rápida (estilo competición / lancha de wakeboard)
+  const boatG = new THREE.Group();
+  beltranGroup.add(boatG);
+  // Casco deportivo en V
+  const hullMain = new THREE.Mesh(GEO.box, mat(INK.BLACK, { tone: 0.12 }));
+  hullMain.scale.set(3.2, 1.1, 7.4);
+  hullMain.position.y = 0.55;
+  boatG.add(hullMain);
+
+  const hullBow = new THREE.Mesh(GEO.cone, mat(INK.BLUE, { tone: 0.18 }));
+  hullBow.scale.set(3.1, 2.9, 1.1);
+  hullBow.position.set(0, 0.65, 3.9);
+  hullBow.rotation.x = Math.PI / 2;
+  boatG.add(hullBow);
+
+  // Banda decorativa lateral en rojo brillante
+  const boatStripe = new THREE.Mesh(GEO.box, mat(INK.RED, { fill: true }));
+  boatStripe.scale.set(3.28, 0.22, 7.0);
+  boatStripe.position.set(0, 0.72, 0.1);
+  boatG.add(boatStripe);
+
+  // Cubierta y parabrisas deportivo
+  const boatDeck = new THREE.Mesh(GEO.box, mat(INK.BLACK, { tone: 0.52 }));
+  boatDeck.scale.set(2.8, 0.25, 4.4);
+  boatDeck.position.set(0, 1.15, -0.4);
+  boatG.add(boatDeck);
+
+  const boatWindshield = new THREE.Mesh(GEO.box, mat(INK.BLUE, { tone: 0.42 }));
+  boatWindshield.scale.set(2.6, 0.8, 0.12);
+  boatWindshield.position.set(0, 1.55, 1.3);
+  boatWindshield.rotation.x = -0.38;
+  boatG.add(boatWindshield);
+
+  // Piloto con gorra al volante
+  const pilotHead = new THREE.Mesh(GEO.sph, mat(INK.ORANGE, { tone: 0.4 }));
+  pilotHead.scale.set(0.65, 0.65, 0.65);
+  pilotHead.position.set(-0.55, 1.85, 0.2);
+  boatG.add(pilotHead);
+
+  const pilotCap = new THREE.Mesh(GEO.cone, mat(INK.RED, { fill: true }));
+  pilotCap.scale.set(0.7, 0.35, 0.7);
+  pilotCap.position.set(-0.55, 2.2, 0.2);
+  boatG.add(pilotCap);
+
+  // Torre central de arrastre de esquí náutico (pylon)
+  const towPylon = new THREE.Mesh(GEO.cyl, mat(INK.BLACK, { fill: true }));
+  towPylon.scale.set(0.18, 2.5, 0.18);
+  towPylon.position.set(0, 2.1, -1.2);
+  boatG.add(towPylon);
+
+  // Manta de estela espumosa detrás de la lancha
+  const boatWakePlane = new THREE.Mesh(GEO.box, mat(INK.BLUE, { tone: 0.45 }));
+  boatWakePlane.scale.set(6.2, 0.05, 14);
+  boatWakePlane.position.set(0, 0.06, -7.5);
+  boatG.add(boatWakePlane);
+
+  // 2. Cuerda de esquí náutico (línea amarilla/naranja flotante)
+  const ropePoints = [new THREE.Vector3(), new THREE.Vector3()];
+  const ropeGeo = new THREE.BufferGeometry().setFromPoints(ropePoints);
+  const ropeLine = new THREE.Line(ropeGeo, new THREE.LineBasicMaterial({ color: 0xec7f19, linewidth: 3 }));
+  ropeLine.frustumCulled = false;
+  beltranGroup.add(ropeLine);
+
+  // 3. Tabla de surf de Beltrán
+  const surfG = new THREE.Group();
+  beltranGroup.add(surfG);
+
+  const surfBoard = new THREE.Mesh(GEO.box, mat(INK.BLUE, { tone: 0.22 }));
+  surfBoard.scale.set(1.2, 0.16, 2.8);
+  surfBoard.position.y = 0.08;
+  surfG.add(surfBoard);
+
+  const surfNose = new THREE.Mesh(GEO.cone, mat(INK.ORANGE, { tone: 0.1 }));
+  surfNose.scale.set(1.2, 0.9, 0.16);
+  surfNose.position.set(0, 0.14, 1.45);
+  surfNose.rotation.x = Math.PI / 2;
+  surfG.add(surfNose);
+
+  const surfStripe = new THREE.Mesh(GEO.box, mat(INK.RED, { fill: true }));
+  surfStripe.scale.set(0.24, 0.18, 2.7);
+  surfStripe.position.set(0, 0.1, 0);
+  surfG.add(surfStripe);
+
+  // Quillas estabilizadoras bajo la tabla
+  for (const qx of [-0.35, 0, 0.35]) {
+    const fin = new THREE.Mesh(GEO.box, mat(INK.BLACK, { fill: true }));
+    fin.scale.set(0.06, 0.3, 0.5);
+    fin.position.set(qx, -0.15, -1.0);
+    surfG.add(fin);
+  }
+
+  // 4. Sticker de Beltrán haciendo surf
+  const beltranSticker = createSticker(overlay || scene, { height: 1.65 });
+  beltranSticker.setChar("beltran");
+
+  // Bocadillo visual cómic en 3D
+  const bubbleG = new THREE.Group();
+  const bubbleBg = new THREE.Mesh(GEO.box, mat(INK.BLACK, { tone: 0.65 }));
+  bubbleBg.scale.set(12.5, 2.6, 0.2);
+  bubbleG.add(bubbleBg);
+  const bubbleTxt = inkText("¡A TOPE! ¡ESO LO VENDEMOS YA!", { size: 0.9, ink: INK.BLUE, weight: 1.4 });
+  bubbleTxt.position.set(0, 0.1, 0.16);
+  bubbleG.add(bubbleTxt);
+  bubbleG.visible = false;
+  beltranGroup.add(bubbleG);
+
+  // Estado del esquí náutico de Beltrán
+  const beltranState = {
+    x: 0, y: 0, z: 0,
+    boatX: 0, boatZ: 0,
+    carveAngle: 0,
+    saluting: false,
+    saluteT: 0,
+    lastVoiceT: 0,
+    wakeBoostCooldown: 0,
+    speechTimer: 0
+  };
 
   // orillas: lomas de tierra y granito alrededor del embalse, con pinares
   const hills = [], pines = [], trunks = [], rocks = [];
@@ -606,10 +944,125 @@ export function buildRaceWorld(scene, track) {
   }
 
   let frameN = 0;
-  function update(t, camX, camZ, dt) {
+  function update(t, camX, camZ, dt, player = null) {
     updateWater(camX, camZ);
-    updateBuoys(t);
-    if ((frameN = (frameN + 1) % 2) === 0) updateStrokes(t);
+    updateCaustics(t);
+    updateLaneFloats(t);
+    updateTallBuoys(t);
+
+    // Paneles de chevrons estilo Mario Kart
+    for (const ch of chevronSigns) {
+      const wy = waveH(ch.x, ch.z, t);
+      ch.g.position.y = wy + 0.15;
+      ch.g.rotation.z = Math.sin(t * 1.5 + ch.x) * 0.04;
+      ch.arrows.scale.setScalar(1 + Math.sin(t * 5 + ch.z) * 0.08);
+    }
+
+    // ── NAVEGACIÓN Y CARVING DE BELTRÁN EN ESQUÍ ACUÁTICO ──
+    const boatSpeed = 0.14;
+    const bAngle = t * boatSpeed;
+    const bx = center.x + Math.sin(bAngle) * 135 + Math.sin(bAngle * 2) * 32;
+    const bz = center.z + Math.cos(bAngle) * 115 + Math.cos(bAngle * 2) * 28;
+    const nextBAngle = bAngle + 0.01;
+    const nextBx = center.x + Math.sin(nextBAngle) * 135 + Math.sin(nextBAngle * 2) * 32;
+    const nextBz = center.z + Math.cos(nextBAngle) * 115 + Math.cos(nextBAngle * 2) * 28;
+    const boatYaw = Math.atan2(nextBx - bx, nextBz - bz);
+    const by = waveH(bx, bz, t) + 0.35;
+
+    boatG.position.set(bx, by, bz);
+    boatG.rotation.y = boatYaw;
+    boatG.rotation.x = -0.06; // lancha planeando a toda velocidad
+    boatG.rotation.z = Math.sin(t * 2) * 0.03;
+
+    // Beltrán haciendo carving fluido con su tabla de surf a través de la estela
+    const ROPE_LEN = 16.5;
+    const carveFreq = 2.2;
+    const carveDist = Math.sin(t * carveFreq) * 5.4;
+    const surfX = bx - Math.sin(boatYaw) * ROPE_LEN - Math.cos(boatYaw) * carveDist;
+    const surfZ = bz - Math.cos(boatYaw) * ROPE_LEN + Math.sin(boatYaw) * carveDist;
+    const surfY = waveH(surfX, surfZ, t) + 0.16;
+    const surfTilt = -Math.cos(t * carveFreq) * 0.42;
+
+    surfG.position.set(surfX, surfY, surfZ);
+    surfG.rotation.y = boatYaw + (carveDist > 0 ? 0.28 : -0.28);
+    surfG.rotation.z = surfTilt;
+
+    // Cuerda de arrastre tensada entre el pylon y las manos de Beltrán
+    const posAttr = ropeLine.geometry.attributes.position;
+    posAttr.setXYZ(0, bx, by + 2.1, bz);
+    posAttr.setXYZ(1, surfX, surfY + 1.1, surfZ);
+    posAttr.needsUpdate = true;
+
+    beltranState.x = surfX;
+    beltranState.y = surfY;
+    beltranState.z = surfZ;
+    beltranState.boatX = bx;
+    beltranState.boatZ = bz;
+
+    // Interacción y saludo con el piloto del jugador
+    let playerDist = 999;
+    let wakeDraftGranted = false;
+    if (player && typeof player.x === "number") {
+      const dx = player.x - surfX, dz = player.z - surfZ;
+      playerDist = Math.hypot(dx, dz);
+
+      // Rebufo interactivo: estar en la estela directa de la tabla de Beltrán (detrás a 1-7 metros)
+      const relX = dx * Math.cos(boatYaw) - dz * Math.sin(boatYaw);
+      const relZ = dx * Math.sin(boatYaw) + dz * Math.cos(boatYaw);
+      if (relZ < -0.8 && relZ > -7.5 && Math.abs(relX) < 3.2 && playerDist < 8.0) {
+        if (t - beltranState.wakeBoostCooldown > 2.5) {
+          beltranState.wakeBoostCooldown = t;
+          wakeDraftGranted = true;
+        }
+      }
+    }
+
+    // Saludo de Beltrán cuando el jugador pasa a menos de 36 metros
+    if (playerDist < 36) {
+      beltranState.saluting = true;
+      beltranState.saluteT = 1.8;
+      if (t - beltranState.lastVoiceT > 10) {
+        beltranState.lastVoiceT = t;
+        const phrases = [
+          "¡A tope! ¡Eso lo vendemos ya!",
+          "¡Qué estilazo en el pantano!",
+          "¡Pilla mi rebufo y dale turbo!",
+          "¡Vamos fiera, a por el podio!"
+        ];
+        const phrase = phrases[Math.floor(Math.random() * phrases.length)];
+        try {
+          speakCharacter("beltran", { phrase, force: true, showBubble: false });
+        } catch (e) {}
+        beltranState.speechTimer = 3.5;
+        bubbleG.visible = true;
+      }
+    }
+
+    if (beltranState.speechTimer > 0) {
+      beltranState.speechTimer -= dt;
+      bubbleG.position.set(surfX, surfY + 3.2, surfZ);
+      bubbleG.rotation.y = boatYaw;
+      if (beltranState.speechTimer <= 0) bubbleG.visible = false;
+    }
+
+    // Actualización del sticker de Beltrán
+    const beltranPos = new THREE.Vector3(surfX, surfY + 0.95, surfZ);
+    const beltranPose = beltranState.saluteT > 0 ? "jump" : "idle";
+    beltranSticker.update(dt, {
+      pos: beltranPos,
+      camera: { position: new THREE.Vector3(camX, 20, camZ) },
+      moveX: 0,
+      facing: 1,
+      speed: 0,
+      onGround: true,
+      firing: false,
+      pose: beltranPose,
+      hurt: 0,
+      tilt: surfTilt * 0.7,
+      squash: 1 + Math.sin(t * 4) * 0.04
+    });
+    beltranState.saluteT = Math.max(0, beltranState.saluteT - dt);
+
     for (const s of sailers) {
       s.g.position.x = s.x0 + Math.sin(t * 0.05 * s.speed + s.ph) * 18;
       s.g.position.z = s.z0 + Math.cos(t * 0.04 * s.speed + s.ph) * 14;
@@ -630,7 +1083,9 @@ export function buildRaceWorld(scene, track) {
       b.g.rotation.x = Math.sin(t * 1.3 + b.ph) * 0.3;
       b.g.position.y = 1.6 + Math.sin(t * 2 + b.ph) * 0.35;
     }
+
+    return { inWakeDraft: wakeDraftGranted, beltran: beltranState };
   }
 
-  return { root, update, colliders, boostPads, ramps, itemBoxes };
+  return { root, update, colliders, boostPads, ramps, itemBoxes, beltran: beltranState };
 }
