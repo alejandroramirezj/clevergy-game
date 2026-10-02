@@ -18,6 +18,8 @@ import { createNet, randomCode, cleanCode } from "../doodleNet.js";
 import { touch as mando } from "../../engine/input.js";
 import { CHARS } from "../../config/characters.js";
 import { getCharacterAvatar } from "../../engine/sprites.js";
+import { speakCharacter } from "../../engine/voice.js";
+import { setInPlay } from "../../game/state.js";
 import { buildTrack, buildRaceWorld, waveH, TRACK_HALF, N_SAMPLES } from "./raceTrack.js";
 import { buzz } from "../haptics.js";
 import "../doodle.css";
@@ -931,6 +933,12 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
     if (r) { r.finished = true; r.finishT = m.time; }
     if (net.isHost) { if (!RC.firstFinishAt) RC.firstFinishAt = hostNow(); net.broadcast(m, from); }
   });
+  net.on("voice", (m, from) => {
+    const r = racers.find((q) => q.id === m.id);
+    const charId = r ? (r.charId || r.c) : m.charId;
+    speakCharacter(charId, { force: true, phrase: m.phrase });
+    if (net.isHost) net.broadcast(m, from);
+  });
   net.on("results", (m) => { if (!net.isHost) showResults(m.list); });
   net.on("_leave", (m, id) => {
     if (net.isHost) {
@@ -1076,11 +1084,21 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
   $(".rk-pausebtn").addEventListener("pointerdown", (e) => { e.preventDefault(); e.stopPropagation(); pause(); });
   $(".rk-item").addEventListener("pointerdown", (e) => { e.preventDefault(); tp.item = true; setTimeout(() => (tp.item = false), 120); });
 
+  function triggerVoice() {
+    const cId = (me && me.charId) ? me.charId : myChar;
+    speakCharacter(cId, {
+      onBroadcast: ({ phrase }) => {
+        tx({ t: "voice", id: myId(), charId: cId, phrase });
+      }
+    });
+  }
+
   // ── entrada ──
   function onKeyDown(e) {
     if (e.target && e.target.tagName === "INPUT") return;
     if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Tab"].includes(e.code)) e.preventDefault();
     keys[e.code] = true;
+    if (e.code === "KeyV" && !e.repeat) triggerVoice();
     if ((e.code === "Escape" || e.code === "KeyP") && screen === "race") paused ? resume() : pause();
     if (e.code === "KeyM") audio.toggleMusic();
   }
@@ -1096,12 +1114,20 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
     actions: [
       { id: "drift", label: "DERRAPE", icon: ICON.dash, accent: "red" },
       { id: "item", label: "OBJETO", icon: ICON.special, accent: "blue" },
+      { id: "voice", label: "VOZ", icon: ICON.speech, accent: "blue" },
       { id: "brake", label: "FRENO", icon: ICON.block }
     ],
     isActive: () => screen === "race" && !paused,
-    onAction: (id, down) => { tp[id] = down; }
+    onAction: (id, down) => {
+      if (id === "voice") {
+        if (down) triggerVoice();
+        return;
+      }
+      tp[id] = down;
+    }
   }) : null;
   function syncPad() {
+    setInPlay(screen === "race" && !paused);
     const portrait = document.body.classList.contains("gameboy-mode");
     if (touchPad) touchPad.setVisible(isTouch && !portrait && screen === "race" && !paused);
     root.classList.toggle("dd-landpad", isTouch && !portrait);
@@ -1198,6 +1224,7 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
     window.removeEventListener("blur", onBlur);
     window.removeEventListener("resize", resize);
     if (ro) ro.disconnect();
+    setInPlay(false);
     net.destroy();
     relabels.forEach(([el, t]) => (el.textContent = t));
     document.body.classList.remove("doodle-mode");
@@ -1212,6 +1239,7 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
   function exit() { destroy(); if (onExit) onExit(); }
   if (import.meta.env && import.meta.env.DEV) window.__race = { DBG, get racers() { return racers; }, get me() { return me; }, RC, track, world, online, clock, net, get screen() { return screen; }, get phase() { return phase; } };
 
+  setInPlay(false);
   showOv("lobby");
   renderRoom();
   return { destroy, exit };

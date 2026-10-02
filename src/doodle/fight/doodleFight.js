@@ -25,6 +25,8 @@ import { createNet, randomCode, cleanCode } from "../doodleNet.js";
 import { touch as mando } from "../../engine/input.js";
 import { CHARS } from "../../config/characters.js";
 import { getCharacterAvatar } from "../../engine/sprites.js";
+import { speakCharacter } from "../../engine/voice.js";
+import { setInPlay } from "../../game/state.js";
 import { buildFightStage, PLATFORMS, MAIN, BLAST, RESPAWN, FIGHT_Z } from "./fightStage.js";
 import { specialFor, rollMulti, specialCooldown } from "./fightMoves.js";
 import { buzz } from "../haptics.js";
@@ -88,7 +90,7 @@ const TEMPLATE = `
   <div class="cf-big"></div>
   <div class="cf-small"></div>
   <div class="cf-floats"></div>
-  <div class="dd-hudbtns"><button class="dd-hb cf-pausebtn" aria-label="Pausa">❚❚</button></div>
+  <div class="dd-hudbtns"><button class="dd-hb cf-voicebtn" aria-label="Hablar / Voz">💬</button><button class="dd-hb cf-pausebtn" aria-label="Pausa">❚❚</button></div>
 </div>
 
 <div class="dd-ov cf-lobby">
@@ -130,8 +132,8 @@ const TEMPLATE = `
         </div>
         <div class="dd-mp-status cf-status"></div>
       </div>
-      <div class="cf-help dd-desktop-only">A/D mover · Espacio saltar · W/S apuntar · J golpe · K especial (W+K súper salto) · L escudo · Esc pausa</div>
-      <div class="cf-help dd-touch-only">Joystick: mover y apuntar (▲ golpe arriba, ▼ abajo, a tope: golpe fuerte) · ▲ + especial: súper salto</div>
+      <div class="cf-help dd-desktop-only">A/D mover · Espacio saltar · W/S apuntar · J golpe · K especial · L escudo · V hablar/frase · Esc pausa</div>
+      <div class="cf-help dd-touch-only">Joystick: mover y apuntar · Botón 💬 hablar · ▲ + especial: súper salto</div>
       <button class="dd-btn dd-ghost dd-mini cf-exit">Volver al mapa</button>
     </div>
   </div>
@@ -1413,6 +1415,12 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
     if (f && f.ctrl !== "remote") applyItem(f, m.k);
   });
   net.on("gone", (m) => { const f = F[m.s]; if (f) { f.gone = true; f.stocks = 0; } });
+  net.on("voice", (m, from) => {
+    const f = F[m.s];
+    const charId = f ? f.char.id : m.charId;
+    speakCharacter(charId, { force: true, phrase: m.phrase });
+    if (net.isHost) relay(m, from);
+  });
   net.on("_leave", (m, from) => {
     if (net.isHost) dropPeer(from);
     else peerGone("El anfitrión ha cerrado la sala.");
@@ -1584,12 +1592,28 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
   $(".cf-tolobby").addEventListener("click", () => { if (online.on && net.isHost) net.broadcast({ t: "tolobby" }); endToLobby(); });
   $(".cf-exit").addEventListener("click", exit);
   $(".cf-pausebtn").addEventListener("pointerdown", (e) => { e.preventDefault(); e.stopPropagation(); pause(); });
+  $(".cf-voicebtn")?.addEventListener("pointerdown", (e) => { e.preventDefault(); e.stopPropagation(); triggerVoice(); });
+
+  function triggerVoice() {
+    const f = (mySlot !== null && F[mySlot]) ? F[mySlot] : null;
+    const cId = f ? f.char.id : myChar;
+    speakCharacter(cId, {
+      onBroadcast: ({ phrase }) => {
+        if (online.on) {
+          const msg = { t: "voice", s: mySlot, charId: cId, phrase };
+          if (net.isHost) net.broadcast(msg);
+          else net.send(msg);
+        }
+      }
+    });
+  }
 
   // ── entrada ──
   function onKeyDown(e) {
     if (e.target && e.target.tagName === "INPUT") return;
     if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Tab"].includes(e.code)) e.preventDefault();
     keys[e.code] = true;
+    if (e.code === "KeyV" && !e.repeat) triggerVoice();
     if ((e.code === "Escape" || e.code === "KeyP") && screen === "match") paused ? resume() : pause();
     if (e.code === "KeyM") audio.toggleMusic();
   }
@@ -1611,6 +1635,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
     onAction: (id, down) => { tp[id] = down; }
   }) : null;
   function syncPad() {
+    setInPlay(screen === "match" && !paused);
     const portrait = document.body.classList.contains("gameboy-mode");
     if (touchPad) touchPad.setVisible(isTouch && !portrait && screen === "match" && !paused);
     root.classList.toggle("dd-landpad", isTouch && !portrait);
@@ -1707,6 +1732,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
     window.removeEventListener("blur", onBlur);
     window.removeEventListener("resize", resize);
     if (ro) ro.disconnect();
+    setInPlay(false);
     net.destroy();
     relabels.forEach(([el, t]) => (el.textContent = t));
     document.body.classList.remove("doodle-mode");
@@ -1721,6 +1747,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
 
   if (import.meta.env && import.meta.env.DEV) window.__fight = { get F() { return F; }, M, net, online, get items() { return items; }, get screen() { return screen; }, get phase() { return phase; } };
 
+  setInPlay(false);
   showOv("lobby");
   return { destroy, exit };
 }

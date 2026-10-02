@@ -4,6 +4,8 @@
 // leen como "mando" y deckNav.js lo usa para moverse por los menús.
 // =============================================================================
 
+import { speakCurrentChar } from "./voice.js";
+
 export const keys = {};
 export const touch = {
   L: false,
@@ -20,6 +22,8 @@ export function initInput({ onSwitchChar, onSwitchSlot, onOpenMap }) {
     if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Space", "Tab"].includes(e.code)) e.preventDefault();
     if (keys[e.code]) return;
     keys[e.code] = true;
+    // Tecla V: hablar frase / voz del personaje
+    if (e.code === "KeyV") speakCurrentChar();
     // Tab / 1-2-3: cambiar de compañero (los mundos lo leen a través de getChar)
     if (e.code === "Tab") onSwitchChar(e.shiftKey ? -1 : 1);
     const slot = { Digit1: 0, Digit2: 1, Digit3: 2, Numpad1: 0, Numpad2: 1, Numpad3: 2 }[e.code];
@@ -57,6 +61,7 @@ export function initInput({ onSwitchChar, onSwitchSlot, onOpenMap }) {
   }
 
   // Portrait Game Boy Action & System Buttons
+  bindT("gbVoice", null, () => speakCurrentChar());
   bindT("gbA", "A");
   bindT("gbB", "B");
   bindT("gbStart", null, () => onSwitchChar(1));

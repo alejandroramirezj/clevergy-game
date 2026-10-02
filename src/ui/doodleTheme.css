@@ -1181,6 +1181,30 @@ html body .comp2-nav .comp-tab-btn.on b { background: #fff; color: var(--nb-ink)
 .comp2-form { font: 14px var(--nb-hand); color: var(--nb-pen); opacity: 0.7; }
 .comp2-power { display: flex; align-items: center; gap: 6px; margin: 4px 0 2px; font: 15px var(--nb-hand); color: var(--nb-red); letter-spacing: 1px; }
 .comp2-char p { margin: 0; font: 15px/1.25 var(--nb-hand); color: var(--nb-pen); }
+.comp2-voice-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 3px 8px;
+  background: #fbf9ef;
+  border: 1.5px dashed var(--nb-ink);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.1s ease;
+}
+.comp2-voice-row:hover {
+  background: #f0f4ff;
+  transform: translateY(-1px);
+}
+.comp2-voice-icon { font-size: 16px; flex-shrink: 0; }
+.comp2-voice-txt {
+  font: italic 13px/1.2 var(--nb-hand);
+  color: var(--nb-ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .comp2-pick { justify-self: start; cursor: pointer; padding: 3px 10px; font: 700 17px/1 var(--nb-title); color: var(--nb-ink); background: var(--nb-paper); border: 2px solid var(--nb-pen); border-radius: 10px 7px 11px 8px; }
 .comp2-char.cur .comp2-pick { background: var(--nb-red); color: #fff; }
 .comp2-worlds { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; }
@@ -1779,7 +1803,123 @@ html body #menuOv .lobby-header-row { height: 96px !important; }
 }
 @media (orientation: portrait), (max-width: 560px) { .en-card { grid-template-columns: 1fr; } .en-side { position: static; } }
 
-/* en los mundos que no son La Oficina no se cambia de personaje: fuera las flechas del selector */
-body.char-locked .doodle-root .cf-arrow, body.char-locked #doodleRoot .cf-arrow { display: none !important; }
+/* en los mundos que no son La Oficina no se cambia de personaje: fuera las flechas del selector y la barra táctil del Game Boy */
+body.char-locked .doodle-root .cf-arrow,
+body.char-locked #doodleRoot .cf-arrow,
+body.char-locked #gbTouchBarContainer,
+body.doodle-mode:not(.world-office) #gbTouchBarContainer { display: none !important; }
 .lb2-fun { margin: 4px 0 6px; padding: 4px 10px; font: 15px var(--nb-hand); color: var(--nb-pen); background: #fff8d6; border: 2px dashed var(--acc, #1f38b8); border-radius: 10px 7px 11px 8px; transform: rotate(-0.4deg); }
 .lb2-fun b { color: var(--acc, #1f38b8); }
+
+/* =============================================================================
+   Bocadillo de voz cómic (Doodle Speech Bubble)
+   ============================================================================= */
+.doodle-speech-bubble {
+  position: fixed;
+  left: 50%;
+  bottom: clamp(100px, 18vh, 180px);
+  transform: translateX(-50%) scale(0.9);
+  max-width: min(92vw, 420px);
+  background: #ffffff;
+  color: var(--nb-pen, #272a36);
+  border: 3px solid var(--nb-ink, #1f38b8);
+  border-radius: 20px 18px 24px 8px;
+  padding: 10px 16px 12px;
+  box-shadow: 4px 6px 0 rgba(31, 56, 184, 0.35), 0 10px 24px rgba(0,0,0,0.15);
+  z-index: 99999;
+  font-family: var(--nb-hand, "Patrick Hand", cursive);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.doodle-speech-bubble.dsb-pop {
+  opacity: 1;
+  transform: translateX(-50%) scale(1) rotate(-1deg);
+}
+
+.doodle-speech-bubble.dsb-fadeout {
+  opacity: 0;
+  transform: translateX(-50%) scale(0.85) translateY(10px);
+}
+
+.dsb-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.dsb-emoji {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.dsb-name {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: var(--nb-ink, #1f38b8);
+  text-transform: uppercase;
+}
+
+.dsb-text {
+  font-size: clamp(16px, 3.8vw, 21px);
+  line-height: 1.25;
+  font-weight: 600;
+  color: #1a1c24;
+}
+
+/* Pico del bocadillo */
+.dsb-tip {
+  position: absolute;
+  bottom: -14px;
+  left: 36px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 14px solid var(--nb-ink, #1f38b8);
+}
+.dsb-tip::after {
+  content: "";
+  position: absolute;
+  top: -16px;
+  left: -8px;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 12px solid #ffffff;
+}
+
+/* Botón de voz en el GameBoy Deck vertical */
+.gb-voice-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.gb-action-btn.gb-btn-voice {
+  background: #fdfaf0;
+  color: var(--nb-ink, #1f38b8);
+  border: 2.5px solid var(--nb-pen, #272a36);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  font-size: 20px;
+  display: grid;
+  place-items: center;
+  box-shadow: 2px 3px 0 var(--nb-pen, #272a36);
+  cursor: pointer;
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.gb-action-btn.gb-btn-voice:active,
+.gb-action-btn.gb-btn-voice.active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 var(--nb-pen, #272a36);
+  background: #e8f0fe;
+}
+

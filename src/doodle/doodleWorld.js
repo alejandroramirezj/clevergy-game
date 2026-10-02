@@ -14,6 +14,8 @@ import { makeEmail, makeMeeting, makeClock, makeBoss, makeGun, makeCoffee } from
 import { createSticker } from "./doodleSticker.js";
 import { createTouchPad, ICON } from "./touchPad.js";
 import { touch as mando } from "../engine/input.js";
+import { speakCharacter } from "../engine/voice.js";
+import { setInPlay } from "../game/state.js";
 import { createNet, randomCode, cleanCode, MAX_PLAYERS } from "./doodleNet.js";
 import { buzz } from "./haptics.js";
 import "./doodle.css";
@@ -69,6 +71,7 @@ const TEMPLATE = `
   <div class="dd-ammo"><b>30</b><span>/${MAG}</span><small>BOLI BIC</small></div>
   <div class="dd-dash"><i></i><small>DASH</small></div>
   <div class="dd-hudbtns">
+    <button class="dd-hb dd-voicebtn" aria-label="Hablar / Voz">💬</button>
     <button class="dd-hb dd-cambtn" aria-label="Cambiar cámara">👁<small>3ª</small></button>
     <button class="dd-hb dd-dashbtn" aria-label="Dash">»<small>DASH</small></button>
     <button class="dd-hb dd-pausebtn" aria-label="Pausa">❚❚</button>
@@ -301,7 +304,8 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
     if (e.code === "Space") input.jump = true;
     if (e.code === "ShiftLeft" || e.code === "ShiftRight") input.dash = true;
     if (e.code === "KeyR") startReload();
-    if (e.code === "KeyV") toggleCam();
+    if (e.code === "KeyV") speakCharacter(char);
+    if (e.code === "KeyC") toggleCam();
     if (e.code === "KeyM") audio.toggleMusic();
     if (e.code === "KeyP" || (noLock && e.code === "Escape")) pause();
   }
@@ -378,6 +382,7 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
     el.addEventListener("pointerdown", (e) => { e.preventDefault(); e.stopPropagation(); fn(); });
     el.addEventListener("click", (e) => e.preventDefault());
   };
+  tapBtn(".dd-voicebtn", () => speakCharacter(char));
   tapBtn(".dd-cambtn", () => toggleCam());
   tapBtn(".dd-dashbtn", () => { input.dash = true; });
   tapBtn(".dd-pausebtn", () => pause());
@@ -764,6 +769,7 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
   }
 
   function syncMandoUi() {
+    setInPlay(state === "play");
     const portrait = document.body.classList.contains("gameboy-mode");
     const show = isTouch && !portrait && state === "play";
     if (touchPad) touchPad.setVisible(show);
@@ -2067,6 +2073,7 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
     window.removeEventListener("blur", onBlur);
     window.removeEventListener("resize", resize);
     if (ro) ro.disconnect();
+    setInPlay(false);
     net.destroy();
     [...mp.remotes.keys()].forEach(removeRemote);
     if (document.pointerLockElement) document.exitPointerLock();

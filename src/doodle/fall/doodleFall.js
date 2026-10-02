@@ -20,6 +20,8 @@ import { CHARS } from "../../config/characters.js";
 import { getCharacterAvatar } from "../../engine/sprites.js";
 import { buzz } from "../haptics.js";
 import { createNet, randomCode, cleanCode } from "../doodleNet.js";
+import { speakCharacter } from "../../engine/voice.js";
+import { setInPlay } from "../../game/state.js";
 import { createKit } from "./fallKit.js";
 import { createSim, newBot, H } from "./fallSim.js";
 import { LEVELS, LEVEL_INFO } from "./fallLevels.js";
@@ -88,8 +90,8 @@ const TEMPLATE = `
         </div>
         <div class="dd-mp-status fg-status"></div>
       </div>
-      <div class="rk-help dd-desktop-only">WASD / flechas mover · ESPACIO saltar · ESPACIO en el aire = lanzarte hacia delante · SHIFT agarrar · 🎮 mando</div>
-      <div class="rk-help dd-touch-only">Joystick mover · SALTO (otra vez en el aire: te lanzas) · AGARRAR para frenar a los demás</div>
+      <div class="rk-help dd-desktop-only">WASD / flechas mover · ESPACIO saltar · ESPACIO en el aire = plancha · SHIFT agarrar · V hablar/frase · 🎮 mando</div>
+      <div class="rk-help dd-touch-only">Joystick mover · SALTO (otra vez en el aire: plancha) · AGARRAR · VOZ para hablar</div>
     </div>
   </div>
 </div>
@@ -645,6 +647,12 @@ export function startDoodleFall({ charId, onPickChar, onExit, onVictory, onScore
     if (t && owned(t)) { t.grabbedBy = m.on ? byId(m.from) || null : null; t.grabSafe = 2.6; if (m.on && t === me) { sfx.grab(); flash("", `¡${(byId(m.from) || { name: "Alguien" }).name} te ha agarrado!`, 1); } }
     else if (net.isHost && t) net.sendTo(m.to, m);
   });
+  net.on("voice", (m, from) => {
+    const c = byId(m.id);
+    const charId = c ? (c.c || c.char) : m.charId;
+    speakCharacter(charId, { force: true, phrase: m.phrase });
+    if (net.isHost) net.broadcast(m, from);
+  });
   net.on("_leave", (m, id) => {
     if (net.isHost) {
       online.roster = online.roster.filter((p) => p.id !== id);
@@ -746,8 +754,8 @@ export function startDoodleFall({ charId, onPickChar, onExit, onVictory, onScore
       if (hidden) continue;
       _v.set(c.x, c.y, c.z);
       const sp = Math.hypot(c.vx, c.vz);
-      // lanzarse (doble salto) es un salto, no un puñetazo; la pose de ataque sólo al agarrar a alguien de verdad
-      const pose = c.stun > 0 ? "damage" : c.grabbing ? "attack" : !c.ground || c.dive ? "jump" : undefined;
+      // pose de agarrar tanto al sujetar a alguien como mientras se mantiene el botón de agarrar
+      const pose = c.stun > 0 ? "damage" : (c.grabbing || c.grabHeld) ? "attack" : !c.ground || c.dive ? "jump" : undefined;
       c.sticker.update(dt, {
         pos: _v, camera, moveX: Math.abs(c.vx) > 0.6 ? -c.vx : 0, speed: c.ground ? sp : 0, onGround: !!c.ground, firing: false, pose,
         hurt: c.stun > 0 ? 0.5 : c.grabbedBy ? 0.3 : 0,
@@ -946,12 +954,21 @@ export function startDoodleFall({ charId, onPickChar, onExit, onVictory, onScore
     if (e.target && e.target.tagName === "INPUT") return;
     if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Tab"].includes(e.code)) e.preventDefault();
     keys[e.code] = true;
+    if (e.code === "KeyV" && !e.repeat) triggerVoice();
     if ((e.code === "Escape" || e.code === "KeyP") && screen === "play") paused ? resume() : pause();
     if ((!me || me.finished) && screen === "play" && !e.repeat) {
       if (e.code === "ArrowLeft" || e.code === "KeyA" || e.code === "KeyQ") switchSpec(-1);
       if (e.code === "ArrowRight" || e.code === "KeyD" || e.code === "KeyE") switchSpec(1);
     }
     if (e.code === "KeyM") audio.toggleMusic();
+  }
+  function triggerVoice() {
+    const cId = (me && me.c) ? me.c : myChar;
+    speakCharacter(cId, {
+      onBroadcast: ({ phrase }) => {
+        tx({ t: "voice", id: myId(), charId: cId, phrase });
+      }
+    });
   }
   function onKeyUp(e) { keys[e.code] = false; }
   function onBlur() { for (const k in keys) keys[k] = false; if (screen === "play" && mode === "solo") pause(); }
@@ -962,12 +979,20 @@ export function startDoodleFall({ charId, onPickChar, onExit, onVictory, onScore
   const touchPad = isTouch ? createTouchPad(root, {
     actions: [
       { id: "jump", label: "SALTO", icon: ICON.jump, accent: "red" },
-      { id: "grab", label: "AGARRAR", icon: ICON.punch, accent: "blue" }
+      { id: "grab", label: "AGARRAR", icon: ICON.punch, accent: "blue" },
+      { id: "voice", label: "VOZ", icon: ICON.speech, accent: "blue" }
     ],
     isActive: () => screen === "play" && !paused,
-    onAction: (id, down) => { tp[id] = down; }
+    onAction: (id, down) => {
+      if (id === "voice") {
+        if (down) triggerVoice();
+        return;
+      }
+      tp[id] = down;
+    }
   }) : null;
   function syncPad() {
+    setInPlay(screen === "play" && !paused);
     const portrait = document.body.classList.contains("gameboy-mode");
     if (touchPad) touchPad.setVisible(isTouch && !portrait && screen === "play" && !paused);
     root.classList.toggle("dd-landpad", isTouch && !portrait);
@@ -1070,6 +1095,7 @@ export function startDoodleFall({ charId, onPickChar, onExit, onVictory, onScore
     window.removeEventListener("blur", onBlur);
     window.removeEventListener("resize", resize);
     if (ro) ro.disconnect();
+    setInPlay(false);
     relabels.forEach(([el, t]) => (el.textContent = t));
     document.body.classList.remove("doodle-mode");
     disposeContestants();
@@ -1085,6 +1111,7 @@ export function startDoodleFall({ charId, onPickChar, onExit, onVictory, onScore
     DBG, step: (n = 1) => { for (let i = 0; i < n; i++) stepSim(STEP); }, load: (i) => { if (!alive.length) startShow(); beginRound(i, alive.length ? alive : cpuFill([{ id: "me", cid: myChar, cpu: false }])); }, net, online, clock, endRound: () => hostEndRound(), get spec() { return spec; }, switchSpec, get history() { return history; },
     get cs() { return cs; }, get me() { return me; }, get K() { return K; }, get L() { return L; }, get screen() { return screen; }, set screen(v) { screen = v; }, get phase() { return phase; }, set phase(v) { phase = v; }, get roundT() { return roundT; }, startShow
   };
+  setInPlay(false);
   showOv("lobby");
   renderRoom();
   return { destroy, exit };

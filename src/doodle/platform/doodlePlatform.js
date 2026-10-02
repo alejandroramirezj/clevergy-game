@@ -20,6 +20,8 @@ import { inkText, cinkLogo } from "../inkText.js";
 import { touch as mando } from "../../engine/input.js";
 import { CHARS, POWER_INFO } from "../../config/characters.js";
 import { getCharacterAvatar } from "../../engine/sprites.js";
+import { speakCharacter } from "../../engine/voice.js";
+import { setInPlay } from "../../game/state.js";
 import { makeLevel, LEVEL_W, LEVEL_H } from "./platformLevel.js";
 import { buzz } from "../haptics.js";
 import { createObserver, observerBar } from "../observer.js";
@@ -1701,6 +1703,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
   function onKeyDown(e) {
     if (["Space", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Tab"].includes(e.code)) e.preventDefault();
     keys[e.code] = true;
+    if (e.code === "KeyV" && !e.repeat) speakCharacter(char);
     if ((e.code === "Escape" || e.code === "KeyP") && (screen === "play" || screen === "pause")) screen === "play" ? pause() : play();
     if (e.code === "KeyM") audio.toggleMusic();
   }
@@ -1714,12 +1717,20 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
   const touchPad = isTouch ? createTouchPad(root, {
     actions: [
       { id: "jump", label: "SALTA", icon: ICON.jump, accent: "red" },
-      { id: "power", label: "PODER", icon: ICON.special, accent: "blue" }
+      { id: "power", label: "PODER", icon: ICON.special, accent: "blue" },
+      { id: "voice", label: "VOZ", icon: ICON.speech, accent: "blue" }
     ],
     isActive: () => screen === "play",
-    onAction: (id, down) => { tp[id] = down; }
+    onAction: (id, down) => {
+      if (id === "voice") {
+        if (down) speakCharacter(char);
+        return;
+      }
+      tp[id] = down;
+    }
   }) : null;
   function syncPad() {
+    setInPlay(screen === "play");
     const portrait = document.body.classList.contains("gameboy-mode");
     if (touchPad) touchPad.setVisible(isTouch && !portrait && screen === "play");
     root.classList.toggle("dd-landpad", isTouch && !portrait);
@@ -1798,6 +1809,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     window.removeEventListener("blur", onBlur);
     window.removeEventListener("resize", resize);
     if (ro) ro.disconnect();
+    setInPlay(false);
     relabels.forEach(([el, t]) => (el.textContent = t));
     document.body.classList.remove("doodle-mode");
     sticker.dispose();
@@ -1813,6 +1825,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
 
   // modo observador (Historia y personajes → Explorar): sin partida, cámara libre por el nivel
   let obs = null;
+  setInPlay(false);
   if (observer) {
     screen = "observer";
     root.classList.add("pf-observer");

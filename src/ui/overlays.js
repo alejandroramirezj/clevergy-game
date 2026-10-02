@@ -6,6 +6,7 @@ import { sfx } from "../engine/audio.js";
 import { ANIM, SPR, getCharacterAvatar } from "../engine/sprites.js";
 import { fetchGlobalLeaderboard } from "../game/leaderboard.js";
 import { GOOGLE_G } from "../game/auth.js";
+import { speakCharacter } from "../engine/voice.js";
 
 export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWorld }) {
   // Elements
@@ -58,6 +59,7 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
       chip.addEventListener("pointerdown", (e) => {
         e.preventDefault();
         e.stopPropagation();
+        if (document.body.classList.contains("char-locked") || (GameState.gameMode === "doodle" && GameState.currentWorld !== 1)) return;
         switchToChar(i);
         updateSpotlight();
       });
@@ -120,34 +122,48 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
     if (spIcon) spIcon.textContent = pinfo ? pinfo.icon : c.emoji;
 
 
-    // Update Mobile Controller Deck Action Labels: A -> SALTAR, B -> [HABILIDAD]
+    // Update Mobile Controller Deck Action Labels: A -> SALTAR/SALTO, B -> [HABILIDAD]/AGARRAR
     const gbLabelB = document.getElementById("gbLabelB");
-    if (gbLabelB) {
-      const actionNames = {
-        ana: "TREPAR",
-        alejandro: "PUÑO",
-        paloma: "VOLAR",
-        beltran: "SLACK",
-        alvaroM: "CALCULAR",
-        alvaroP: "PODCAST",
-        ale: "DESLIZAR",
-        bruno: "TÓTEM",
-        gonzalo: "CLONAR",
-        javi: "MARCHA",
-        jesus: "SMASH",
-        joseluis: "IMPRIMIR",
-        josu: "REBOTE",
-        juan: "CALENTAR",
-        maca: "MATE",
-        manu: "PISOTÓN",
-        pablo: "RODAR",
-        silvia: "SPEEDRUN",
-        yair: "BULERÍA"
-      };
-      gbLabelB.textContent = actionNames[c.id] || c.ab.split(" ")[0].toUpperCase();
-    }
     const gbLabelA = document.getElementById("gbLabelA");
-    if (gbLabelA) gbLabelA.textContent = "SALTAR";
+    if (GameState.gameMode === "doodle" && GameState.currentWorld === 9) {
+      if (gbLabelB) gbLabelB.textContent = "AGARRAR";
+      if (gbLabelA) gbLabelA.textContent = "SALTO";
+    } else if (GameState.gameMode === "doodle" && GameState.currentWorld === 8) {
+      if (gbLabelB) gbLabelB.textContent = "OBJETO";
+      if (gbLabelA) gbLabelA.textContent = "DERRAPE";
+    } else if (GameState.gameMode === "doodle" && GameState.currentWorld === 6) {
+      if (gbLabelB) gbLabelB.textContent = "ESPECIAL";
+      if (gbLabelA) gbLabelA.textContent = "GOLPE";
+    } else if (GameState.gameMode === "doodle" && GameState.currentWorld === 7) {
+      if (gbLabelB) gbLabelB.textContent = "DISPARAR";
+      if (gbLabelA) gbLabelA.textContent = "SALTAR";
+    } else {
+      if (gbLabelB) {
+        const actionNames = {
+          ana: "TREPAR",
+          alejandro: "PUÑO",
+          paloma: "VOLAR",
+          beltran: "SLACK",
+          alvaroM: "CALCULAR",
+          alvaroP: "PODCAST",
+          ale: "DESLIZAR",
+          bruno: "TÓTEM",
+          gonzalo: "CLONAR",
+          javi: "MARCHA",
+          jesus: "SMASH",
+          joseluis: "IMPRIMIR",
+          josu: "REBOTE",
+          juan: "CALENTAR",
+          maca: "MATE",
+          manu: "PISOTÓN",
+          pablo: "RODAR",
+          silvia: "SPEEDRUN",
+          yair: "BULERÍA"
+        };
+        gbLabelB.textContent = actionNames[c.id] || c.ab.split(" ")[0].toUpperCase();
+      }
+      if (gbLabelA) gbLabelA.textContent = "SALTAR";
+    }
 
     updateTouchBarActive(GameState.charIdx);
   }
@@ -634,16 +650,28 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
     if (!compCharsGrid) return;
     compCharsGrid.innerHTML = CHARS.map((c) => {
       const p = POWER_INFO[c.id] || { icon: "★", desc: c.tip };
-      return `<article class="comp2-char">
+      const phrasePreview = c.id === "gonzalo" ? "Cuenta un chiste malo corto..." : (c.voice ? c.voice[0] : "");
+      return `<article class="comp2-char" data-id="${c.id}">
         <div class="comp2-char-av">${avImg(c)}</div>
         <div class="comp2-char-txt">
           <h3>${c.name}</h3>
           <div class="comp2-form">${c.form}</div>
           <div class="comp2-power"><span>${p.icon}</span><b>${c.ab}</b></div>
           <p>${p.desc}</p>
+          <div class="comp2-voice-row" data-char="${c.id}" role="button" title="Toca para escuchar frase">
+            <span class="comp2-voice-icon">💬</span>
+            <small class="comp2-voice-txt">«${phrasePreview}»</small>
+          </div>
         </div>
       </article>`;
     }).join("");
+
+    compCharsGrid.querySelectorAll(".comp2-voice-row, .comp2-char").forEach((el) => {
+      el.addEventListener("click", (e) => {
+        const cid = el.getAttribute("data-char") || el.getAttribute("data-id");
+        if (cid) speakCharacter(cid);
+      });
+    });
   }
 
   // qué se hace en cada mapa, contado para la presentación

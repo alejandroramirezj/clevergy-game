@@ -12,12 +12,20 @@ export const GameState = {
   currentWorld: 1,
   worldMapOpen: false,
   gameMode: "menu", // "menu" | "doodle" (un mundo 3D en marcha)
+  inPlay: false, // true sólo cuando se está jugando la partida activa (no en menús/lobbies)
   playerName: "ANON",
   W: 960,
   H: 540,
   DPR: 1,
   SAFEB: 0
 };
+
+export function setInPlay(v) {
+  const next = !!v;
+  if (GameState.inPlay === next) return;
+  GameState.inPlay = next;
+  window.dispatchEvent(new CustomEvent("in_play_change", { detail: { inPlay: next } }));
+}
 
 export function fmtT(s) {
   const m = Math.floor(s / 60);

@@ -9,7 +9,7 @@ import { CHARS } from "./config/characters.js";
 import { stopMusic } from "./engine/audio.js";
 import { initSprites } from "./engine/sprites.js";
 import { initInput } from "./engine/input.js";
-import { GameState, switchChar, switchToChar } from "./game/state.js";
+import { GameState, switchChar, switchToChar, setInPlay } from "./game/state.js";
 import { initOverlays } from "./ui/overlays.js";
 import { initWorldMap } from "./ui/worldMap.js";
 import { saveWorldProgress } from "./config/worlds.js";
@@ -22,13 +22,14 @@ const cv = document.getElementById("cv");
 const cx = cv.getContext("2d");
 
 function fitCanvas() {
-  // Marco común de los mundos 3D: en vertical, pantalla + deck Game Boy; en horizontal,
-  // pantalla completa. #cv sólo reserva el hueco: cada mundo pinta su propio WebGL encima.
+  // Marco común de los mundos 3D: en vertical durante la partida activa, pantalla + deck Game Boy;
+  // en menús, elección de mundo y lobbies: pantalla completa táctil sin mando.
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const iw = window.innerWidth, ih = window.innerHeight;
   const isPortrait = ih > iw;
+  const useDeck = isPortrait && GameState.inPlay;
 
-  if (isPortrait) {
+  if (useDeck) {
     document.body.classList.add("gameboy-mode");
     document.getElementById("gameboyDeck")?.classList.remove("hidden");
 
@@ -61,10 +62,11 @@ function fitCanvas() {
       ('ontouchstart' in window) || 
       (navigator.maxTouchPoints > 0) || 
       (ih <= 680 && iw <= 1100);
-    if (isHorizontalResponsive) {
+    if (isHorizontalResponsive && !isPortrait && GameState.inPlay) {
       document.getElementById("touch")?.classList.remove("hidden");
     } else {
-      }
+      document.getElementById("touch")?.classList.add("hidden");
+    }
     const H = 540;
     let W = Math.round(H * (iw / ih));
     W = Math.max(700, Math.min(1600, W));
@@ -85,12 +87,11 @@ function fitCanvas() {
     GameState.DPR = dpr;
     GameState.SAFEB = 0;
   }
-
-
 }
 
 window.addEventListener("resize", fitCanvas);
 window.addEventListener("orientationchange", () => setTimeout(fitCanvas, 200));
+window.addEventListener("in_play_change", () => setTimeout(fitCanvas, 0));
 
 // ── los mundos: id → módulo y cómo se arranca ──
 const WORLD_LOADERS = {
@@ -118,8 +119,15 @@ async function startGame(worldId) {
   showLoading(true);
   // sólo en La Oficina se cambia de personaje dentro del mundo; en los demás vas con el tuyo
   document.body.classList.toggle("char-locked", worldId !== 1);
+  document.body.classList.toggle("world-office", worldId === 1);
+  const gbTB = document.getElementById("gbTouchBarContainer");
+  if (gbTB) gbTB.style.display = (worldId === 1) ? "" : "none";
+  setInPlay(false); // todos los mundos empiezan en su pantalla de lobby o presentación a pantalla completa táctil
   const back = () => {
-    document.body.classList.remove("char-locked");
+    setInPlay(false);
+    document.body.classList.remove("char-locked", "world-office");
+    const tb = document.getElementById("gbTouchBarContainer");
+    if (tb) tb.style.display = "";
     doodle = null;
     showLoading(false);
     document.body.classList.remove("doodle-mode");

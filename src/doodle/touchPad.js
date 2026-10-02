@@ -16,7 +16,8 @@ export const ICON = {
   swap: '<svg viewBox="0 0 32 32"><path d="M6 11 L24 11"/><path d="M19 6 L24.5 11 L19 16"/><path d="M26 21 L8 21"/><path d="M13 16 L7.5 21 L13 26"/></svg>',
   punch: '<svg viewBox="0 0 32 32"><path d="M9 12 C9 8 12 7 14 8 L22 8 C25 8 26 10 26 13 L26 18 C26 22 23 24 20 24 L13 24 C10 24 8 22 8 19 Z"/><path d="M14 8 L14 14 M18 8 L18 14 M22 8.4 L22 14"/><path d="M8 17 L13 17 L13 14"/><path d="M2 12 L5 12 M1 16 L5 16 M2 20 L5 20"/></svg>',
   special: '<svg viewBox="0 0 32 32"><path d="M16 3 L19.2 11.6 L28.3 12 L21.2 17.7 L23.6 26.6 L16 21.5 L8.4 26.6 L10.8 17.7 L3.7 12 L12.8 11.6 Z"/></svg>',
-  block: '<svg viewBox="0 0 32 32"><path d="M16 4 L26 8 C26 17 22.5 24 16 28 C9.5 24 6 17 6 8 Z"/><path d="M16 9 L16 22"/><path d="M11 13.5 L21 13.5"/></svg>'
+  block: '<svg viewBox="0 0 32 32"><path d="M16 4 L26 8 C26 17 22.5 24 16 28 C9.5 24 6 17 6 8 Z"/><path d="M16 9 L16 22"/><path d="M11 13.5 L21 13.5"/></svg>',
+  speech: '<svg viewBox="0 0 32 32"><path d="M5 6 C5 4.3 6.3 3 8 3 L24 3 C25.7 3 27 4.3 27 6 L27 18 C27 19.7 25.7 21 24 21 L12 21 L6 28 L6 21 C5.4 21 5 20.6 5 20 Z"/><path d="M10 10 L22 10 M10 14.5 L18 14.5"/></svg>'
 };
 
 const JOY_R = 58;
