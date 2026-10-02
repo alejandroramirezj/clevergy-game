@@ -436,7 +436,7 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
       const p = players.get(name) || { name, best: {}, top: null };
       let stats = null;
       try { stats = it.stats ? (typeof it.stats === "string" ? JSON.parse(it.stats) : it.stats) : null; } catch (e) {}
-      if (!p.best[world] || score > p.best[world].score) p.best[world] = { score, character: it.character || it.c, rank: it.rank || it.r || "", stats };
+      if (!p.best[world] || score > p.best[world].score) p.best[world] = { score, character: it.character || it.c, used: it.used || (stats && stats.used) || it.character || it.c, rank: it.rank || it.r || "", stats };
       if (!p.top || score > p.top.score) p.top = { score, character: it.character || it.c };
       players.set(name, p);
     }
@@ -460,6 +460,24 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
     else if (worldId === 9) { b.push(st.won ? "🔋 Batería" : `🎪 Ronda ${st.wave || 1}/4`); if (st.falls != null) b.push(`💨 ${st.falls}`); }
     if (st.time && worldId !== 6) b.push(`⏱ ${mmss(st.time)}`);
     return b.join(" · ");
+  }
+
+  // dato curioso: con qué personaje (que no es el suyo) juega más la gente
+  function funFact(worldId) {
+    const recs = worldId ? (lbData.perWorld[worldId] || []) : lbData.all.flatMap((p) => Object.values(p.best));
+    const other = new Map(), all = new Map();
+    for (const r of recs) {
+      if (!r.used) continue;
+      all.set(r.used, (all.get(r.used) || 0) + 1);
+      if (r.used !== r.character) other.set(r.used, (other.get(r.used) || 0) + 1);
+    }
+    const top = (m) => [...m.entries()].sort((a, b) => b[1] - a[1])[0];
+    const where = worldId ? `en ${VISIBLE_WORLDS.find((x) => x.id === worldId).name}` : "en el Retreat";
+    const o = top(other);
+    if (o) { const c = CHARS.find((x) => x.id === o[0]); return `🎭 Dato curioso: ${where}, el personaje que más usan los que no son él es <b>${c ? `${c.emoji} ${c.name}` : o[0]}</b> (${o[1]} ${o[1] === 1 ? "récord" : "récords"})`; }
+    const a = top(all);
+    if (a && recs.length > 1) { const c = CHARS.find((x) => x.id === a[0]); return `🎭 Dato curioso: ${where}, el personaje más jugado es <b>${c ? `${c.emoji} ${c.name}` : a[0]}</b>, y todos juegan con el suyo`; }
+    return "";
   }
 
   // ── pantalla de ranking: pestañas a la izquierda · podio · lista · tu fila fija abajo ──
@@ -509,6 +527,7 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
           <div class="lb2-podium">${podiumHtml(list.slice(0, 3), valueOf, me, general ? null : detailOf)}</div>
           <div class="lb2-listbox">
             <div class="lb2-listhead">${general ? "Suma del mejor récord de cada uno en cada mundo · cuenta aunque no termines" : `Mejor partida de cada uno en ${esc(w.name)} · cuenta aunque no termines`}</div>
+            ${(() => { const f = funFact(general ? null : w.id); return f ? `<div class="lb2-fun">${f}</div>` : ""; })()}
             <ol class="lb2-list">${rest || `<li class="lb2-row lb2-row-empty">Aún no hay más jugadores… ¡entra en el top!</li>`}</ol>
           </div>
         </div>
@@ -584,13 +603,13 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
 
 
   const ENEMIES_DATA = [
-    { icon: "✉️", name: "Email urgente", where: "La Oficina · BoliBic Tag", desc: "Sobres con dientes que vuelan hacia ti en bandada.", tip: "Písalos o dispárales antes de que muerdan." },
-    { icon: "⏰", name: "Reloj de fichar", where: "La Oficina · BoliBic Tag", desc: "Patrulla los pasillos marcando la hora sin descanso.", tip: "Un pisotón y se para el tiempo." },
-    { icon: "📅", name: "Reunión de 5 minutos", where: "La Oficina · BoliBic Tag", desc: "Te lanza invitaciones de calendario desde lejos.", tip: "Acércate entre invitación e invitación." },
-    { icon: "🥊", name: "El compañero rival", where: "Coworking Fight", desc: "Otro héroe de Clevergy, de la CPU o desde otro móvil.", tip: "Bloquea, esquiva y guarda el especial para rematar." },
-    { icon: "🚤", name: "Los rivales del pantano", where: "Pantano de San Juan", desc: "Cinco motos de agua que no te dejarán ganar tan fácil.", tip: "Derrapa en las curvas para cargar turbo." },
-    { icon: "🗄️", img: "/sprites/datadis/ready.png", name: "DATADIS", where: "Jefe · La Oficina", boss: true, desc: "El proveedor de datos de consumo y nuestro peor enemigo, un monstruo de servidores y cables. Aparece «en mantenimiento», te lanza el DNI por las dos caras, el CUPS, auditorías, cambia el proceso de la API (x20), te quita el acceso sin avisar… y se cae cuando menos lo esperas.", tip: "Salta sus pisotones, esquiva los requisitos y písale la cabeza cuando se le caiga la plataforma." },
-    { icon: "📬", name: "INBOX INFINITO", where: "Jefe · BoliBic Tag", boss: true, desc: "La bandeja de entrada hecha monstruo en la última oleada.", tip: "Muévete sin parar y apunta al centro." }
+    { id: "email", icon: "✉️", name: "Email urgente", where: "La Oficina · BoliBic Tag", world: 7, desc: "Sobres con dientes que vuelan hacia ti en bandada.", attack: "Vuela en grupo hacia ti y muerde: cada mordisco te quita vida. En BoliBic Tag llegan por oleadas, de planta en planta.", tip: "Písalos o dispárales antes de que muerdan.", fun: "Nunca viene solo: siempre trae a todo el equipo en copia." },
+    { id: "clock", icon: "⏰", name: "Reloj de fichar", where: "La Oficina · BoliBic Tag", world: 7, desc: "Patrulla los pasillos marcando la hora sin descanso.", attack: "Da vueltas por los pasillos y, cuando te ve, embiste a toda velocidad.", tip: "Un pisotón y se para el tiempo.", fun: "Ficha la entrada, la salida… y tu paciencia." },
+    { id: "meeting", icon: "📅", name: "Reunión de 5 minutos", where: "La Oficina · BoliBic Tag", world: 7, desc: "Te lanza invitaciones de calendario desde lejos.", attack: "Se queda a distancia y te dispara invitaciones de calendario que te frenan en seco.", tip: "Acércate entre invitación e invitación.", fun: "«Sólo son 5 minutos.» Nunca son 5 minutos." },
+    { id: "rival", icon: "🥊", name: "El compañero rival", where: "Coworking Fight", world: 6, desc: "Otro héroe de Clevergy, de la CPU o desde otro móvil.", attack: "Golpes, agarres y su poder especial. Cuanto más porcentaje de daño llevas, más lejos te manda volando.", tip: "Bloquea, esquiva y guarda el especial para rematar.", fun: "Puede ser la CPU… o el compañero de la mesa de al lado." },
+    { id: "boats", icon: "🚤", name: "Los rivales del pantano", where: "Pantano de San Juan", world: 8, desc: "Cinco motos de agua que no te dejarán ganar tan fácil.", attack: "Te lanzan emails y reuniones, dejan manchas de tinta en el agua y te cierran en las curvas.", tip: "Derrapa en las curvas para cargar turbo.", fun: "Los de atrás reciben mejores objetos: nunca te confíes yendo primero." },
+    { id: "datadis", icon: "🗄️", img: "/sprites/datadis/ready.png", name: "DATADIS", where: "Jefe · La Oficina", world: 1, boss: true, desc: "El proveedor de datos de consumo y nuestro peor enemigo, un monstruo de servidores y cables.", attack: "Aparece «en mantenimiento», te lanza el DNI por las dos caras, el CUPS, auditorías, cambia el proceso de la API (x20), te quita el acceso sin avisar… y se cae cuando menos lo esperas.", tip: "Salta sus pisotones, esquiva los requisitos y písale la cabeza cuando se le caiga la plataforma.", fun: "También te frena en La Integración, en el camino de Datadis de la ronda 2." },
+    { id: "inbox", icon: "📬", name: "INBOX INFINITO", where: "Jefe · BoliBic Tag", world: 7, boss: true, desc: "La bandeja de entrada hecha monstruo en la última oleada.", attack: "Una torre de sobres que salta por la terraza del CINK y suelta oleadas de emails mientras le quede vida.", tip: "Muévete sin parar y apunta al centro.", fun: "9.999+ sin leer. Y subiendo." }
   ];
   const ITEMS_DATA = [
     { icon: "☕", name: "Café", where: "Todos los mundos", desc: "Recupera un corazón (o da puntos extra si vas a tope)." },
@@ -758,7 +777,89 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
         ${e.tip ? `<div class="comp2-tip">💡 ${e.tip}</div>` : ""}
       </div>
     </article>`;
-  function renderCompendiumEnemies() { if (compEnemiesGrid) compEnemiesGrid.innerHTML = ENEMIES_DATA.map(miniCard).join(""); }
+  const enemyCard = (e) => `
+    <article class="comp2-enemy${e.boss ? " boss" : ""}" data-enemy="${e.id}" role="button" tabindex="0" aria-label="Ver ficha de ${e.name}">
+      <div class="comp2-enemy-av">${e.img ? `<img src="${e.img}" alt="">` : `<span>${e.icon}</span>`}</div>
+      <div class="comp2-enemy-txt">
+        <small>${e.boss ? "👑 JEFE · " : ""}${e.where}</small>
+        <h3>${e.name}</h3>
+        <p>${e.desc}</p>
+        <span class="comp2-go">Ver ficha →</span>
+      </div>
+    </article>`;
+  // las fotos de las poses se sacan con el render a boli la primera vez que se abre
+  let posesMod = null;
+  const loadPoses = async () => (posesMod ||= await import("../doodle/enemyPoses.js"));
+  function renderCompendiumEnemies() {
+    if (!compEnemiesGrid) return;
+    compEnemiesGrid.innerHTML = ENEMIES_DATA.map(enemyCard).join("");
+    loadPoses().then((m) => {
+      for (const e of ENEMIES_DATA) {
+        const poses = m.enemyPoses(e.id);
+        const av = compEnemiesGrid.querySelector(`[data-enemy="${e.id}"] .comp2-enemy-av`);
+        if (av && poses[0]) av.innerHTML = `<img src="${poses[0].src}" alt="">`;
+      }
+    }).catch(() => {});
+  }
+  compEnemiesGrid?.addEventListener("click", (e) => { const c = e.target.closest(".comp2-enemy"); if (c) openEnemyDetail(c.dataset.enemy); });
+  compEnemiesGrid?.addEventListener("keydown", (e) => { const c = e.target.closest(".comp2-enemy"); if (c && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openEnemyDetail(c.dataset.enemy); } });
+
+  // ── ficha de un enemigo: pose en grande, todas sus poses y cómo vencerle ──
+  let enemyDetailEl = null, enPrevScroll = 0;
+  async function openEnemyDetail(id) {
+    const e = ENEMIES_DATA.find((x) => x.id === id);
+    if (!e || !compEnemiesGrid) return;
+    if (!enemyDetailEl) {
+      enemyDetailEl = document.createElement("div");
+      enemyDetailEl.className = "comp2-edetail hidden";
+      compEnemiesGrid.after(enemyDetailEl);
+      enemyDetailEl.addEventListener("click", (ev) => {
+        const t = ev.target.closest("button");
+        if (!t) return;
+        if (t.classList.contains("en-back")) return closeEnemyDetail();
+        if (t.classList.contains("en-pose")) {
+          const big = enemyDetailEl.querySelector(".en-big img"), lab = enemyDetailEl.querySelector(".en-big-lab");
+          big.src = t.dataset.src; lab.textContent = t.dataset.label;
+          enemyDetailEl.querySelectorAll(".en-pose").forEach((b) => b.classList.toggle("on", b === t));
+          return;
+        }
+        if (t.classList.contains("en-other")) return openEnemyDetail(t.dataset.enemy);
+        if (t.classList.contains("en-world")) { closeEnemyDetail(); openWorldDetail(Number(t.dataset.world)); }
+      });
+    }
+    let poses = [];
+    try { poses = (await loadPoses()).enemyPoses(id); } catch (err) {}
+    const first = poses[0] || { src: e.img || "", label: e.name };
+    const w = VISIBLE_WORLDS.find((x) => x.id === e.world);
+    enemyDetailEl.innerHTML = `
+      <nav class="wd-crumbs"><button class="en-back wd-back">← Enemigos</button><span>›</span><b>${e.name}</b></nav>
+      <article class="en-card${e.boss ? " boss" : ""}">
+        <div class="en-side">
+          <figure class="en-big">${first.src ? `<img src="${first.src}" alt="${e.name}">` : `<span>${e.icon}</span>`}<figcaption class="en-big-lab">${first.label}</figcaption></figure>
+          ${poses.length > 1 ? `<div class="en-poses">${poses.map((p, i) => `<button class="en-pose${i === 0 ? " on" : ""}" data-src="${p.src}" data-label="${p.label}" title="${p.label}"><img src="${p.src}" alt=""><small>${p.label}</small></button>`).join("")}</div>` : ""}
+        </div>
+        <div class="en-body">
+          <small class="en-where">${e.boss ? "👑 JEFE · " : ""}${e.where}</small>
+          <h3>${e.icon} ${e.name}</h3>
+          <p>${e.desc}</p>
+          <h4>⚔️ Cómo ataca</h4><p>${e.attack}</p>
+          <h4>💡 Cómo vencerle</h4><p>${e.tip}</p>
+          <h4>😄 Curiosidad</h4><p>${e.fun}</p>
+          ${w ? `<button class="en-world" data-world="${w.id}" style="--acc:${w.color}">🗺️ Está en ${w.name} →</button>` : ""}
+          <div class="wd-others"><span>Otros enemigos:</span>${ENEMIES_DATA.filter((x) => x.id !== id).map((x) => `<button class="en-other wd-other" data-enemy="${x.id}">${x.icon} ${x.name}</button>`).join("")}</div>
+        </div>
+      </article>`;
+    if (!compendiumOv.classList.contains("en-mode")) enPrevScroll = compScrollEl ? compScrollEl.scrollTop : 0;
+    compendiumOv.classList.add("en-mode");
+    enemyDetailEl.classList.remove("hidden");
+    if (compScrollEl) compScrollEl.scrollTop = 0;
+  }
+  function closeEnemyDetail() {
+    if (!enemyDetailEl || !compendiumOv.classList.contains("en-mode")) return;
+    compendiumOv.classList.remove("en-mode");
+    enemyDetailEl.classList.add("hidden");
+    if (compScrollEl) compScrollEl.scrollTop = enPrevScroll;
+  }
   function renderCompendiumItems() { if (compItemsGrid) compItemsGrid.innerHTML = ITEMS_DATA.map(miniCard).join(""); }
 
   function openCompendium() {
@@ -767,8 +868,9 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
     renderCompendiumWorlds();
     renderCompendiumEnemies();
     renderCompendiumItems();
-    compendiumOv.classList.remove("wd-mode");
+    compendiumOv.classList.remove("wd-mode", "en-mode");
     if (worldDetailEl) worldDetailEl.classList.add("hidden");
+    if (enemyDetailEl) enemyDetailEl.classList.add("hidden");
     compendiumOv.classList.remove("hidden");
     const sc = document.getElementById("compScroll");
     if (sc) sc.scrollTop = 0;
@@ -787,6 +889,7 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
     const tabBtns = compendiumOv.querySelectorAll(".comp-tab-btn");
     tabBtns.forEach((btn) => btn.addEventListener("click", () => {
       if (compendiumOv.classList.contains("wd-mode")) closeWorldDetail();
+      if (compendiumOv.classList.contains("en-mode")) closeEnemyDetail();
       const sec = document.getElementById(`compTab-${btn.dataset.tab}`);
       if (sec && sc) sc.scrollTo({ top: sec.offsetTop - 6, behavior: "smooth" });
       sfx(600, 0.04);
@@ -804,7 +907,7 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
 
   if (btnOpenCompendium) btnOpenCompendium.addEventListener("click", openCompendium);
   // ↩ dentro de la página de un mundo vuelve a la lista; fuera, cierra la historia
-  if (btnCloseCompendium) btnCloseCompendium.addEventListener("click", () => (compendiumOv.classList.contains("wd-mode") ? closeWorldDetail() : closeCompendium()));
+  if (btnCloseCompendium) btnCloseCompendium.addEventListener("click", () => (compendiumOv.classList.contains("en-mode") ? closeEnemyDetail() : compendiumOv.classList.contains("wd-mode") ? closeWorldDetail() : closeCompendium()));
 
   // Start game from Menu: Opens the 5-World Adventure Map!
   function triggerStart() {

@@ -10,12 +10,18 @@ export async function onRequestGet({ env }) {
       });
     }
 
+    // el personaje que sale es siempre el de la cuenta (el "suyo"); con el que jugó va en `used`
     const { results } = await env.DB.prepare(
-      "SELECT * FROM leaderboard ORDER BY score DESC, time_seconds ASC LIMIT 800"
+      "SELECT l.*, u.character AS acct_char FROM leaderboard l LEFT JOIN users u ON u.id = l.user_id ORDER BY l.score DESC, l.time_seconds ASC LIMIT 800"
     ).all();
 
     // sin el id de Google: sólo lo necesario para pintar el ranking
-    const data = (results || []).map(({ user_id, ...row }) => ({ ...row, verified: !!user_id }));
+    const data = (results || []).map(({ user_id, acct_char, ...row }) => {
+      let stats = null;
+      try { stats = row.stats ? JSON.parse(row.stats) : null; } catch (e) {}
+      const used = (stats && stats.used) || row.character;
+      return { ...row, character: acct_char || row.character, char_name: acct_char && acct_char !== row.character ? "" : row.char_name, used, verified: !!user_id };
+    });
     return new Response(JSON.stringify({ success: true, data }), {
       headers: {
         "Content-Type": "application/json",
@@ -43,6 +49,11 @@ export async function onRequestPost({ request, env }) {
     const v = validateScore(body, user);
     if (!v.ok) return J({ success: false, error: v.error }, 400);
     const e = v.entry;
+    // con cuenta, el récord lleva su personaje; con cuál jugó se guarda en el detalle
+    if (user && user.character) {
+      if (e.character !== user.character) { e.stats = { ...(e.stats || {}), used: (e.stats && e.stats.used) || e.character }; e.char_name = ""; }
+      e.character = user.character;
+    }
     const who = e.user_id ? ["user_id = ?", e.user_id] : ["name = ? AND user_id IS NULL", e.name];
 
     // como mucho 4 envíos por minuto por jugador

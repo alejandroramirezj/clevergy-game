@@ -116,7 +116,10 @@ async function startGame(worldId) {
   stopMusic();
   fitCanvas();
   showLoading(true);
+  // sólo en La Oficina se cambia de personaje dentro del mundo; en los demás vas con el tuyo
+  document.body.classList.toggle("char-locked", worldId !== 1);
   const back = () => {
+    document.body.classList.remove("char-locked");
     doodle = null;
     showLoading(false);
     document.body.classList.remove("doodle-mode");
@@ -165,8 +168,10 @@ const sentBest = {};
 function reportScore(worldId, score, stats, rank) {
   if (!window.__cgAuth || !window.__cgAuth.user || score <= (sentBest[worldId] || 0)) return;
   sentBest[worldId] = score;
-  const c = CHARS[GameState.charIdx] || CHARS[0];
-  submitScore({ name: GameState.playerName, score: Math.round(score), character: c.id, char_name: c.name, time_seconds: (stats && stats.time) || 0, rank: rank || "", deaths: 0, world: worldId, stats });
+  // en el ranking sale siempre TU personaje (el de la cuenta); con el que jugaste va en el detalle
+  const played = CHARS[GameState.charIdx] || CHARS[0];
+  const mine = CHARS.find((x) => x.id === window.__cgAuth.user.character) || played;
+  submitScore({ name: GameState.playerName, score: Math.round(score), character: mine.id, char_name: mine.name, time_seconds: (stats && stats.time) || 0, rank: rank || "", deaths: 0, world: worldId, stats: { ...(stats || {}), used: played.id } });
 }
 
 // ¿Viene de un enlace/QR de personaje (/jose-luis)? Empieza con ese personaje
@@ -200,9 +205,10 @@ initDeckNav();
 // cuenta de Google (opcional): guarda progreso y ranking y fija "tu" personaje
 initAuth({ onCharChosen: (idx) => { switchToChar(idx); updateSpotlight(); worldMap.renderMap(); } });
 
+const charLocked = () => document.body.classList.contains("char-locked");
 initInput({
-  onSwitchChar: (dir) => { switchChar(dir); updateSpotlight(); worldMap.renderMap(); },
-  onSwitchSlot: (slotIdx) => { switchToChar(slotIdx); updateSpotlight(); worldMap.renderMap(); },
+  onSwitchChar: (dir) => { if (charLocked()) return; switchChar(dir); updateSpotlight(); worldMap.renderMap(); },
+  onSwitchSlot: (slotIdx) => { if (charLocked()) return; switchToChar(slotIdx); updateSpotlight(); worldMap.renderMap(); },
   onOpenMap: () => {
     if (doodle) return doodle.exit();
     worldMap.showWorldMap();

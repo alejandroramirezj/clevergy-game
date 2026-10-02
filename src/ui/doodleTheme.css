@@ -1729,3 +1729,57 @@ html body #menuOv .lobby-header-row { height: 96px !important; }
   html body #menuOv .dossier-power .dossier-skill { font-size: 16px !important; }
   html body #menuOv .dossier-power .dossier-lore { font-size: 14px !important; line-height: 1.25 !important; }
 }
+
+/* ════════════════ Historia · Enemigos: tarjetas grandes y ficha con sus poses ════════════════ */
+.comp2-cards#compEnemiesGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+.comp2-enemy { display: grid; grid-template-columns: 112px 1fr; gap: 12px; align-items: center; padding: 10px; background: #fff; border: 2.5px solid var(--nb-pen); border-radius: 16px 10px 18px 12px; box-shadow: 5px 6px 0 var(--nb-ink); cursor: pointer; transition: transform 0.12s, box-shadow 0.12s; }
+.comp2-enemy.boss { box-shadow: 5px 6px 0 var(--nb-red); background: #fff7f1; }
+.comp2-enemy:hover, .comp2-enemy:focus-visible { transform: translate(-2px, -3px) rotate(-0.4deg); box-shadow: 8px 10px 0 var(--nb-ink); outline: none; }
+.comp2-enemy.boss:hover { box-shadow: 8px 10px 0 var(--nb-red); }
+.comp2-enemy-av { height: 112px; display: grid; place-items: center; background: repeating-linear-gradient(transparent 0 11px, var(--nb-rule) 11px 12px), var(--nb-paper); border-radius: 12px; border: 2px dashed rgba(39, 42, 54, 0.25); overflow: hidden; }
+.comp2-enemy-av img { max-width: 100%; max-height: 104px; object-fit: contain; filter: drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff); }
+.comp2-enemy-av span { font-size: 54px; }
+.comp2-enemy-txt small { font: 12px var(--nb-hand); letter-spacing: 1px; color: var(--nb-red); }
+.comp2-enemy-txt h3 { margin: 2px 0 4px; font: 700 23px/1 var(--nb-title); color: var(--nb-ink); }
+.comp2-enemy-txt p { margin: 0 0 6px; font: 15px/1.25 var(--nb-hand); color: var(--nb-pen); }
+.comp2-enemy .comp2-go { --acc: var(--nb-red); }
+.comp2-edetail.hidden { display: none !important; }
+.comp2.en-mode .comp2-intro, .comp2.en-mode .comp2-sec:not(#compTab-enemies), .comp2.en-mode #compTab-enemies > .comp2-h, .comp2.en-mode #compEnemiesGrid, .comp2.en-mode .comp2-end { display: none !important; }
+.en-card { --acc: var(--nb-ink, #1f38b8); display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr); gap: 18px; align-items: start; padding: 14px; background: #fff; border: 2.5px solid var(--nb-pen); border-radius: 18px 11px 20px 13px; box-shadow: 6px 7px 0 var(--acc); }
+.en-card.boss { --acc: var(--nb-red, #d6243a); }
+.en-side { position: sticky; top: 6px; display: flex; flex-direction: column; gap: 10px; }
+.en-big { position: relative; margin: 0; height: 230px; display: grid; place-items: center; border: 3px solid var(--nb-pen); border-radius: 14px 9px 15px 10px; background: repeating-linear-gradient(transparent 0 15px, var(--nb-rule) 15px 16px), var(--nb-paper); overflow: hidden; }
+.en-big img { max-width: 92%; max-height: 196px; object-fit: contain; filter: drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(2px 2px 0 var(--nb-pen)); animation: en-bob 2.2s ease-in-out infinite; }
+.en-big span { font-size: 96px; }
+@keyframes en-bob { 50% { transform: translateY(-5px) rotate(-1deg); } }
+.en-big-lab { position: absolute; left: 8px; bottom: 6px; font: 17px var(--nb-hand); padding: 1px 10px; background: #fff; border: 2px solid var(--nb-pen); border-radius: 9px; color: var(--acc); }
+.en-poses { display: grid; grid-template-columns: repeat(auto-fill, minmax(74px, 1fr)); gap: 6px; }
+.en-pose { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px; background: #fff; border: 2px solid var(--nb-pen); border-radius: 10px 7px 11px 8px; cursor: pointer; }
+.en-pose img { width: 100%; height: 54px; object-fit: contain; }
+.en-pose small { font: 12px/1.05 var(--nb-hand); text-align: center; color: var(--nb-pen); }
+.en-pose.on { background: var(--acc); box-shadow: 2px 3px 0 var(--nb-pen); }
+.en-pose.on small { color: #fff; }
+.en-where { font: 13px var(--nb-hand); letter-spacing: 1px; color: var(--nb-red); }
+.en-body h3 { margin: 4px 0 6px; font: 700 clamp(30px, 5vw, 44px)/1 var(--nb-title); color: var(--nb-ink); }
+.en-body h4 { margin: 12px 0 4px; font: 19px var(--nb-hand); color: var(--acc); }
+.en-body p { margin: 0; font-size: 15px; line-height: 1.35; }
+.en-world { margin-top: 14px; font: 17px var(--nb-hand); color: #fff; background: var(--acc); padding: 6px 14px; border: 2.5px solid var(--nb-pen); border-radius: 12px 8px 13px 9px; box-shadow: 3px 4px 0 var(--nb-pen); cursor: pointer; }
+@media (orientation: landscape) and (max-height: 520px) {
+  .comp2-enemy { grid-template-columns: 90px 1fr; }
+  .comp2-enemy-av { height: 90px; }
+  .comp2-enemy-av img { max-height: 84px; }
+  .en-card { gap: 12px; padding: 10px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .en-big { height: 170px; }
+  .en-big img { max-height: 146px; }
+  .en-poses { grid-template-columns: repeat(auto-fill, minmax(62px, 1fr)); gap: 4px; }
+  .en-pose img { height: 42px; }
+  .en-body h3 { font-size: 28px; }
+  .en-body h4 { margin: 8px 0 2px; font-size: 16px; }
+  .en-body p { font-size: 13px; }
+}
+@media (orientation: portrait), (max-width: 560px) { .en-card { grid-template-columns: 1fr; } .en-side { position: static; } }
+
+/* en los mundos que no son La Oficina no se cambia de personaje: fuera las flechas del selector */
+body.char-locked .doodle-root .cf-arrow, body.char-locked #doodleRoot .cf-arrow { display: none !important; }
+.lb2-fun { margin: 4px 0 6px; padding: 4px 10px; font: 15px var(--nb-hand); color: var(--nb-pen); background: #fff8d6; border: 2px dashed var(--acc, #1f38b8); border-radius: 10px 7px 11px 8px; transform: rotate(-0.4deg); }
+.lb2-fun b { color: var(--acc, #1f38b8); }

@@ -15,7 +15,7 @@ export const SCORE_CAP = {
 export const RANKS = ["S", "A", "B", "C"];
 
 // detalle de la partida: sólo claves conocidas, números acotados o textos cortos
-const STAT_KEYS = ["coins", "frags", "stomps", "time", "zone", "won", "wave", "kills", "acc", "kos", "falls", "rivals", "place", "pos", "racers"];
+const STAT_KEYS = ["coins", "frags", "stomps", "time", "zone", "won", "wave", "kills", "acc", "kos", "falls", "rivals", "place", "pos", "racers", "used"]; // used = con qué personaje jugó
 export function cleanStats(raw) {
   if (!raw || typeof raw !== "object") return null;
   const out = {};
