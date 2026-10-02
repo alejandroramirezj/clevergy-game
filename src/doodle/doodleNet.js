@@ -12,17 +12,32 @@ const PREFIX = "clevergy-doodle-";
 export const MAX_PLAYERS = 20;
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ"; // sin números: no chocan con los atajos 1-2-3
 
+// ICE servers: STUN (descubrimiento) + TURN (relay para NAT de operador en móvil)
+// Open Relay Project — TURN público gratuito, puertos 80/443 para atravesar cualquier red móvil
+const TURN_SERVERS = [
+  {
+    urls: [
+      "turn:openrelay.metered.ca:80",
+      "turn:openrelay.metered.ca:80?transport=tcp",
+      "turn:openrelay.metered.ca:443",
+      "turn:openrelay.metered.ca:443?transport=tcp",
+      "turns:openrelay.metered.ca:443"
+    ],
+    username: "openrelayproject",
+    credential: "openrelayproject"
+  }
+];
+
 const PEER_OPTS = {
   debug: 1,
   config: {
     iceServers: [
       { urls: "stun:stun.l.google.com:19302" },
       { urls: "stun:stun1.l.google.com:19302" },
-      { urls: "stun:stun2.l.google.com:19302" },
-      { urls: "stun:stun3.l.google.com:19302" },
-      { urls: "stun:stun4.l.google.com:19302" },
-      { urls: "stun:stun.cloudflare.com:3478" }
-    ]
+      { urls: "stun:stun.cloudflare.com:3478" },
+      ...TURN_SERVERS
+    ],
+    iceCandidatePoolSize: 10
   }
 };
 
@@ -117,56 +132,83 @@ export function createNet({ prefix = PREFIX, maxPlayers = MAX_PLAYERS } = {}) {
     net.isHost = false;
     net.code = code;
     net.hostId = prefix + code;
+
     return new Promise((resolve, reject) => {
       let done = false;
+      let attempts = 0;
+      const MAX_ATTEMPTS = 4;      // reintenta hasta 4 veces (peer-unavailable puede ser transitorio)
+      const RETRY_DELAY = 1500;    // ms entre reintentos
+      const GLOBAL_TIMEOUT = 20000;
+
       const fail = (msg) => {
         if (!done) {
           done = true;
-          clearTimeout(timer);
+          clearTimeout(globalTimer);
           destroy();
           reject(new Error(msg));
         }
       };
-      const timer = setTimeout(() => fail("No se pudo conectar con la sala (tiempo de espera agotado)"), 15000);
 
-      const peer = new Peer(PEER_OPTS);
-      net.peer = peer;
+      const globalTimer = setTimeout(
+        () => fail("No se pudo conectar con la sala (tiempo de espera agotado)"),
+        GLOBAL_TIMEOUT
+      );
 
-      peer.on("open", (id) => {
-        net.myId = id;
-        const conn = peer.connect(net.hostId, { reliable: true });
-        wire(conn);
+      function attempt() {
+        if (done) return;
+        attempts++;
 
-        conn.on("open", () => {
-          net.conns.set(conn.peer, conn);
-          if (!done) {
-            done = true;
-            clearTimeout(timer);
-            resolve(id);
+        // Destruir peer anterior sin marcar done
+        if (net.peer) { try { net.peer.destroy(); } catch (e) {} net.peer = null; net.myId = null; }
+
+        const peer = new Peer(PEER_OPTS);
+        net.peer = peer;
+
+        peer.on("open", (id) => {
+          net.myId = id;
+          const conn = peer.connect(net.hostId, { reliable: true });
+          wire(conn);
+
+          conn.on("open", () => {
+            net.conns.set(conn.peer, conn);
+            if (!done) {
+              done = true;
+              clearTimeout(globalTimer);
+              resolve(id);
+            }
+          });
+
+          conn.on("error", (err) => {
+            const detail = err?.type === "negotiation-failed"
+              ? "Fallo al negociar la conexión P2P con el anfitrión"
+              : (err?.message || "Error al conectar con la sala");
+            fail(detail);
+          });
+
+          conn.on("close", () => {
+            if (!done) fail("La sala se cerró antes de completar la conexión");
+          });
+        });
+
+        peer.on("error", (err) => {
+          if (done) return;
+          if (err.type === "peer-unavailable") {
+            // Puede ser transitorio si el host acaba de abrirse: reintentar
+            if (attempts < MAX_ATTEMPTS) {
+              try { peer.destroy(); } catch (e) {}
+              setTimeout(attempt, RETRY_DELAY);
+            } else {
+              fail(`No se ha encontrado ninguna sala con el código ${code}. Comprueba el código e inténtalo de nuevo.`);
+            }
+          } else if (err.type === "network" || err.type === "server-error" || err.type === "socket-error") {
+            fail("Error de conexión con el servidor de salas. Comprueba tu internet.");
+          } else {
+            fail(`Error de conexión: ${err.type || err.message || "desconocido"}`);
           }
         });
+      }
 
-        conn.on("error", (err) => {
-          const detail = err?.type === "negotiation-failed"
-            ? "Fallo al negociar la conexión P2P con el anfitrión"
-            : (err?.message || "Error al conectar con la sala");
-          fail(detail);
-        });
-
-        conn.on("close", () => {
-          if (!done) fail("La sala se cerró antes de completar la conexión");
-        });
-      });
-
-      peer.on("error", (err) => {
-        if (err.type === "peer-unavailable") {
-          fail(`No existe ninguna sala con el código ${code}`);
-        } else if (err.type === "network" || err.type === "server-error" || err.type === "socket-error") {
-          fail("Error de conexión con el servidor de salas");
-        } else {
-          fail(`Error de conexión: ${err.type || err.message || "desconocido"}`);
-        }
-      });
+      attempt();
     });
   }
 
