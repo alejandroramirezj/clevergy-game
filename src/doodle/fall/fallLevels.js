@@ -239,8 +239,8 @@ function level2(K, seed) {
     { id: "f2", alts: [{ segs: [W(aseme)], w: 1 }, { segs: [W(ufd)], w: 1 }, { segs: [W(line(-13.5, 59, -13.5, 81, 3))], w: 1, dead: "fall", z0: 58, z1: 82 }] },
     W([{ x: -18.5, z: 84 }]), W(eredes), W(line(-18.5, 114, -14, 119, 3))];
   const datadis = [W(line(0, 14, 0, 119, 3).map((p, i) => ({ ...p, x: p.z > 64 && p.z < 75 ? 0 : (i % 3 - 1) * 1.6 })))];
-  const api = [W([{ x: 17, z: 15 }]), W(tok.map((s) => ({ x: (s.x0 + s.x1) / 2, z: s.z0 + 1.3 }))), W([{ x: 17, z: 42 }]),
-    W(pag.map((s) => ({ x: 17, z: s.bz, follow: s }))), W([{ x: 17, z: 72 }, { x: 17, z: 76 }, { x: 17, z: 80 }, { x: 17, z: 84 }, { x: 17, z: 88.5 }, { x: 17, z: 93.5 }]), W(line(17, 105, 17, 119, 3))];
+  const api = [W([{ x: 17, z: 15 }]), W(tok.map((s) => ({ x: (s.x0 + s.x1) / 2, z: s.z0 + 1.3, blink: s }))), W([{ x: 17, z: 42 }]),
+    W(pag.map((s) => ({ x: 17, z: s.z0 + 0.6, follow: s }))), W([{ x: 17, z: 72 }, { x: 17, z: 76 }, { x: 17, z: 80 }, { x: 17, z: 84 }, { x: 17, z: 88.5 }, { x: 17, z: 93.5 }]), W(line(17, 105, 17, 119, 3))];
   return {
     key: "consumo", num: 2, title: "Consigue el consumo", subtitle: "Datadis, FTP de la distribuidora o API: tú eliges",
     checklist: ["Fuente de datos", "Consumo"],

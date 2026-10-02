@@ -73,6 +73,15 @@ export function createSim(E) {
     let tx = wpX(w) + b.lane * (w.follow ? 0.3 : 0.9), tz = w.z;
     // plataformas que se mueven / que desaparecen: espera a que lleguen
     let waiting = false;
+    // waypoint directo sobre plataforma blink (ej: tokens del camino API)
+    if (w.blink && !w.follow) {
+      const s = w.blink;
+      const near = s.z0 - c.z < 5;
+      if (near && s.blink) {
+        const bl = s.blink, per = bl.on + bl.off, k = (((E.t + 0.5 + bl.ph) % per) + per) % per;
+        if (!s.active || k > bl.on - 0.4) { tz = c.z; tx = wpX(w); waiting = true; }
+      }
+    }
     if (w.follow && c.ground && c.ground !== w.follow) {
       const s = w.follow;
       // dónde estará la plataforma cuando aterrice (~0,6 s)
@@ -83,8 +92,8 @@ export function createSim(E) {
       // columnas que suben y bajan: espera a que estén a tiro de salto
       if (near && s.move && s.by + s.move(E.t + 0.5).y > c.y + 1.3) { tz = c.z; tx = c.x; waiting = true; }
       if (near && s.blink) {
-        const b = s.blink, per = b.on + b.off, k = (((E.t + 0.5 + b.ph) % per) + per) % per;
-        if (!s.active || k > b.on - 0.3) { tz = c.z; tx = c.x; waiting = true; }
+        const bl = s.blink, per = bl.on + bl.off, k = (((E.t + 0.5 + bl.ph) % per) + per) % per;
+        if (!s.active || k > bl.on - 0.3) { tz = c.z; tx = c.x; waiting = true; }
       }
     }
     // barreras que se abren y cierran: espera delante mientras estén cerradas (o a punto de cerrarse)
