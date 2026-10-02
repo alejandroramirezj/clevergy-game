@@ -1,1 +1,0 @@
-const a=typeof navigator<"u"&&"vibrate"in navigator&&!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches);let t=0;function o(n=18){if(!a)return;const e=performance.now();if(!(e-t<60)){t=e;try{navigator.vibrate(n)}catch{}}}export{o as b};

@@ -19,6 +19,7 @@ import { setInPlay } from "../game/state.js";
 import { createNet, randomCode, cleanCode, MAX_PLAYERS } from "./doodleNet.js";
 import { CHARS } from "../config/characters.js";
 import { getCharacterAvatar } from "../engine/sprites.js";
+import { buzz } from "./haptics.js";
 import "./doodle.css";
 import "./fight/fight.css";
 import "./race/race.css";

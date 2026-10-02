@@ -104,12 +104,17 @@ const WORLD_LOADERS = {
 };
 
 let doodle = null;
+let _startGameLock = false; // guard: evita doble-arranque simultáneo
 function hideMenus() {
   for (const id of ["menuOv", "worldMapOv", "bootOv", "lbOv", "ctrlOv", "compendiumOv"]) document.getElementById(id)?.classList.add("hidden");
 }
 async function startGame(worldId) {
   const W = WORLD_LOADERS[worldId];
   if (!W) return;
+  // Guard: si ya hay una carga en curso, no lanzar otra
+  if (_startGameLock) { console.warn("startGame: carga en curso, ignorando"); return; }
+  _startGameLock = true;
+
   hideMenus();
   GameState.worldMapOpen = false;
   GameState.currentWorld = worldId;
@@ -124,7 +129,12 @@ async function startGame(worldId) {
   const gbTB = document.getElementById("gbTouchBarContainer");
   if (gbTB) gbTB.style.display = (worldId === 1) ? "" : "none";
   setInPlay(false); // todos los mundos empiezan en su pantalla de lobby o presentación a pantalla completa táctil
+
+  let backCalled = false; // idempotente: back() sólo actúa una vez
   const back = () => {
+    if (backCalled) return;
+    backCalled = true;
+    _startGameLock = false;
     setInPlay(false);
     document.body.classList.remove("char-locked", "world-office");
     const tb = document.getElementById("gbTouchBarContainer");
@@ -136,8 +146,14 @@ async function startGame(worldId) {
     fitCanvas();
     worldMap.showWorldMap();
   };
+
   try {
-    const mod = await W.load();
+    // Timeout de 20 s: si el módulo no carga (red lenta / service worker atascado)
+    const timeout = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Timeout cargando el mundo (20 s)")), 20000)
+    );
+    const mod = await Promise.race([W.load(), timeout]);
+    _startGameLock = false; // módulo cargado: liberar el lock, el mundo tiene su propio ciclo
     doodle = W.start(mod, {
       char: CHARS[GameState.charIdx] || CHARS[0],
       getChar: () => CHARS[GameState.charIdx],
@@ -164,8 +180,22 @@ function showLoading(on) {
   }
   if (!on && el) el.remove();
 }
-// cuando el mundo 3D ya ha montado su pantalla, se quita la de carga
-new MutationObserver(() => { if (document.getElementById("doodleRoot")) showLoading(false); }).observe(document.getElementById("wrap") || document.body, { childList: true });
+// cuando el mundo 3D ya ha montado su pantalla, se quita la de carga.
+// Usamos un observer que se desconecta en cuanto cumple su misión para no
+// seguir ejecutándose durante toda la partida con cada mutación de DOM.
+const _loadingObserver = new MutationObserver(() => {
+  if (document.getElementById("doodleRoot")) {
+    showLoading(false);
+    _loadingObserver.disconnect();
+    // Re-arm para la próxima carga de mundo
+    _armLoadingObserver();
+  }
+});
+function _armLoadingObserver() {
+  const target = document.getElementById("wrap") || document.body;
+  _loadingObserver.observe(target, { childList: true });
+}
+_armLoadingObserver();
 
 // al ganar: guarda el progreso local (retos)
 function recordWorld(worldId, score, rank) {

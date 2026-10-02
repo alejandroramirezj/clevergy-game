@@ -301,10 +301,17 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
   });
 
   // Stumble Lobby Character Render Loop
+  // El bucle se pausa cuando el menú está oculto para no quemar CPU/GPU
+  // durante la partida. Se re-arranca al volver al menú.
   let lastLobbyFrame = performance.now();
+  let _lobbyRafId = null;
+
   function renderLobbyHero(now) {
-    requestAnimationFrame(renderLobbyHero);
-    if (!menuOv || menuOv.classList.contains("hidden")) return;
+    if (!menuOv || menuOv.classList.contains("hidden")) {
+      _lobbyRafId = null; // el bucle queda parado; se re-arrancará al abrir el menú
+      return;
+    }
+    _lobbyRafId = requestAnimationFrame(renderLobbyHero);
     if (!stumbleHeroCtx || !stumbleHeroCanvas) return;
 
     const dt = Math.min(0.1, (now - lastLobbyFrame) / 1000);
@@ -421,7 +428,23 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
 
     ctx.restore();
   }
-  requestAnimationFrame(renderLobbyHero);
+
+  // Arrancar el bucle (sólo si no está ya corriendo)
+  function startLobbyLoop() {
+    if (_lobbyRafId) return;
+    lastLobbyFrame = performance.now();
+    _lobbyRafId = requestAnimationFrame(renderLobbyHero);
+  }
+  startLobbyLoop();
+
+  // Re-arrancar el bucle cada vez que el menú vuelva a ser visible
+  // (cuando el usuario vuelve de una partida o de un modal)
+  if (menuOv) {
+    new MutationObserver(() => {
+      if (!menuOv.classList.contains("hidden")) startLobbyLoop();
+    }).observe(menuOv, { attributes: true, attributeFilter: ["class"] });
+  }
+
   updateSpotlight();
 
   const btnOpenMapMenu = document.getElementById("btnOpenMapMenu");
