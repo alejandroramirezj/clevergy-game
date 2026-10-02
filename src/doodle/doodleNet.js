@@ -12,14 +12,18 @@ const PREFIX = "clevergy-doodle-";
 export const MAX_PLAYERS = 20;
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ"; // sin números: no chocan con los atajos 1-2-3
 
-// ICE servers: STUN (descubrimiento) + TURN (relay para NAT de operador en móvil)
-// Open Relay Project — TURN público gratuito, puertos 80/443 para atravesar cualquier red móvil
-const TURN_SERVERS = [
+// ─── ICE servers ────────────────────────────────────────────────────────────
+// El Worker /api/turn-credentials genera credenciales TURN de corta duración
+// usando Cloudflare Realtime TURN (red Anycast global).
+// Si el Worker no está disponible, usamos Open Relay como fallback.
+
+const FALLBACK_ICE = [
+  { urls: "stun:stun.cloudflare.com:3478" },
+  { urls: "stun:stun.l.google.com:19302" },
   {
     urls: [
       "turn:openrelay.metered.ca:80",
       "turn:openrelay.metered.ca:80?transport=tcp",
-      "turn:openrelay.metered.ca:443",
       "turn:openrelay.metered.ca:443?transport=tcp",
       "turns:openrelay.metered.ca:443"
     ],
@@ -28,21 +32,36 @@ const TURN_SERVERS = [
   }
 ];
 
-const PEER_OPTS = {
-  debug: 1,
-  config: {
-    iceServers: [
-      { urls: "stun:stun.l.google.com:19302" },
-      { urls: "stun:stun1.l.google.com:19302" },
-      { urls: "stun:stun.cloudflare.com:3478" },
-      ...TURN_SERVERS
-    ],
-    iceCandidatePoolSize: 10
+let _cachedIce = null; // cache de sesión para no repetir el fetch
+
+async function getIceServers() {
+  if (_cachedIce) return _cachedIce;
+  try {
+    const r = await fetch("/api/turn-credentials", { signal: AbortSignal.timeout(4000) });
+    if (r.ok) {
+      const data = await r.json();
+      if (Array.isArray(data.iceServers) && data.iceServers.length) {
+        _cachedIce = data.iceServers;
+        return _cachedIce;
+      }
+    }
+  } catch (e) {
+    console.warn("[doodleNet] No se pudo obtener TURN de CF, usando fallback:", e.message);
   }
-};
+  _cachedIce = FALLBACK_ICE;
+  return _cachedIce;
+}
+
+function makePeerOpts(iceServers) {
+  return {
+    debug: 1,
+    config: { iceServers, iceCandidatePoolSize: 10 }
+  };
+}
 
 export const randomCode = () => Array.from({ length: 5 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join("");
 export const cleanCode = (s) => String(s || "").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 5);
+
 
 // `prefix` separa los juegos (shooter / pelea) en el servidor de señalización
 export function createNet({ prefix = PREFIX, maxPlayers = MAX_PLAYERS } = {}) {
@@ -71,10 +90,11 @@ export function createNet({ prefix = PREFIX, maxPlayers = MAX_PLAYERS } = {}) {
     conn.on("error", gone);
   }
 
-  function host(code) {
+  async function host(code) {
     destroy();
     net.isHost = true;
     net.code = code;
+    const iceServers = await getIceServers();
     return new Promise((resolve, reject) => {
       let opened = false;
       const timer = setTimeout(() => {
@@ -84,7 +104,7 @@ export function createNet({ prefix = PREFIX, maxPlayers = MAX_PLAYERS } = {}) {
         }
       }, 10000);
 
-      const peer = new Peer(prefix + code, PEER_OPTS);
+      const peer = new Peer(prefix + code, makePeerOpts(iceServers));
       net.peer = peer;
 
       peer.on("open", (id) => {
@@ -127,11 +147,13 @@ export function createNet({ prefix = PREFIX, maxPlayers = MAX_PLAYERS } = {}) {
     });
   }
 
-  function join(code) {
+
+  async function join(code) {
     destroy();
     net.isHost = false;
     net.code = code;
     net.hostId = prefix + code;
+    const iceServers = await getIceServers();
 
     return new Promise((resolve, reject) => {
       let done = false;
@@ -161,7 +183,7 @@ export function createNet({ prefix = PREFIX, maxPlayers = MAX_PLAYERS } = {}) {
         // Destruir peer anterior sin marcar done
         if (net.peer) { try { net.peer.destroy(); } catch (e) {} net.peer = null; net.myId = null; }
 
-        const peer = new Peer(PEER_OPTS);
+        const peer = new Peer(makePeerOpts(iceServers));
         net.peer = peer;
 
         peer.on("open", (id) => {
