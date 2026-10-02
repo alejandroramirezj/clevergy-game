@@ -91,9 +91,26 @@ body.gameboy-mode .pf-score { top: 40px; font-size: 26px; }
 .pf-help-box summary::after { content: " ▾"; }
 .pf-help-box[open] summary::after { content: " ▴"; }
 .pf-help-box .pf-howto { margin-top: 6px; font-size: 14px; }
+.pf-picker { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 2px 0 4px; }
+.pf-picker .pf-preview { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.pf-picker .pf-sticker { height: 68px !important; max-width: 100%; object-fit: contain; }
+.pf-picker .pf-pname { font-family: "Caveat", cursive; font-size: 22px; color: var(--dd-ink); line-height: 1; margin-top: 2px; }
+.pf-picker .pf-arrow {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 50% !important;
+  border: 2.5px solid var(--dd-black) !important;
+  background: #fff !important;
+  font-size: 14px !important;
+  cursor: pointer !important;
+  display: grid !important;
+  place-items: center !important;
+  box-shadow: 2px 3px 0 var(--dd-black) !important;
+  flex: 0 0 auto !important;
+}
+.pf-picker .pf-arrow:active { transform: translate(1px, 2px); box-shadow: 1px 1px 0 var(--dd-black) !important; }
 .pf-playcol { align-items: stretch; justify-content: center; gap: 8px; }
-.pf-playcol .pf-preview { text-align: center; }
-.pf-playcol .pf-pspecial { font-size: 14px; line-height: 1.25; letter-spacing: 0; }
+.pf-playcol .pf-pspecial { font-size: 13px; line-height: 1.2; opacity: 0.85; max-width: 260px; text-align: center; margin: 0 auto; }
 .pf-actions { display: flex; gap: 8px; }
 .pf-actions .dd-btn { flex: 1; font-size: 26px; padding: 8px 10px; }
 .pf-actions .pf-continue { font-size: 18px; background: var(--dd-paper); color: var(--dd-ink); }
