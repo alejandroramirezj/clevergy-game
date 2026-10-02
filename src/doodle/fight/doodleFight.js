@@ -206,7 +206,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
 
   // ── red ──
   const net = createNet({ prefix: "clevergy-brawl-", maxPlayers: MAX_F });
-  const online = { on: false, slots: [], lastRx: new Map(), pingT: 0, sendT: 0 };
+  const online = { on: false, slots: [], lastRx: new Map(), pingT: 0, sendT: 0, lastTick: 0 };
   const isAuthority = () => mode === "cpu" || net.isHost;
   const tx = (msg) => (net.isHost ? net.broadcast(msg) : net.send(msg));
   const RELAY = new Set(["st", "mv", "proj", "pgone", "ko", "throw"]);
@@ -1201,6 +1201,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
   function matchEnded(m) {
     if (phase === "over") return;
     phase = "over";
+    M.events = []; // si acaba antes de terminar la cuenta atrás, que no salga «¡A PELEAR!» encima
     M.frozenTime = Math.max(0, MATCH_TIME - (hostNow() - M.fightAt) / 1000);
     const w = F[m.order[0]];
     if (w && w.ctrl !== "remote") { w.state = "win"; w.move = null; }
@@ -1277,6 +1278,10 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
   function netTick(dt) {
     if (!online.on) return;
     const now = performance.now();
+    // si el que se ha congelado somos nosotros (app en segundo plano, carga pesada), los mensajes
+    // de los demás aún esperan en cola: no es culpa suya, les damos otros 6 s de margen
+    if (now - online.lastTick > 1500) for (const id of online.lastRx.keys()) online.lastRx.set(id, now);
+    online.lastTick = now;
     online.pingT -= dt;
     if (online.pingT <= 0) { online.pingT = 0.7; tx({ t: "ping", c: now }); }
     if (screen !== "match" && screen !== "end") return;

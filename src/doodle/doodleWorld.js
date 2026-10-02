@@ -1949,7 +1949,7 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
 
   P.pos.set(START.x, START.y, START.z);
   P.yaw = START.yaw;
-  if (import.meta.env && import.meta.env.DEV) window.__doodle = { P, G, mp, net, input, scene, camera, shadow, sticker, get enemies() { return enemies; }, get state() { return state; }, get noLock() { return noLock; } };
+  if (import.meta.env && import.meta.env.DEV) window.__doodle = { P, G, mp, net, input, scene, camera, shadow, sticker, hitEnemy: (e, d) => damageEnemy(e, d, null, null), get enemies() { return enemies; }, get state() { return state; }, get noLock() { return noLock; } };
   let raf = 0, prev = performance.now(), acc = 0, wall = 0;
   let lastRaf = performance.now();
   let lastHello = -99;
