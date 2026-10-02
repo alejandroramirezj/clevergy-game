@@ -650,7 +650,7 @@ export function startDoodleFall({ charId, onPickChar, onExit, onVictory, onScore
   net.on("voice", (m, from) => {
     const c = byId(m.id);
     const charId = c ? (c.c || c.char) : m.charId;
-    speakCharacter(charId, { force: true, phrase: m.phrase });
+    speakCharacter(charId, { force: true, phrase: m.phrase, sillyVoice: m.sillyVoice });
     if (net.isHost) net.broadcast(m, from);
   });
   net.on("_leave", (m, id) => {
@@ -971,8 +971,8 @@ export function startDoodleFall({ charId, onPickChar, onExit, onVictory, onScore
     const nearAlvaro = isAlvaroNear();
     speakCharacter(cId, {
       nearAlvaro,
-      onBroadcast: ({ phrase }) => {
-        tx({ t: "voice", id: myId(), charId: cId, phrase });
+      onBroadcast: ({ phrase, sillyVoice }) => {
+        tx({ t: "voice", id: myId(), charId: cId, phrase, sillyVoice });
       }
     });
   }

@@ -98,6 +98,7 @@ const TEMPLATE = `
     <div class="cf-col cf-pickcol">
       <div class="dd-kicker">MUNDO 3 · TODOS CONTRA TODOS</div>
       <h1 class="cf-title">Coworking Fight</h1>
+      <div class="cf-pick-tag">👑 1. Tu personaje</div>
       <div class="cf-picker">
         <button class="cf-arrow" data-d="-1" aria-label="Anterior">◀</button>
         <div class="cf-preview"><img class="cf-sticker" alt=""><div class="cf-pname"></div><div class="cf-pspecial"></div></div>
@@ -105,16 +106,27 @@ const TEMPLATE = `
       </div>
     </div>
     <div class="cf-col cf-modecol">
-      <div class="sb-cpubox">
+      <div class="ds-tabs cf-tabs" role="tablist">
+        <button class="ds-tab on cf-tab-btn" data-tab="cpu" role="tab">🤖 Solo vs CPU</button>
+        <button class="ds-tab cf-tab-btn" data-tab="online" role="tab">👥 Online</button>
+      </div>
+      <div class="sb-cpubox cf-mode-panel cf-panel-cpu">
         <div class="sb-cpurow"><span>🤖 Rivales CPU</span>
-          <div class="sb-seg" role="group"><button data-n="1">1</button><button data-n="2">2</button><button data-n="3" class="on">3</button></div>
+          <div class="sb-seg sb-cpunum" role="group"><button data-n="1">1</button><button data-n="2">2</button><button data-n="3" class="on">3</button></div>
         </div>
         <div class="sb-cpurow"><span>🎚️ Dificultad</span>
           <div class="sb-seg sb-diff" role="group"><button data-d="0">Fácil</button><button data-d="1" class="on">Normal</button><button data-d="2">Difícil</button></div>
         </div>
+        <div class="cf-rivals-box">
+          <div class="cf-rivals-header">
+            <span class="cf-rivals-title">⚔️ 2. Elige a tus rivales</span>
+            <button class="cf-rivals-rand-all" type="button" title="Poner todos en aleatorio">🎲 Todos aleatorios</button>
+          </div>
+          <div class="cf-rivals-list"></div>
+        </div>
         <button class="dd-btn cf-cpu">¡A pelear!</button>
       </div>
-      <div class="dd-mp cf-online">
+      <div class="dd-mp cf-online cf-mode-panel cf-panel-online hidden">
         <div class="dd-mp-head">📱 <b>Online</b> <small>hasta 4 compañeros</small></div>
         <div class="dd-mp-row cf-lobbyrow">
           <button class="dd-btn dd-mini cf-create">Crear sala</button>
@@ -1418,7 +1430,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
   net.on("voice", (m, from) => {
     const f = F[m.s];
     const charId = f ? f.char.id : m.charId;
-    speakCharacter(charId, { force: true, phrase: m.phrase });
+    speakCharacter(charId, { force: true, phrase: m.phrase, sillyVoice: m.sillyVoice });
     if (net.isHost) relay(m, from);
   });
   net.on("_leave", (m, from) => {
@@ -1447,6 +1459,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
       await net.host(randomCode());
       online.on = true; clock.offset = 0; online.lastRx.clear();
       mode = "online";
+      switchToOnlineTab();
       online.slots = [{ c: myChar, id: net.myId, cpu: false }];
       renderRoom();
       setStatus("Comparte el código. Añade CPUs si sois pocos.");
@@ -1460,6 +1473,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
       await net.join(code);
       online.on = true; clock.samples = []; online.lastRx.clear();
       mode = "online";
+      switchToOnlineTab();
       online.slots = [];
       online.lastRx.set(net.hostId, performance.now());
       tx({ t: "hello", c: myChar });
@@ -1520,21 +1534,122 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
     root.querySelectorAll(".sb-diff button").forEach((x) => x.classList.toggle("on", x === b));
     audio.init(); audio.tone({ freq: 500 + Number(b.dataset.d) * 200, dur: 0.05, type: "triangle", gain: 0.08 });
   }));
-  root.querySelectorAll(".sb-seg:not(.sb-diff) button").forEach((b) => b.addEventListener("click", () => {
+  root.querySelectorAll(".sb-seg.sb-cpunum button").forEach((b) => b.addEventListener("click", () => {
     cpuCount = Number(b.dataset.n);
-    root.querySelectorAll(".sb-seg:not(.sb-diff) button").forEach((x) => x.classList.toggle("on", x === b));
+    root.querySelectorAll(".sb-seg.sb-cpunum button").forEach((x) => x.classList.toggle("on", x === b));
+    renderRivals();
     audio.init();
     audio.tone({ freq: 600 + cpuCount * 120, dur: 0.05, type: "triangle", gain: 0.08 });
   }));
+
+  // ── selección de rivales CPU (específicos o aleatorios) ──
+  let cpuRivalPicks = ["random", "random", "random"];
+  const RIVAL_OPTIONS = ["random", ...CHARS.map((c) => c.id)];
+
+  function renderRivals() {
+    const listEl = $(".cf-rivals-list");
+    if (!listEl) return;
+    listEl.innerHTML = "";
+    for (let i = 0; i < cpuCount; i++) {
+      const pick = cpuRivalPicks[i] || "random";
+      const isRand = pick === "random";
+      const charObj = !isRand ? charById(pick) : null;
+      const row = document.createElement("div");
+      row.className = "cf-rival-item";
+      row.innerHTML = `
+        <span class="cf-rival-badge">Rival ${i + 1}</span>
+        <div class="cf-rival-ctrl">
+          <button class="cf-rival-btn cf-rival-prev" data-slot="${i}" aria-label="Rival anterior">◀</button>
+          <div class="cf-rival-info" data-slot="${i}" title="Pulsa para cambiar personaje">
+            <span class="cf-rival-emoji">${isRand ? "🎲" : charObj.emoji}</span>
+            <span class="cf-rival-name">${isRand ? "Aleatorio" : charObj.name}</span>
+          </div>
+          <button class="cf-rival-btn cf-rival-next" data-slot="${i}" aria-label="Rival siguiente">▶</button>
+        </div>
+      `;
+
+      const changeSlot = (delta) => {
+        let curIdx = RIVAL_OPTIONS.indexOf(cpuRivalPicks[i]);
+        if (curIdx === -1) curIdx = 0;
+        curIdx = (curIdx + delta + RIVAL_OPTIONS.length) % RIVAL_OPTIONS.length;
+        cpuRivalPicks[i] = RIVAL_OPTIONS[curIdx];
+        renderRivals();
+        audio.init();
+        audio.tone({ freq: 640 + i * 40, dur: 0.04, type: "triangle", gain: 0.07 });
+      };
+
+      row.querySelector(".cf-rival-prev").addEventListener("click", (e) => {
+        e.preventDefault(); e.stopPropagation();
+        changeSlot(-1);
+      });
+      row.querySelector(".cf-rival-next").addEventListener("click", (e) => {
+        e.preventDefault(); e.stopPropagation();
+        changeSlot(1);
+      });
+      row.querySelector(".cf-rival-info").addEventListener("click", (e) => {
+        e.preventDefault(); e.stopPropagation();
+        changeSlot(1);
+      });
+
+      listEl.appendChild(row);
+    }
+  }
+
+  $(".cf-rivals-rand-all")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    cpuRivalPicks = ["random", "random", "random"];
+    renderRivals();
+    audio.init();
+    audio.tone({ freq: 560, dur: 0.06, type: "sine", gain: 0.08 });
+  });
+
+  renderRivals();
+
+  // ── pestañas Solo vs CPU / Online ──
+  root.querySelectorAll(".cf-tab-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const tab = btn.dataset.tab;
+      root.querySelectorAll(".cf-tab-btn").forEach((b) => b.classList.toggle("on", b === btn));
+      $(".cf-panel-cpu").classList.toggle("hidden", tab !== "cpu");
+      $(".cf-panel-online").classList.toggle("hidden", tab !== "online");
+      audio.init();
+      audio.tone({ freq: 600, dur: 0.04, type: "sine", gain: 0.06 });
+    });
+  });
+
+  function switchToOnlineTab() {
+    root.querySelectorAll(".cf-tab-btn").forEach((b) => b.classList.toggle("on", b.dataset.tab === "online"));
+    $(".cf-panel-cpu").classList.add("hidden");
+    $(".cf-panel-online").classList.remove("hidden");
+  }
+
   function cpuSlots() {
     const used = new Set([myChar]);
-    const slots = [{ c: myChar, id: null, cpu: false }];
+    const slots = [{ c: myChar, id: null, cpu: false, slotIdx: 0 }];
+
+    // 1. Asignar los rivales con personaje elegido específicamente
+    const pending = [];
     for (let i = 0; i < cpuCount; i++) {
-      const pool = CHARS.filter((c) => !used.has(c.id));
-      const c = pool[Math.floor(Math.random() * pool.length)] || CHARS[i];
-      used.add(c.id);
-      slots.push({ c: c.id, id: null, cpu: true });
+      const pick = cpuRivalPicks[i];
+      if (pick && pick !== "random") {
+        used.add(pick);
+        slots.push({ c: pick, id: null, cpu: true, slotIdx: i + 1 });
+      } else {
+        pending.push(i);
+      }
     }
+
+    // 2. Rellenar los aleatorios con personajes no repetidos en la medida de lo posible
+    for (const i of pending) {
+      const pool = CHARS.filter((c) => !used.has(c.id));
+      const c = pool.length > 0
+        ? pool[Math.floor(Math.random() * pool.length)]
+        : CHARS[Math.floor(Math.random() * CHARS.length)];
+      used.add(c.id);
+      slots.push({ c: c.id, id: null, cpu: true, slotIdx: i + 1 });
+    }
+
+    slots.sort((a, b) => a.slotIdx - b.slotIdx);
     return slots;
   }
   $(".cf-cpu").addEventListener("click", () => {
@@ -1600,9 +1715,9 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
     const nearAlvaro = f ? F.some(other => other && other !== f && (other.char?.id === "alvaroP" || other.char?.id === "alvaro") && Math.hypot(other.x - f.x, other.y - f.y) < 220) : false;
     speakCharacter(cId, {
       nearAlvaro,
-      onBroadcast: ({ phrase }) => {
+      onBroadcast: ({ phrase, sillyVoice }) => {
         if (online.on) {
-          const msg = { t: "voice", s: mySlot, charId: cId, phrase };
+          const msg = { t: "voice", s: mySlot, charId: cId, phrase, sillyVoice };
           if (net.isHost) net.broadcast(msg);
           else net.send(msg);
         }

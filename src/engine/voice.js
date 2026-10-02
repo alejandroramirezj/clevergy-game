@@ -122,7 +122,8 @@ export function getCharacterPhrase(charOrId, opts = {}) {
     if (nearAlvaro) {
       return {
         char: c,
-        phrase: "¿Quiere un poquito de kétchup, Álvaro?"
+        phrase: "¿Quieres un poquito de ketchup, Álvaro?",
+        sillyVoice: true
       };
     }
     return {
@@ -131,17 +132,29 @@ export function getCharacterPhrase(charOrId, opts = {}) {
     };
   }
 
-  // 2. Caso especial Gonzalo (chistes aleatorios cortos)
+  // 2. Caso especial Gonzalo (chistes aleatorios cortos mejorados)
   if (id === "gonzalo") {
     const jokes = c.voice || [
-      "¿Por qué los pájaros vuelan hacia el sur? Porque es demasiado lejos para ir andando.",
-      "¿Qué le dice un semáforo a otro? No me mires, que me estoy cambiando.",
-      "¿Cómo se llama el campeón de buceo de España? Ahogaíto.",
+      "¿Cómo se llama el hermano vegano de Bruce Lee? Broco Lee.",
+      "¿Qué pasa si tiras un pato al agua? Nada.",
+      "¿Cuál es la cura definitiva de la caspa? La calvicie.",
+      "¿Qué le dice una taza a otra? ¿Qué taza ciendo?",
+      "¿Qué hace un vampiro conduciendo un tractor? Sembrar el miedo.",
+      "¿Cómo se queda un mago después de comer? Magordito.",
+      "¿Qué le dice un techo a otro? Techo de menos.",
+      "¿Por qué las vacas van a Nueva York? Para ver los muuu-sicales.",
+      "¿Cómo se llama un bumerán que no vuelve? Palo.",
+      "¿Qué hace una vaca pensando? Leche concentrada.",
+      "Me sacaron del grupo de WhatsApp de paracaidismo... se ve que no caía bien.",
+      "¿Cuál es la fruta más divertida? La naranjajajaja.",
+      "¿Qué le dice un jaguar a otro jaguar? Jaguar you.",
+      "¿Qué le dice un espagueti a otro? ¡Mi cuerpo pide salsa!",
+      "¿Cómo se dice pañuelo en japonés? Saka moko.",
       "¿Qué hace una abeja en el gimnasio? ¡Zum-ba!",
-      "¿Por qué el libro de matemáticas estaba triste? Porque tenía demasiados problemas.",
-      "¿Qué le dice un jardinero a otro? Me pasa la vida arreglando entuertos.",
-      "¿Cuál es el colmo de un electricista? Que su hijo sea una luz y su mujer una lámpara.",
-      "¿Por qué los esqueletos no se pelean? Porque no tienen agallas."
+      "¿Qué le dice una pared a otra pared? Nos vemos en la esquina.",
+      "¿Por qué los diabéticos no se vengan? Porque la venganza es dulce.",
+      "¿Por qué los pájaros vuelan hacia el sur? Porque es demasiado lejos para ir andando.",
+      "¿Qué le dice un semáforo a otro? No me mires, que me estoy cambiando."
     ];
     return {
       char: c,
@@ -215,26 +228,37 @@ export function showSpeechBubble(char, phrase) {
 }
 
 /**
- * Selecciona la mejor voz disponible del sistema
+ * Selecciona la mejor voz disponible del sistema, priorizando estrictamente castellano de España (es-ES).
  */
 function pickSystemVoice(profile = {}) {
   if (typeof window === "undefined" || !("speechSynthesis" in window)) return null;
   const voices = window.speechSynthesis.getVoices ? window.speechSynthesis.getVoices() : [];
   if (!voices || voices.length === 0) return null;
 
-  const esVoices = voices.filter((v) => v.lang && v.lang.toLowerCase().startsWith("es"));
-  const pool = esVoices.length > 0 ? esVoices : voices;
+  // 1. Filtrar voces de España (castellano: es-ES, Spain, España, Castilian, Castellano)
+  const isCastilian = (v) => {
+    const lang = (v.lang || "").toLowerCase();
+    const name = (v.name || "").toLowerCase();
+    // Excluir explícitamente variantes latinoamericanas (mx, us, ar, co, cl, pe, 419, etc.)
+    if (/es[-_](mx|us|ar|co|cl|pe|419|ve|uy|cr|gt|cu|do)/i.test(lang)) return false;
+    if (/mexico|méxico|argentina|colombia|united states|chile/i.test(name)) return false;
+    return lang.startsWith("es-es") || lang.startsWith("es_es") || /spain|españa|castilian|castellano/i.test(name);
+  };
+
+  const castilianVoices = voices.filter(isCastilian);
+  // Si hay voces en castellano de España, usar exclusivamente ese pool
+  const pool = castilianVoices.length > 0 ? castilianVoices : voices.filter(v => v.lang && v.lang.toLowerCase().startsWith("es"));
 
   if (profile.preferGender === "female") {
-    const female = pool.find((v) => /monica|paulina|helena|laura|victoria|lucia|paloma|carmen|conchita|maria/i.test(v.name));
+    const female = pool.find((v) => /monica|mónica|helena|laura|lucia|lucía|elvira|maribel|conchita|maria|maría|carmen/i.test(v.name));
     if (female) return female;
   } else if (profile.preferGender === "male") {
-    const male = pool.find((v) => /jorge|diego|enrique|carlos|miguel|pablo|alvaro|juan|manuel/i.test(v.name));
+    const male = pool.find((v) => /jorge|pablo|alvaro|álvaro|carlos|enrique|miguel|manuel/i.test(v.name));
     if (male) return male;
   }
 
-  // Voz en español predeterminada o la primera disponible
-  const esDefault = pool.find((v) => v.default && v.lang.startsWith("es")) || pool[0];
+  // Voz en castellano predeterminada o la primera disponible de España
+  const esDefault = pool.find((v) => v.default && isCastilian(v)) || pool[0];
   return esDefault || null;
 }
 
@@ -275,14 +299,16 @@ export function speakCharacter(charOrId, opts = {}) {
   if (!opts.force && now - lastSpokenTime < 500) return;
   lastSpokenTime = now;
 
-  let charObj, phrase;
+  let charObj, phrase, isSillyVoice = false;
   if (opts.phrase) {
     charObj = getCharObj(charOrId);
     phrase = opts.phrase;
+    isSillyVoice = Boolean(opts.sillyVoice);
   } else {
     const res = getCharacterPhrase(charOrId, opts);
     charObj = res.char;
     phrase = res.phrase;
+    isSillyVoice = Boolean(res.sillyVoice);
   }
 
   // 1. Bocadillo visual: por defecto apagado para no tapar la visión del juego (sólo audio)
@@ -293,7 +319,7 @@ export function speakCharacter(charOrId, opts = {}) {
   // 2. Multijugador broadcast si se especifica
   if (opts.onBroadcast) {
     try {
-      opts.onBroadcast({ charId: charObj.id, phrase });
+      opts.onBroadcast({ charId: charObj.id, phrase, sillyVoice: isSillyVoice });
     } catch (e) {
       console.warn("broadcast voice error", e);
     }
@@ -301,7 +327,11 @@ export function speakCharacter(charOrId, opts = {}) {
 
   // 3. Audio mediante SpeechSynthesis y perfiles de tono/velocidad
   if (!opts.silent) {
-    const profile = VOICE_PROFILES[charObj.id] || VOICE_PROFILES.hero;
+    let profile = VOICE_PROFILES[charObj.id] || VOICE_PROFILES.hero;
+    if (isSillyVoice) {
+      // Voz cómicamente ridícula: tono muy agudo de pito (1.95), caricaturesco y acelerado (1.35)
+      profile = { pitch: 1.95, rate: 1.35, preferGender: "female" };
+    }
     speakTextSystem(phrase, profile);
   }
 

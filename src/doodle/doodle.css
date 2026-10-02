@@ -354,6 +354,12 @@ body.doodle-mode:not(.gameboy-mode) #touch { display: none !important; }
 .ds-help .dd-controls { margin-top: 6px; font-size: 13px; }
 .ds-back { align-self: flex-start; margin-top: auto; }
 .ds-play { justify-content: flex-start; }
+.ds-picker { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 6px; }
+.ds-preview { display: flex; flex-direction: column; align-items: center; min-width: 140px; }
+.ds-sticker { height: 68px; object-fit: contain; }
+.ds-pname { font-family: "Caveat", cursive; font-size: 22px; color: var(--dd-ink); line-height: 1.1; }
+.ds-arrow { width: 34px; height: 34px; border-radius: 50%; border: 2.5px solid var(--dd-black); background: #fff; font-size: 14px; cursor: pointer; display: grid; place-items: center; box-shadow: 2px 3px 0 var(--dd-black); }
+.ds-arrow:active { transform: translate(1px, 2px); box-shadow: 1px 1px 0 var(--dd-black); }
 .ds-tabs { display: grid; grid-template-columns: 1fr 1fr; border: 3px solid var(--dd-black); border-radius: 14px 9px 15px 10px; overflow: hidden; background: #fff; }
 .ds-tab { border: 0; background: none; padding: 8px 6px; font-family: "Caveat", cursive; font-size: 22px; color: var(--dd-black); cursor: pointer; }
 .ds-tab + .ds-tab { border-left: 3px solid var(--dd-black); }

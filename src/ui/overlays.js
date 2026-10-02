@@ -646,11 +646,17 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
     return av ? `<img src="${av}" class="${av.startsWith("data:") ? "px" : ""}" alt="">` : `<span>${c.emoji}</span>`;
   };
 
+  const compVoiceIndices = {};
+
   function renderCompendiumChars() {
     if (!compCharsGrid) return;
     compCharsGrid.innerHTML = CHARS.map((c) => {
       const p = POWER_INFO[c.id] || { icon: "★", desc: c.tip };
-      const phrasePreview = c.id === "gonzalo" ? "Cuenta un chiste malo corto..." : (c.voice ? c.voice[0] : "");
+      const phrases = Array.isArray(c.voice) && c.voice.length > 0 ? c.voice : ["¡Vamos!"];
+      const curIdx = compVoiceIndices[c.id] || 0;
+      const currentPhrase = phrases[curIdx % phrases.length];
+      const hasMultiple = phrases.length > 1;
+
       return `<article class="comp2-char" data-id="${c.id}">
         <div class="comp2-char-av">${avImg(c)}</div>
         <div class="comp2-char-txt">
@@ -658,18 +664,62 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
           <div class="comp2-form">${c.form}</div>
           <div class="comp2-power"><span>${p.icon}</span><b>${c.ab}</b></div>
           <p>${p.desc}</p>
-          <div class="comp2-voice-row" data-char="${c.id}" role="button" title="Toca para escuchar frase">
+          <div class="comp2-voice-row" data-char="${c.id}" role="button" title="Toca para escuchar frase y ver la siguiente">
             <span class="comp2-voice-icon">💬</span>
-            <small class="comp2-voice-txt">«${phrasePreview}»</small>
+            <div class="comp2-voice-scroller">
+              <small class="comp2-voice-txt">«${currentPhrase}»</small>
+            </div>
+            ${hasMultiple ? `<span class="comp2-voice-badge">${(curIdx % phrases.length) + 1}/${phrases.length}</span>` : ""}
           </div>
         </div>
       </article>`;
     }).join("");
 
-    compCharsGrid.querySelectorAll(".comp2-voice-row, .comp2-char").forEach((el) => {
-      el.addEventListener("click", (e) => {
-        const cid = el.getAttribute("data-char") || el.getAttribute("data-id");
-        if (cid) speakCharacter(cid);
+    compCharsGrid.querySelectorAll(".comp2-voice-row").forEach((elRow) => {
+      elRow.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const cid = elRow.getAttribute("data-char");
+        const c = CHARS.find((ch) => ch.id === cid);
+        if (!c) return;
+        const phrases = Array.isArray(c.voice) && c.voice.length > 0 ? c.voice : ["¡Vamos!"];
+        const curIdx = compVoiceIndices[cid] || 0;
+        const phraseToSpeak = phrases[curIdx % phrases.length];
+        const isSilly = cid === "jesus" && phraseToSpeak.toLowerCase().includes("ketchup");
+
+        // 1. Hablar la frase que está en pantalla (con voz ridícula si es el ketchup de Jesús)
+        speakCharacter(cid, { force: true, phrase: phraseToSpeak, sillyVoice: isSilly });
+
+        // 2. Avanzar el texto en el mismo espacio al siguiente
+        const nextIdx = (curIdx + 1) % phrases.length;
+        compVoiceIndices[cid] = nextIdx;
+        const nextPhrase = phrases[nextIdx];
+
+        const txtEl = elRow.querySelector(".comp2-voice-txt");
+        const badgeEl = elRow.querySelector(".comp2-voice-badge");
+        if (txtEl) {
+          txtEl.textContent = `«${nextPhrase}»`;
+          const scroller = elRow.querySelector(".comp2-voice-scroller");
+          if (scroller) scroller.scrollLeft = 0;
+          txtEl.classList.remove("comp2-pop");
+          void txtEl.offsetWidth;
+          txtEl.classList.add("comp2-pop");
+        }
+        if (badgeEl) {
+          badgeEl.textContent = `${nextIdx + 1}/${phrases.length}`;
+        }
+      });
+    });
+
+    compCharsGrid.querySelectorAll(".comp2-char").forEach((card) => {
+      card.addEventListener("click", (e) => {
+        if (e.target.closest(".comp2-voice-row")) return;
+        const cid = card.getAttribute("data-id");
+        const idx = CHARS.findIndex((c) => c.id === cid);
+        if (idx >= 0) {
+          GameState.charIdx = idx;
+          updateSpotlight?.();
+          compCharsGrid.querySelectorAll(".comp2-char").forEach((c, i) => c.classList.toggle("cur", i === idx));
+        }
       });
     });
   }
@@ -740,6 +790,7 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
     const lore = WORLD_LORE[id];
     const retos = worldRetos(id, loadWorldProgress());
     const others = VISIBLE_WORLDS.filter((x) => x.id !== id);
+    const curChar = CHARS[GameState.charIdx] || CHARS[0];
     worldDetailEl.innerHTML = `
       <nav class="wd-crumbs"><button class="wd-back">← Mundos</button><span>›</span><b>${w.name}</b></nav>
       <article class="wd-card" style="--acc:${w.color}">
@@ -751,6 +802,20 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
             <span class="wd-shot-tag">📸 Así es el mundo</span>
             ${onExploreWorld ? `<button class="wd-explore wd-explore-big" data-world="${id}" aria-label="Ver el mundo en 3D"><i>👁</i><span>Ver el mundo en 3D</span></button>` : ""}
           </figure>
+          <div class="wd-char-picker" title="Elige con qué personaje empezar este mundo">
+            <div class="wd-char-tag">👤 Personaje inicial</div>
+            <div class="wd-char-box">
+              <button class="wd-char-btn wd-char-prev" aria-label="Personaje anterior">◀</button>
+              <div class="wd-char-preview">
+                <span class="wd-char-av">${avImg(curChar)}</span>
+                <div class="wd-char-meta">
+                  <b class="wd-char-name">${curChar.emoji} ${curChar.name}</b>
+                  <small class="wd-char-form">${curChar.form}</small>
+                </div>
+              </div>
+              <button class="wd-char-btn wd-char-next" aria-label="Personaje siguiente">▶</button>
+            </div>
+          </div>
           ${onPlayWorld ? `<button class="wd-play" data-world="${id}">▶ Jugar este mundo</button>` : ""}
         </div>
         <div class="wd-body">
@@ -767,6 +832,31 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
           <div class="wd-others"><span>Otros mundos:</span>${others.map((x) => `<button class="wd-other" data-world="${x.id}" style="--acc:${x.color}">${x.num} · ${x.name}</button>`).join("")}</div>
         </div>
       </article>`;
+
+    const curCharBox = worldDetailEl.querySelector(".wd-char-box");
+    if (curCharBox) {
+      const updateWdChar = () => {
+        const c = CHARS[GameState.charIdx] || CHARS[0];
+        const avEl = curCharBox.querySelector(".wd-char-av");
+        const nameEl = curCharBox.querySelector(".wd-char-name");
+        const formEl = curCharBox.querySelector(".wd-char-form");
+        if (avEl) avEl.innerHTML = avImg(c);
+        if (nameEl) nameEl.textContent = `${c.emoji} ${c.name}`;
+        if (formEl) formEl.textContent = c.form;
+        updateSpotlight?.();
+      };
+      curCharBox.querySelector(".wd-char-prev")?.addEventListener("click", (e) => {
+        e.preventDefault(); e.stopPropagation();
+        GameState.charIdx = (GameState.charIdx - 1 + CHARS.length) % CHARS.length;
+        updateWdChar();
+      });
+      curCharBox.querySelector(".wd-char-next")?.addEventListener("click", (e) => {
+        e.preventDefault(); e.stopPropagation();
+        GameState.charIdx = (GameState.charIdx + 1) % CHARS.length;
+        updateWdChar();
+      });
+    }
+
     if (!compendiumOv.classList.contains("wd-mode")) wdPrevScroll = compScrollEl ? compScrollEl.scrollTop : 0;
     compendiumOv.classList.add("wd-mode");
     worldDetailEl.classList.remove("hidden");

@@ -17,8 +17,11 @@ import { touch as mando } from "../engine/input.js";
 import { speakCharacter } from "../engine/voice.js";
 import { setInPlay } from "../game/state.js";
 import { createNet, randomCode, cleanCode, MAX_PLAYERS } from "./doodleNet.js";
-import { buzz } from "./haptics.js";
+import { CHARS } from "../config/characters.js";
+import { getCharacterAvatar } from "../engine/sprites.js";
 import "./doodle.css";
+import "./fight/fight.css";
+import "./race/race.css";
 
 // ── constantes de juego ──
 const STEP = 1 / 60;
@@ -100,6 +103,14 @@ const TEMPLATE = `
       <button class="dd-btn dd-ghost dd-mini dd-exit ds-back">↩ Volver al mapa</button>
     </div>
     <div class="ds-col ds-play">
+      <div class="rk-picker ds-picker">
+        <button class="cf-arrow ds-arrow" data-d="-1" aria-label="Anterior">◀</button>
+        <div class="rk-preview ds-preview">
+          <img class="cf-sticker ds-sticker" alt="" />
+          <div class="cf-pname ds-pname"></div>
+        </div>
+        <button class="cf-arrow ds-arrow" data-d="1" aria-label="Siguiente">▶</button>
+      </div>
       <div class="ds-tabs" role="tablist">
         <button class="ds-tab on" data-tab="solo" role="tab">🎯 Solo</button>
         <button class="ds-tab" data-tab="mp" role="tab">👥 Con compañeros</button>
@@ -157,7 +168,7 @@ const TEMPLATE = `
  * Arranca el mundo 7.
  * @param {{char?: {id:string, name:string, emoji:string, spd:number, jump:number}, getChar?: () => object, onExit?: Function, onVictory?: (score:number, rank:string)=>void}} opts
  */
-export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictory, onScore } = {}) {
+export function startDoodleWorld({ char, getChar, onSwitchChar, onPickChar, onExit, onVictory, onScore } = {}) {
   const root = document.createElement("div");
   root.id = "doodleRoot";
   root.innerHTML = TEMPLATE;
@@ -243,6 +254,25 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onExit, onVictor
     if (char && char.id) sticker.setChar(char.id);
   }
   setChar(char);
+
+  // elección de personaje en el menú inicial de BoliBic Tag
+  let pickIdx = Math.max(0, CHARS.findIndex((c) => c.id === ((char && char.id) || "alejandro")));
+  function renderPick() {
+    const c = CHARS[pickIdx];
+    const av = getCharacterAvatar(c.id);
+    const img = $(".ds-sticker");
+    if (img && av) img.src = av;
+    if (img) img.classList.toggle("px", !!(av && av.startsWith("data:")));
+    const pname = $(".ds-pname");
+    if (pname) pname.textContent = `${c.emoji} ${c.name}`;
+  }
+  root.querySelectorAll(".ds-arrow").forEach((b) => b.addEventListener("click", () => {
+    pickIdx = (pickIdx + Number(b.dataset.d) + CHARS.length) % CHARS.length;
+    setChar(CHARS[pickIdx]);
+    if (onPickChar) try { onPickChar(CHARS[pickIdx].id); } catch (e) {}
+    renderPick();
+  }));
+  renderPick();
 
   // cámara: 1ª persona (boli en mano) o 3ª persona (ves a tu personaje)
   let camMode = "third";

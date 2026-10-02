@@ -936,7 +936,7 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
   net.on("voice", (m, from) => {
     const r = racers.find((q) => q.id === m.id);
     const charId = r ? (r.charId || r.c) : m.charId;
-    speakCharacter(charId, { force: true, phrase: m.phrase });
+    speakCharacter(charId, { force: true, phrase: m.phrase, sillyVoice: m.sillyVoice });
     if (net.isHost) net.broadcast(m, from);
   });
   net.on("results", (m) => { if (!net.isHost) showResults(m.list); });
@@ -1089,8 +1089,8 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
     const nearAlvaro = (me && racers) ? racers.some(other => other !== me && (other.charId === "alvaroP" || other.charId === "alvaro") && Math.hypot(other.x - me.x, other.z - me.z) < 18) : false;
     speakCharacter(cId, {
       nearAlvaro,
-      onBroadcast: ({ phrase }) => {
-        tx({ t: "voice", id: myId(), charId: cId, phrase });
+      onBroadcast: ({ phrase, sillyVoice }) => {
+        tx({ t: "voice", id: myId(), charId: cId, phrase, sillyVoice });
       }
     });
   }
