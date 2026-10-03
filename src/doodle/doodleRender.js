@@ -145,7 +145,8 @@ void main() {
   // ── rayado ──
   float shade = s.r;
   float hatch = 0.0;
-  if (!sky) {
+  bool isWater = s.g > 6.5;
+  if (!sky && !isWater) {
     if (shade < 0.0) {
       hatch = 1.0;
     } else {
@@ -191,7 +192,12 @@ void main() {
   float margin = 1.0 - smoothstep(0.9 * sc, 2.2 * sc, abs(pp.x - uRes.x * 0.075));
   col = mix(col, vec3(0.92, 0.5, 0.56), margin * 0.5);
 
-  col = mix(col, inkCol(s.g), hatch * 0.74 * fade);
+  if (isWater) {
+    col = vec3(s.r, s.b, s.a);
+  } else {
+    col = mix(col, inkCol(s.g), hatch * 0.74 * fade);
+  }
+  if (inkId > 6.5) edge = 0.0;
   float ew = 0.75 + 0.35 * vnoise(pp * 0.33 + boil);
   col = mix(col, inkCol(inkId) * 0.9, clamp(edge * ew, 0.0, 1.0) * fadeE);
 

@@ -152,7 +152,7 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
   const camera = new THREE.PerspectiveCamera(68, 1, 0.3, 1400);
   scene.add(camera);
   const track = buildTrack();
-  const world = buildRaceWorld(scene, track, overlay);
+  const world = buildRaceWorld(scene, track, overlay, R.renderer);
 
   // ── estado ──
   let screen = "lobby"; // lobby | race | end
@@ -588,9 +588,15 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
       if (!r.air && Math.abs(across) < 4.2 && along > 2.5 && along < 5 && r.v > 12) { r.air = true; r.vy = 7 + r.v * 0.12; r.y = Math.max(r.y, 1.6); if (r === me) sfx.boost(); }
     }
     for (const bp of world.boostPads) {
-      if (Math.hypot(r.x - bp.x, r.z - bp.z) < 3.4 && r.boostT < 0.9) {
-        r.boostT = 1.1;
-        if (r === me) sfx.boost();
+      const inPad = Math.hypot(r.x - bp.x, r.z - bp.z) < 3.4;
+      if (inPad) {
+        if (r.lastPad !== bp) {
+          r.lastPad = bp;
+          r.boostT = 1.25;
+          if (r === me) sfx.boost();
+        }
+      } else if (r.lastPad === bp) {
+        r.lastPad = null;
       }
     }
     for (const b of world.itemBoxes) {
@@ -836,7 +842,10 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
     }
   }
   const burst = (x, y, z, ink, n) => spray(x, y, z, ink, n, 2.2);
-  function splashFx(r) { for (let i = 0; i < 14; i++) spray(r.x + rnd(-1.5, 1.5), r.y, r.z + rnd(-1.5, 1.5), INK.BLUE, 1); }
+  function splashFx(r) {
+    for (let i = 0; i < 14; i++) spray(r.x + rnd(-1.5, 1.5), r.y, r.z + rnd(-1.5, 1.5), INK.BLUE, 1);
+    if (world.water) world.water.disturb(r.x, r.z, 3.2, -0.5);
+  }
   function updateParticles(dt) {
     for (const p of particles) {
       if (!p.alive) continue;
@@ -891,6 +900,13 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
     if (r.v > 16 && !r.air && Math.random() < 0.3) {
       const fx = Math.sin(r.yaw), fz = Math.cos(r.yaw);
       spray(r.x - fx * 2.1, r.y + 0.35, r.z - fz * 2.1, INK.BLUE, 1, 1.8);
+    }
+
+    // estela real en el agua simulada: el casco hunde el agua al avanzar
+    if (world.water && dt > 0 && !r.air && r.v > 2) {
+      const fx = Math.sin(r.yaw), fz = Math.cos(r.yaw);
+      const k = Math.min(1, r.v / 30);
+      world.water.disturb(r.x - fx * 1.2, r.z - fz * 1.2, 1.3, -0.045 * k);
     }
 
     // piloto: pegatina sobre la moto (se oculta si queda tapado por un islote)
@@ -1013,6 +1029,7 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
     me = racers.find((r) => r.ctrl === "local") || racers[0];
     RC.startAt = at; RC.goAt = at + 3200; RC.firstFinishAt = 0; RC.results = null; RC.events = [];
     world.itemBoxes.forEach((b) => { b.cool = 0; b.g.visible = true; });
+    if (world && world.beltran) world.beltran.wakeBoostCooldown = at + 4000;
     screen = "race"; phase = "countdown"; paused = false; camInit = false;
     showOv(null);
     $(".rk-hud").classList.remove("hidden");
@@ -1448,7 +1465,7 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
       camera.updateProjectionMatrix();
     } else updateCamera(dt);
     const worldRes = world.update(frozen ? RC.t : RC.t || wall, camera.position.x, camera.position.z, frozen ? 0 : dt, me);
-    if (worldRes && worldRes.inWakeDraft && me && !frozen) {
+    if (screen === "race" && phase === "race" && worldRes && worldRes.inWakeDraft && me && !frozen) {
       me.boostT = Math.max(me.boostT, 1.4);
       sfx.boost();
       spray(me.x, me.y + 0.6, me.z, INK.BLUE, 10, 2.2);
@@ -1495,6 +1512,7 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
     if (raceMusic) raceMusic.stop();
     stopEngine();
     audio.destroy();
+    if (world.dispose) world.dispose();
     R.dispose();
     root.remove();
     if (window.__race) delete window.__race;

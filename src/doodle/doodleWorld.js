@@ -198,7 +198,29 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onPickChar, onEx
 
   // personaje en tercera persona (pegatina) + sombra de tinta en el suelo
   const overlay = new THREE.Scene(); // pegatinas (tú y tus compañeros), pintadas encima del dibujo
-  const STICKER_OPTS = { poseOverrides: { alejandro: { attack: "/sprites/alejandro/shoot.png" } } };
+  const STICKER_OPTS = {
+    poseOverrides: {
+      ale: { attack: "/sprites/ale/shoot.png" },
+      alejandro: { attack: "/sprites/alejandro/shoot.png" },
+      alvaroM: { attack: "/sprites/alvaroM/shoot.png" },
+      alvaroP: { attack: "/sprites/alvaroP/shoot.png" },
+      ana: { attack: "/sprites/ana/shoot.png" },
+      beltran: { attack: "/sprites/beltran/shoot.png" },
+      bruno: { attack: "/sprites/bruno/shoot.png" },
+      gonzalo: { attack: "/sprites/gonzalo/shoot.png" },
+      javi: { attack: "/sprites/javi/shoot.png" },
+      jesus: { attack: "/sprites/jesus/shoot.png" },
+      joseluis: { attack: "/sprites/joseluis/shoot.png" },
+      josu: { attack: "/sprites/josu/shoot.png" },
+      juan: { attack: "/sprites/juan/shoot.png" },
+      maca: { attack: "/sprites/maca/shoot.png" },
+      manu: { attack: "/sprites/manu/shoot.png" },
+      pablo: { attack: "/sprites/pablo/shoot.png" },
+      paloma: { attack: "/sprites/paloma/shoot.png" },
+      silvia: { attack: "/sprites/silvia/shoot.png" },
+      yair: { attack: "/sprites/yair/shoot.png" }
+    }
+  };
   const sticker = createSticker(overlay, STICKER_OPTS);
 
   // la foto de la pared de la pizarra de Clevergy: una polaroid con sus colores reales

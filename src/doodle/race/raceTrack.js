@@ -11,6 +11,7 @@ import { GEO } from "../doodleLevel.js";
 import { inkText } from "../inkText.js";
 import { createSticker } from "../doodleSticker.js";
 import { speakCharacter } from "../../engine/voice.js";
+import { createRaceWater } from "./raceWater.js";
 
 export const TRACK_HALF = 13; // media anchura del canal entre boyas (m)
 export const N_SAMPLES = 900;
@@ -89,7 +90,7 @@ export function buildTrack() {
 }
 
 // ── escenario ────────────────────────────────────────────────────────────────
-export function buildRaceWorld(scene, track, overlay = null) {
+export function buildRaceWorld(scene, track, overlay = null, renderer = null) {
   const root = new THREE.Group();
   scene.add(root);
   const R = rng(20260928);
@@ -120,93 +121,11 @@ export function buildRaceWorld(scene, track, overlay = null) {
   const trackDist = (x, z) => track.nearest(x, z).d;
   const { center } = track;
 
-  // ── AGUA DEL EMBALSE Y CANAL DE CARRERAS CLARAMENTE DIFERENCIADO ──
-  // 1. Agua profunda exterior (azul marino oscuro con rayado denso)
-  const farWater = new THREE.Mesh(new THREE.PlaneGeometry(5000, 5000), mat(INK.BLUE, { tone: -0.42 }));
-  farWater.rotation.x = -Math.PI / 2;
-  farWater.position.y = -0.28;
-  root.add(farWater);
-  const WG = 2, WS = 400; // celdas y tamaño del parche de olas
-  const wGeo = new THREE.PlaneGeometry(WS, WS, WG, WG);
-  wGeo.rotateX(-Math.PI / 2);
-  const water = new THREE.Mesh(wGeo, mat(INK.BLUE, { tone: -0.38 }));
-  water.frustumCulled = false;
-  root.add(water);
-  const cell = WS / WG;
-  function updateWater(camX, camZ) {
-    water.position.set(Math.round(camX / cell) * cell, 0, Math.round(camZ / cell) * cell);
-  }
-
-  // 2. Cinta de agua navegable del circuito (aguas claras y cristalinas, tono luminoso)
-  // Permite distinguir perfectamente el canal de la carrera frente al resto del embalse.
-  const ribbonGeo = new THREE.BufferGeometry();
-  const ribbonPos = new Float32Array(N_SAMPLES * 2 * 3);
-  const ribbonIndices = [];
-  const ribbonUVs = new Float32Array(N_SAMPLES * 2 * 2);
-  for (let i = 0; i < N_SAMPLES; i++) {
-    const p = track.at(i);
-    const nx = -p.tz, nz = p.tx;
-    // Vértice izquierdo
-    ribbonPos[i * 6 + 0] = p.x - nx * TRACK_HALF;
-    ribbonPos[i * 6 + 1] = 0.05;
-    ribbonPos[i * 6 + 2] = p.z - nz * TRACK_HALF;
-    ribbonUVs[i * 4 + 0] = 0;
-    ribbonUVs[i * 4 + 1] = i / 10;
-    // Vértice derecho
-    ribbonPos[i * 6 + 3] = p.x + nx * TRACK_HALF;
-    ribbonPos[i * 6 + 4] = 0.05;
-    ribbonPos[i * 6 + 5] = p.z + nz * TRACK_HALF;
-    ribbonUVs[i * 4 + 2] = 1;
-    ribbonUVs[i * 4 + 3] = i / 10;
-    // Triángulos entre i y (i+1)
-    const next = (i + 1) % N_SAMPLES;
-    const i0 = i * 2, i1 = i * 2 + 1, i2 = next * 2, i3 = next * 2 + 1;
-    ribbonIndices.push(i0, i2, i1);
-    ribbonIndices.push(i1, i2, i3);
-  }
-  ribbonGeo.setAttribute("position", new THREE.BufferAttribute(ribbonPos, 3));
-  ribbonGeo.setAttribute("uv", new THREE.BufferAttribute(ribbonUVs, 2));
-  ribbonGeo.setIndex(ribbonIndices);
-  ribbonGeo.computeVertexNormals();
-
-  const trackWater = new THREE.Mesh(ribbonGeo, mat(INK.BLUE, { tone: 0.36 }));
-  trackWater.frustumCulled = false;
-  root.add(trackWater);
-
-  // 3. Estelas de corriente y cáusticas que fluyen a lo largo del circuito
-  const caustics = [];
-  for (let i = 0; i < N_SAMPLES; i += 2) {
-    const p = track.at(i);
-    for (let k = 0; k < 2; k++) {
-      const lat = (R() - 0.5) * (TRACK_HALF * 1.8);
-      caustics.push({
-        x: p.x - p.tz * lat,
-        z: p.z + p.tx * lat,
-        tx: p.tx,
-        tz: p.tz,
-        ph: R() * 6,
-        s: 1.4 + R() * 1.8,
-        speed: 1.8 + R() * 1.2
-      });
-    }
-  }
-  const causticsIM = new THREE.InstancedMesh(GEO.box, mat(INK.BLUE, { tone: 0.48 }), caustics.length);
-  causticsIM.frustumCulled = false;
-  root.add(causticsIM);
-  function updateCaustics(t) {
-    caustics.forEach((c, k) => {
-      const y = waveH(c.x, c.z, t) + 0.09;
-      const pulse = 0.8 + 0.3 * Math.sin(t * 3.5 + c.ph);
-      const flow = (t * c.speed + c.ph * 2) % 6 - 3;
-      const px = c.x + c.tx * flow, pz = c.z + c.tz * flow;
-      const ry = Math.atan2(c.tx, c.tz) + Math.PI / 2;
-      tmpE.set(0, ry, 0);
-      tmpQ.setFromEuler(tmpE);
-      tmpM.compose(tmpP.set(px, y, pz), tmpQ, tmpS.set(c.s * pulse * 2.2, 0.05, 0.22));
-      causticsIM.setMatrixAt(k, tmpM);
-    });
-    causticsIM.instanceMatrix.needsUpdate = true;
-  }
+  // ── AGUA DEL EMBALSE (simulación GPU al estilo jeantimex/threejs-water) ──
+  // Rizos simulados, cáusticas, estelas reales de las motos, reflejo del cielo y
+  // refracción hasta el fondo: azulejos en el canal de carrera, arena en el resto.
+  const water = renderer ? createRaceWater(renderer, track, TRACK_HALF) : null;
+  if (water) root.add(water.group);
 
   // 4. Corcheras náuticas continuas (línea de boyarines enlazados en ambos bordes del canal)
   // Hace que el límite de pista sea continuo y visible en todo momento.
@@ -945,8 +864,6 @@ export function buildRaceWorld(scene, track, overlay = null) {
 
   let frameN = 0;
   function update(t, camX, camZ, dt, player = null) {
-    updateWater(camX, camZ);
-    updateCaustics(t);
     updateLaneFloats(t);
     updateTallBuoys(t);
 
@@ -998,6 +915,12 @@ export function buildRaceWorld(scene, track, overlay = null) {
     beltranState.z = surfZ;
     beltranState.boatX = bx;
     beltranState.boatZ = bz;
+
+    // la lancha y la tabla de Beltrán también abren el agua
+    if (water && dt > 0) {
+      water.disturb(bx - Math.sin(boatYaw) * 2.5, bz - Math.cos(boatYaw) * 2.5, 2.2, -0.035);
+      water.disturb(surfX, surfZ, 1.1, -0.02);
+    }
 
     // Interacción y saludo con el piloto del jugador
     let playerDist = 999;
@@ -1084,8 +1007,16 @@ export function buildRaceWorld(scene, track, overlay = null) {
       b.g.position.y = 1.6 + Math.sin(t * 2 + b.ph) * 0.35;
     }
 
+    // agua: el parche de estelas va por delante del jugador (en el menú, sigue a la lancha)
+    if (water) {
+      const hasP = player && typeof player.x === "number";
+      const fx = hasP ? player.x + Math.sin(player.yaw || 0) * 28 : bx;
+      const fz = hasP ? player.z + Math.cos(player.yaw || 0) * 28 : bz;
+      water.update(t, dt, camX, camZ, fx, fz);
+    }
+
     return { inWakeDraft: wakeDraftGranted, beltran: beltranState };
   }
 
-  return { root, update, colliders, boostPads, ramps, itemBoxes, beltran: beltranState };
+  return { root, update, colliders, boostPads, ramps, itemBoxes, beltran: beltranState, water, dispose: () => water && water.dispose() };
 }

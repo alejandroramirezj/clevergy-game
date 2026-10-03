@@ -47,7 +47,7 @@
   display: none; font-family: "Caveat", cursive; font-size: 15px; font-weight: bold;
   color: #fff; background: var(--dd-red); border: 1.5px solid var(--dd-black);
   padding: 1px 7px; border-radius: 6px; box-shadow: 2px 2px 0 var(--dd-ink);
-  letter-spacing: 0.5px;
+  letter-spacing: 0.5px; text-shadow: none;
 }
 .rk-speed.turbo .rk-turbobadge {
   display: inline-block; animation: rk-tpop 0.3s cubic-bezier(0.2, 1.6, 0.4, 1);
