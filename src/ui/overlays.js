@@ -755,9 +755,15 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
       goal: "Llega a la bandera con el máximo de monedas y los 3 disquetes escondidos: así se saca el rango S."
     },
     6: {
-      place: "La terraza y las salas del CINK convertidas en ring.",
-      steps: ["Hasta 4 compañeros a la vez, contra la CPU o online", "Cada golpe suma porcentaje: cuanto más llevas, más lejos sales volando", "Echa a los demás fuera del escenario para quitarles una vida", "Del cielo caen grapadoras, cafés, bombas de post-its y más objetos"],
-      goal: "Gana quien se quede con vidas al final. ¡Todos contra todos!"
+      place: "La sala de reuniones de Clevergy convertida en una arena de retrospectiva.",
+      steps: [
+        "Gran tablero de EasyRetro al fondo con sus cuatro columnas: Qué ha ido bien, A mejorar, Preguntas y Action Items",
+        "Pelea encima de la mesa de conferencias entre notas, portátiles, cafés y rotuladores",
+        "5 minutos para escribir tarjetas, 5 minutos para votar... ¡y el resto pelea!",
+        "Cada golpe suma porcentaje: cuanto más daño llevas, más lejos sales volando",
+        "Las tarjetas y los votos reaccionan a los impactos y vuelan por la sala"
+      ],
+      goal: "Gana quien resista en la mesa y conserve sus vidas, resolviendo la retro a puñetazos. ¡Todos contra todos o contra la CPU!"
     },
     7: {
       place: "Las tres plantas del CINK Coworking de Infanta Mercedes, a boli.",
