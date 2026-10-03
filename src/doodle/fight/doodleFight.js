@@ -94,14 +94,6 @@ const TEMPLATE = `
   </div>
   <div class="sb-timer"><span>3:00</span></div>
   <div class="sb-cards"></div>
-  <div class="rf-desk-note rf-note-left">
-    <span class="rf-note-title">RETRO FIGHT</span>
-    <span class="rf-note-sub">♥</span>
-  </div>
-  <div class="rf-desk-note rf-note-right">
-    <span class="rf-note-title">MISMAS IDEAS</span>
-    <span class="rf-note-sub">MÁS ACCIÓN !! 😊</span>
-  </div>
   <div class="cf-ping"></div>
   <div class="cf-big"></div>
   <div class="cf-small"></div>
