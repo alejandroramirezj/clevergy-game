@@ -191,7 +191,7 @@ export function initSprites() {
     idle: "/sprites/ana/idle.png",
     walk: "/sprites/ana/walk.png",
     run: "/sprites/ana/walk.png",
-    jump: "/sprites/ana/jump.png",
+    jump: "/sprites/ana/climb.png",
     climb: "/sprites/ana/climb.png",
     attack: "/sprites/ana/attack.png",
     death: "/sprites/ana/death.png"
@@ -472,6 +472,10 @@ export function loadPoses(id, poses, options = {}) {
     canvH: options.canvH ?? 260,
     targetH: options.targetH ?? 58
   };
+
+  if (!poses.shoot) {
+    poses.shoot = `/sprites/${id}/shoot.png`;
+  }
 
   const keys = Object.keys(poses);
   for (const k of keys) {

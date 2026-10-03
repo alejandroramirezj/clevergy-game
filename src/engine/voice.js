@@ -339,6 +339,17 @@ export function speakCharacter(charOrId, opts = {}) {
 }
 
 /**
+ * Detiene inmediatamente cualquier síntesis de voz activa
+ */
+export function stopSpeaking() {
+  if (typeof window !== "undefined" && "speechSynthesis" in window) {
+    try {
+      window.speechSynthesis.cancel();
+    } catch (e) {}
+  }
+}
+
+/**
  * Atajo para hablar con el personaje activo actual
  */
 export function speakCurrentChar(opts = {}) {

@@ -71,9 +71,9 @@
       <div class="lobby-workspace">
         <!-- Direct Screen Navigation Menu (Visible outside, no hamburger) -->
         <nav class="lobby-side-nav" id="lobbySideNav">
-          <button class="side-nav-btn" id="btnOpenCompendium" aria-label="Historia y Personajes">
+          <button class="side-nav-btn" id="btnOpenCompendium" aria-label="Historia">
             <span class="nav-icon">📖</span>
-            <span class="nav-text"><span class="btn-txt-short">HISTORIA</span><span class="btn-txt-long"> Y PERSONAJES</span></span>
+            <span class="nav-text">HISTORIA</span>
             <span class="nav-chevron">›</span>
           </button>
           <button class="side-nav-btn" id="btnOpenMapMenu" aria-label="Mundos">
@@ -83,12 +83,7 @@
           </button>
           <button class="side-nav-btn" id="btnOpenLB" aria-label="Ranking Global">
             <span class="nav-icon">🏆</span>
-            <span class="nav-text"><span class="btn-txt-short">RANKING</span><span class="btn-txt-long"> GLOBAL</span></span>
-            <span class="nav-chevron">›</span>
-          </button>
-          <button class="side-nav-btn" id="btnOpenCtrl" aria-label="Ajustes y Controles">
-            <span class="nav-icon">⚙️</span>
-            <span class="nav-text"><span class="btn-txt-short">AJUSTES</span><span class="btn-txt-long"> Y CONTROLES</span></span>
+            <span class="nav-text">RANKING</span>
             <span class="nav-chevron">›</span>
           </button>
         </nav>
@@ -112,20 +107,20 @@
 
         <!-- Dossier Info (Right side in landscape, centered below hero in portrait) -->
         <div class="hero-dossier-card">
-          <div class="dossier-tag">FORMA</div>
+          <div class="dossier-tag" id="spotlightTag">ALEJANDRO R.</div>
           <h2 class="dossier-title" id="spotlightName">MOSCA BOXEADORA</h2>
           <div class="dossier-power">
             <div class="dossier-power-kicker">★ HABILIDAD ESPECIAL</div>
             <div class="dossier-power-head">
               <span class="dossier-power-icon" id="spotlightPowerIcon">🥊</span>
-              <span class="dossier-skill" id="spotlightAb">FLY PUNCH</span>
+              <span class="dossier-skill" id="spotlightAb">PUÑETAZO VELOZ</span>
             </div>
-            <div class="dossier-lore" id="spotlightTip">Pequeña en tamaño, grande en actitud.</div>
+            <div class="dossier-lore" id="spotlightTip">Puñetazo veloz: impacto directo de mosca y planeo por el aire al mantener el salto.</div>
           </div>
         </div>
       </div>
 
-      <!-- FOOTER ROW: Watermark Left, 4 Actions Center, JUGAR Right (or stacked in portrait) -->
+      <!-- FOOTER ROW: Watermark Left, Actions Center, JUGAR Right (or stacked in portrait) -->
       <footer class="lobby-bottom-bar">
 
         <!-- Brand Watermark tag on bottom left -->
@@ -137,7 +132,7 @@
           </g><text x="372" y="222" font-family="Nunito, 'Varela Round', Arial Rounded MT Bold, Arial, sans-serif" font-weight="700" font-size="220" fill="#3aaa9f" letter-spacing="-4">Clevergy</text></svg>
         </div>
 
-        <!-- 4 Actions Dock (Pose REMOVED as requested!) -->
+        <!-- 5 Actions Dock: Reposo, Caminar, Salto, Ataque, Disparar -->
         <div class="lobby-actions-dock" id="stumblePoseDock">
           <button class="action-dock-item active" data-pose="idle">
             <span class="action-icon">🧍</span>
@@ -145,8 +140,8 @@
             <span class="active-indicator"></span>
           </button>
           <button class="action-dock-item" data-pose="run">
-            <span class="action-icon">🏃</span>
-            <span class="action-label">Correr</span>
+            <span class="action-icon">🚶</span>
+            <span class="action-label">Caminar</span>
             <span class="active-indicator"></span>
           </button>
 
@@ -158,6 +153,11 @@
           <button class="action-dock-item" data-pose="attack">
             <span class="action-icon">🥊</span>
             <span class="action-label">Ataque</span>
+            <span class="active-indicator"></span>
+          </button>
+          <button class="action-dock-item" data-pose="shoot">
+            <span class="action-icon">🎯</span>
+            <span class="action-label">Disparar</span>
             <span class="active-indicator"></span>
           </button>
         </div>
@@ -189,24 +189,6 @@
     <div class="lb2-body">
       <nav class="lb2-tabs" id="lbTabs" role="tablist"></nav>
       <div id="lbModalContent" class="lb2-board"><div class="lb-empty">Cargando clasificación…</div></div>
-    </div>
-  </div>
-
-  <!-- CONTROLS & GUIDE MODAL -->
-  <div id="ctrlOv" class="overlay hidden nb-page">
-    <header class="nb-page-head">
-      <button class="nb-back" id="btnCloseCtrl" aria-label="Volver">↩</button>
-      <div class="nb-page-title"><small>THE RETREAT</small><h1>🕹️ Cómo jugar</h1></div>
-    </header>
-    <div class="nb-page-scroll">
-      <div class="ctrl2">
-        <section><h3>📱 Móvil en horizontal</h3><p>Joystick flotante donde pongas el pulgar izquierdo y botones de acción a la derecha. Es igual en los 4 mundos.</p></section>
-        <section><h3>📱 Móvil en vertical</h3><p>Mando Game Boy: cruceta, A y B. En los menús la cruceta elige, <b>A</b> pulsa y <b>B</b> vuelve.</p></section>
-        <section><h3>⌨️ Teclado</h3><p><b>A/D</b> o flechas para moverte · <b>Espacio</b> saltar · <b>J</b> acción · <b>K</b> especial · <b>Esc</b> pausa · <b>M</b> música.</p></section>
-        <section><h3>🔁 Compañeros</h3><p><b>Tab</b> o <b>1 2 3</b> cambian de compañero. Cada uno tiene su poder: míralos en <b>Historia</b>.</p></section>
-        <section><h3>🎮 Mando</h3><p>Cualquier mando de consola conectado al móvil o al ordenador.</p></section>
-        <section><h3>💡 En cada mundo</h3><p>Su pantalla de inicio explica los controles propios (disparar, derrapar, escudo…).</p></section>
-      </div>
     </div>
   </div>
 

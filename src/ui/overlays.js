@@ -6,7 +6,7 @@ import { sfx } from "../engine/audio.js";
 import { ANIM, SPR, getCharacterAvatar } from "../engine/sprites.js";
 import { fetchGlobalLeaderboard } from "../game/leaderboard.js";
 import { GOOGLE_G } from "../game/auth.js";
-import { speakCharacter } from "../engine/voice.js";
+import { speakCharacter, stopSpeaking } from "../engine/voice.js";
 
 export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWorld }) {
   // Elements
@@ -112,8 +112,10 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
     if (!c) return;
 
 
-    // Side dossier: Form in uppercase, Skill in cyan, and numerical stats
-    if (spotlightName) spotlightName.textContent = c.form.toUpperCase();
+    // Side dossier: Subtitle (Form) on top, Name below, Skill and info
+    const spotlightTag = document.getElementById("spotlightTag") || document.querySelector(".dossier-tag");
+    if (spotlightTag) spotlightTag.textContent = c.form.toUpperCase();
+    if (spotlightName) spotlightName.textContent = c.name.toUpperCase();
     if (spotlightForm) spotlightForm.textContent = `FORMA: ${c.form.toUpperCase()}`;
     if (spotlightAb) spotlightAb.textContent = c.ab.toUpperCase();
     const pinfo = POWER_INFO[c.id];
@@ -183,10 +185,150 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
   const btnOpenArenaQuick = document.getElementById("btnOpenArenaQuick");
   const stumblePassCard = document.getElementById("stumblePassCard");
 
-  let lobbyPose = "idle"; // "idle" | "run" | "attack" | "jump" | "victory"
+  let lobbyPose = "idle"; // "idle" | "run" | "attack" | "jump" | "shoot" | "victory"
   let lobbyPoseTime = 0;
   let lobbyLockPose = null;
   let lobbyLockT = 0;
+
+  // Configuración de disparos personalizados por personaje en la lobby
+  const CHAR_SHOTS = {
+    alejandro: { emoji: "🥊", color: "#ef4444", trail: "#fbbf24", glow: "#f87171", speed: 950, size: 24, label: "¡POW!" },
+    ale:       { emoji: "🫒", color: "#84cc16", trail: "#eab308", glow: "#a3e635", speed: 880, size: 22, label: "¡CHOF!" },
+    alvaroM:   { emoji: "🧮", color: "#06b6d4", trail: "#3b82f6", glow: "#22d3ee", speed: 960, size: 22, label: "404!" },
+    alvaroP:   { emoji: "🎙️", color: "#a855f7", trail: "#ec4899", glow: "#c084fc", speed: 900, size: 22, label: "¡ONDA!" },
+    ana:       { emoji: "🦁", color: "#f59e0b", trail: "#ef4444", glow: "#fbbf24", speed: 940, size: 24, label: "¡ZARPA!" },
+    beltran:   { emoji: "💬", color: "#0284c7", trail: "#38bdf8", glow: "#38bdf8", speed: 930, size: 22, label: "¡MSG!" },
+    bruno:     { emoji: "🗿", color: "#9ca3af", trail: "#eab308", glow: "#d1d5db", speed: 850, size: 24, label: "¡TÓTEM!" },
+    gonzalo:   { emoji: "🥦", color: "#22c55e", trail: "#a3e635", glow: "#4ade80", speed: 920, size: 24, label: "¡BROC!" },
+    javi:      { emoji: "☭",  color: "#dc2626", trail: "#f59e0b", glow: "#ef4444", speed: 940, size: 22, label: "¡MARCHA!" },
+    jesus:     { emoji: "🍺", color: "#eab308", trail: "#f97316", glow: "#facc15", speed: 900, size: 24, label: "¡CAÑA!" },
+    joseluis:  { emoji: "🖨️", color: "#0ea5e9", trail: "#6366f1", glow: "#38bdf8", speed: 880, size: 22, label: "¡3D!" },
+    josu:      { emoji: "🥮", color: "#d97706", trail: "#b45309", glow: "#f59e0b", speed: 910, size: 22, label: "¡PANETÓN!" },
+    juan:      { emoji: "📻", color: "#f43f5e", trail: "#ec4899", glow: "#fb7185", speed: 930, size: 22, label: "¡WAVE!" },
+    maca:      { emoji: "🏐", color: "#f59e0b", trail: "#06b6d4", glow: "#fbbf24", speed: 980, size: 24, label: "¡REMATE!" },
+    manu:      { emoji: "💪", color: "#10b981", trail: "#34d399", glow: "#6ee7b7", speed: 950, size: 24, label: "¡SALES!" },
+    pablo:     { emoji: "🍊", color: "#f97316", trail: "#fbbf24", glow: "#fb923c", speed: 960, size: 24, label: "¡NANO!" },
+    paloma:    { emoji: "🕊️", color: "#e2e8f0", trail: "#60a5fa", glow: "#ffffff", speed: 940, size: 22, label: "¡VOLAR!" },
+    silvia:    { emoji: "👟", color: "#06b6d4", trail: "#10b981", glow: "#22d3ee", speed: 1020, size: 22, label: "¡FACTURA!" },
+    yair:      { emoji: "🪘", color: "#e11d48", trail: "#f59e0b", glow: "#fb7185", speed: 920, size: 24, label: "¡OLÉ!" }
+  };
+
+  const lobbyProjectiles = [];
+  const lobbyParticles = [];
+  let lobbyRecoil = 0;
+
+  function triggerLobbyImpact(p) {
+    const hitX = stumbleHeroCanvas ? stumbleHeroCanvas.width - 22 : 400;
+    const hitY = p.y;
+    sfx(160, 0.12, "sawtooth", 0.1);
+
+    lobbyParticles.push({
+      type: "ring",
+      x: hitX,
+      y: hitY,
+      radius: 6,
+      maxRadius: 36,
+      color: p.glow || "#00ffff",
+      life: 0.28,
+      maxLife: 0.28
+    });
+
+    for (let j = 0; j < 14; j++) {
+      const angle = Math.PI * 0.55 + Math.random() * Math.PI * 0.9;
+      const spd = 90 + Math.random() * 220;
+      lobbyParticles.push({
+        type: "spark",
+        x: hitX,
+        y: hitY,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd,
+        gravity: 140,
+        color: Math.random() > 0.4 ? p.color : "#ffffff",
+        size: 2.5 + Math.random() * 3.5,
+        life: 0.35 + Math.random() * 0.22,
+        maxLife: 0.57
+      });
+    }
+
+    lobbyParticles.push({
+      type: "pop",
+      text: p.label || "¡POW!",
+      x: hitX - 16,
+      y: hitY - 12,
+      vy: -55,
+      rot: (Math.random() - 0.5) * 0.25,
+      color: p.color || "#ffea00",
+      life: 0.55,
+      maxLife: 0.55
+    });
+  }
+
+  function spawnLobbyShot() {
+    const c = CHARS[GameState.charIdx] || CHARS[0];
+    const shotCfg = CHAR_SHOTS[c.id] || {
+      emoji: "💥",
+      color: "#00d4ff",
+      trail: "#38bdf8",
+      glow: "#0284c7",
+      speed: 920,
+      size: 22,
+      label: "¡POW!"
+    };
+
+    setLobbyPose("shoot", 1.2);
+    lobbyRecoil = 22;
+
+    if (stumbleCharViewport) {
+      stumbleCharViewport.classList.remove("lobby-shot-recoil");
+      void stumbleCharViewport.offsetWidth;
+      stumbleCharViewport.classList.add("lobby-shot-recoil");
+      setTimeout(() => stumbleCharViewport.classList.remove("lobby-shot-recoil"), 160);
+    }
+
+    sfx(940, 0.05, "sawtooth", 0.12);
+    setTimeout(() => sfx(620, 0.07, "square", 0.09), 30);
+    setTimeout(() => sfx(340, 0.11, "triangle", 0.07), 65);
+
+    const W = stumbleHeroCanvas ? stumbleHeroCanvas.width : 420;
+    const startX = W / 2 + 56;
+    const startY = 224;
+
+    lobbyParticles.push({
+      type: "spark",
+      x: startX,
+      y: startY,
+      vx: 0,
+      vy: 0,
+      gravity: 0,
+      color: "#ffffff",
+      size: 16,
+      life: 0.12,
+      maxLife: 0.12
+    });
+    lobbyParticles.push({
+      type: "ring",
+      x: startX,
+      y: startY,
+      radius: 4,
+      maxRadius: 24,
+      color: shotCfg.glow,
+      life: 0.18,
+      maxLife: 0.18
+    });
+
+    lobbyProjectiles.push({
+      emoji: shotCfg.emoji,
+      color: shotCfg.color,
+      trail: shotCfg.trail,
+      glow: shotCfg.glow,
+      label: shotCfg.label,
+      size: shotCfg.size,
+      x: startX,
+      y: startY,
+      vx: shotCfg.speed,
+      life: 0
+    });
+  }
 
   function setLobbyPose(pose, lockDuration = 0) {
     lobbyPose = pose;
@@ -232,10 +374,14 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
       p.addEventListener("click", (e) => {
         e.stopPropagation();
         const pName = p.dataset.pose;
-        setLobbyPose(pName, pName === "attack" || pName === "jump" ? 1.4 : 0);
-        if (pName === "attack") sfx(220, 0.1, "triangle", 0.08);
-        else if (pName === "jump") sfx(520, 0.08, "square", 0.06);
-        else sfx(600, 0.04);
+        if (pName === "shoot") {
+          spawnLobbyShot();
+        } else {
+          setLobbyPose(pName, pName === "attack" || pName === "jump" ? 1.4 : 0);
+          if (pName === "attack") sfx(220, 0.1, "triangle", 0.08);
+          else if (pName === "jump") sfx(520, 0.08, "square", 0.06);
+          else sfx(600, 0.04);
+        }
       });
     });
   }
@@ -262,6 +408,8 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
         // Horizontal swipe -> cycle character
         if (dx < 0) cycleHero(1);
         else cycleHero(-1);
+      } else if (Math.abs(dx) <= 10 && Math.abs(dy) <= 10 && lobbyPose === "shoot") {
+        spawnLobbyShot();
       }
     });
 
@@ -343,6 +491,13 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
     let shadowScale = 1;
     let shadowOpacity = 0.85;
 
+    if (lobbyRecoil > 0.05) {
+      offsetX -= lobbyRecoil;
+      lobbyRecoil *= Math.max(0, 1 - dt * 14);
+    } else {
+      lobbyRecoil = 0;
+    }
+
     if (lobbyPose === "idle") {
       offsetY = 0;
       scaleY = 1;
@@ -362,6 +517,14 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
       scaleX = 1 + atkPhase * 0.12;
       scaleY = 1 - atkPhase * 0.06;
       shadowScale = 1.1;
+    } else if (lobbyPose === "shoot") {
+      const shootPhase = Math.sin(Math.min(Math.PI, lobbyPoseTime * 8));
+      offsetX = -shootPhase * 14;
+      offsetY = -shootPhase * 5;
+      scaleX = 1 - shootPhase * 0.06;
+      scaleY = 1 + shootPhase * 0.08;
+      rot = -shootPhase * 0.05;
+      shadowScale = 0.95;
     } else if (lobbyPose === "jump") {
       const jProg = Math.sin(Math.min(Math.PI, lobbyPoseTime * 3.5));
       offsetY = -jProg * 50;
@@ -394,7 +557,8 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
     let drawn = false;
     if (rec && rec.ready && rec.images) {
       let imgList = null;
-      if (lobbyPose === "attack") imgList = rec.images.attack || rec.images.run || rec.images.idle;
+      if (lobbyPose === "shoot") imgList = rec.images.shoot || rec.images.attack || rec.images.idle;
+      else if (lobbyPose === "attack") imgList = rec.images.attack || rec.images.run || rec.images.idle;
       else if (lobbyPose === "run") imgList = rec.images.run || rec.images.walk || rec.images.idle;
       else if (lobbyPose === "jump") imgList = rec.images.jump || rec.images.run || rec.images.idle;
       else if (lobbyPose === "victory") imgList = rec.images.attack || rec.images.run || rec.images.idle;
@@ -427,6 +591,119 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
     }
 
     ctx.restore();
+
+    // -----------------------------------------------------------------------
+    // Render and update lobby projectiles and particle VFX
+    // -----------------------------------------------------------------------
+    if (lobbyProjectiles.length > 0 || lobbyParticles.length > 0) {
+      // 1. Update and render active projectiles
+      for (let i = lobbyProjectiles.length - 1; i >= 0; i--) {
+        const p = lobbyProjectiles[i];
+        p.x += p.vx * dt;
+        p.life += dt;
+
+        // Trail emission
+        if (Math.random() < 0.65) {
+          lobbyParticles.push({
+            type: "spark",
+            x: p.x - 14 + (Math.random() - 0.5) * 6,
+            y: p.y + (Math.random() - 0.5) * 8,
+            vx: -p.vx * 0.15 + (Math.random() - 0.5) * 50,
+            vy: (Math.random() - 0.5) * 60,
+            color: p.trail,
+            size: 3 + Math.random() * 3,
+            life: 0.28,
+            maxLife: 0.28
+          });
+        }
+
+        // Draw projectile beam / glow
+        ctx.save();
+        ctx.shadowColor = p.glow;
+        ctx.shadowBlur = 12;
+
+        const grad = ctx.createLinearGradient(p.x - 45, p.y, p.x, p.y);
+        grad.addColorStop(0, "transparent");
+        grad.addColorStop(0.5, p.trail);
+        grad.addColorStop(1, p.color);
+        ctx.beginPath();
+        ctx.moveTo(p.x - 45, p.y);
+        ctx.lineTo(p.x, p.y);
+        ctx.lineWidth = 6;
+        ctx.strokeStyle = grad;
+        ctx.lineCap = "round";
+        ctx.stroke();
+
+        ctx.font = `${p.size}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText(p.emoji, p.x, p.y);
+        ctx.restore();
+
+        // Check border impact
+        if (p.x >= W - 20) {
+          triggerLobbyImpact(p);
+          lobbyProjectiles.splice(i, 1);
+        }
+      }
+
+      // 2. Update and render particles and pop labels
+      for (let i = lobbyParticles.length - 1; i >= 0; i--) {
+        const pt = lobbyParticles[i];
+        pt.life -= dt;
+        if (pt.life <= 0) {
+          lobbyParticles.splice(i, 1);
+          continue;
+        }
+
+        const progress = 1 - pt.life / pt.maxLife;
+        const alpha = Math.max(0, pt.life / pt.maxLife);
+
+        if (pt.type === "spark") {
+          pt.x += pt.vx * dt;
+          pt.y += pt.vy * dt;
+          pt.vy += (pt.gravity || 80) * dt;
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = pt.color;
+          ctx.shadowColor = pt.color;
+          ctx.shadowBlur = 8;
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, pt.size * (1 - progress * 0.4), 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        } else if (pt.type === "ring") {
+          pt.radius += (pt.maxRadius - pt.radius) * dt * 10;
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          ctx.strokeStyle = pt.color;
+          ctx.lineWidth = 3 * alpha;
+          ctx.shadowColor = pt.color;
+          ctx.shadowBlur = 10;
+          ctx.beginPath();
+          ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        } else if (pt.type === "pop") {
+          pt.y += pt.vy * dt;
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          const scale = 1 + Math.sin(progress * Math.PI) * 0.35;
+          ctx.translate(pt.x, pt.y);
+          ctx.scale(scale, scale);
+          ctx.rotate(pt.rot || 0);
+          ctx.font = '900 20px "Nunito", "Bangers", Arial, sans-serif';
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.strokeStyle = "#111827";
+          ctx.lineWidth = 4;
+          ctx.strokeText(pt.text, 0, 0);
+          ctx.fillStyle = pt.color || "#ffea00";
+          ctx.fillText(pt.text, 0, 0);
+          ctx.restore();
+        }
+      }
+    }
   }
 
   // Arrancar el bucle (sólo si no está ya corriendo)
@@ -487,36 +764,36 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
     }
     return { all, perWorld };
   }
-  // detalle de lo conseguido en cada mundo, en una línea corta
+  // detalle de lo conseguido en cada mundo en badges con estilo
   const mmss = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
-  function statLine(worldId, st) {
+  function statChips(worldId, st, worldsCount) {
+    if (worldsCount != null) {
+      return `<div class="lb2-chips"><span class="lb2-chip lb2-chip-world">🌍 ${worldsCount} ${worldsCount === 1 ? "mundo" : "mundos"}</span></div>`;
+    }
     if (!st) return "";
     const b = [];
-    if (worldId === 1) { if (st.frags != null) b.push(`💾 ${st.frags}/3`); if (st.coins != null) b.push(`🪙 ${st.coins}`); if (st.stomps) b.push(`👟 ${st.stomps}`); b.push(st.won ? "🏁 Meta" : `📍 ${st.zone || "Campus"}`); }
-    else if (worldId === 7) { b.push(st.won ? "🏆 6/6" : `🌊 ${st.wave || 1}/6`); if (st.kills != null) b.push(`💥 ${st.kills}`); if (st.acc != null) b.push(`🎯 ${st.acc}%`); }
-    else if (worldId === 6) { b.push(st.won ? "🏆 Ganó" : `${st.place || "?"}º de ${(st.rivals || 0) + 1}`); if (st.kos != null) b.push(`💥 ${st.kos} KO`); if (st.falls != null) b.push(`💨 ${st.falls}`); }
-    else if (worldId === 8) { if (st.pos) b.push(`🏁 ${st.pos}º/${st.racers || 6}`); }
-    else if (worldId === 9) { b.push(st.won ? "🔋 Batería" : `🎪 Ronda ${st.wave || 1}/4`); if (st.falls != null) b.push(`💨 ${st.falls}`); }
-    if (st.time && worldId !== 6) b.push(`⏱ ${mmss(st.time)}`);
-    return b.join(" · ");
-  }
-
-  // dato curioso: con qué personaje (que no es el suyo) juega más la gente
-  function funFact(worldId) {
-    const recs = worldId ? (lbData.perWorld[worldId] || []) : lbData.all.flatMap((p) => Object.values(p.best));
-    const other = new Map(), all = new Map();
-    for (const r of recs) {
-      if (!r.used) continue;
-      all.set(r.used, (all.get(r.used) || 0) + 1);
-      if (r.used !== r.character) other.set(r.used, (other.get(r.used) || 0) + 1);
+    if (st.time && worldId !== 6) b.push(`<span class="lb2-chip lb2-chip-time" title="Tiempo de partida">⏱ ${mmss(st.time)}</span>`);
+    if (worldId === 1) {
+      if (st.coins != null) b.push(`<span class="lb2-chip lb2-chip-coins" title="Monedas recogidas">🪙 ${st.coins}</span>`);
+      if (st.frags != null) b.push(`<span class="lb2-chip lb2-chip-frags" title="Disquetes">💾 ${st.frags}/3</span>`);
+      if (st.stomps) b.push(`<span class="lb2-chip" title="Pisadas">👟 ${st.stomps}</span>`);
+      b.push(`<span class="lb2-chip ${st.won ? "lb2-chip-win" : ""}" title="Zona">${st.won ? "🏁 Meta" : `📍 ${st.zone || "Campus"}`}</span>`);
+    } else if (worldId === 7) {
+      b.push(`<span class="lb2-chip ${st.won ? "lb2-chip-win" : ""}" title="Oleadas">${st.won ? "🏆 6/6" : `🌊 ${st.wave || 1}/6`}</span>`);
+      if (st.kills != null) b.push(`<span class="lb2-chip" title="Enemigos">💥 ${st.kills}</span>`);
+      if (st.acc != null) b.push(`<span class="lb2-chip" title="Puntería">🎯 ${st.acc}%</span>`);
+    } else if (worldId === 6) {
+      b.push(`<span class="lb2-chip ${st.won ? "lb2-chip-win" : ""}" title="Puesto">${st.won ? "🏆 Ganó" : `${st.place || "?"}º de ${(st.rivals || 0) + 1}`}</span>`);
+      if (st.kos != null) b.push(`<span class="lb2-chip" title="KOs">💥 ${st.kos} KO</span>`);
+      if (st.falls != null) b.push(`<span class="lb2-chip" title="Caídas">💨 ${st.falls}</span>`);
+    } else if (worldId === 8) {
+      if (st.pos) b.push(`<span class="lb2-chip ${st.pos === 1 ? "lb2-chip-win" : ""}" title="Posición">🏁 ${st.pos}º/${st.racers || 6}</span>`);
+    } else if (worldId === 9) {
+      b.push(`<span class="lb2-chip ${st.won ? "lb2-chip-win" : ""}" title="Ronda">${st.won ? "🔋 Batería" : `🎪 Ronda ${st.wave || 1}/4`}</span>`);
+      if (st.falls != null) b.push(`<span class="lb2-chip" title="Caídas">💨 ${st.falls}</span>`);
     }
-    const top = (m) => [...m.entries()].sort((a, b) => b[1] - a[1])[0];
-    const where = worldId ? `en ${VISIBLE_WORLDS.find((x) => x.id === worldId).name}` : "en el Retreat";
-    const o = top(other);
-    if (o) { const c = CHARS.find((x) => x.id === o[0]); return `🎭 Dato curioso: ${where}, el personaje que más usan los que no son él es <b>${c ? `${c.emoji} ${c.name}` : o[0]}</b> (${o[1]} ${o[1] === 1 ? "récord" : "récords"})`; }
-    const a = top(all);
-    if (a && recs.length > 1) { const c = CHARS.find((x) => x.id === a[0]); return `🎭 Dato curioso: ${where}, el personaje más jugado es <b>${c ? `${c.emoji} ${c.name}` : a[0]}</b>, y todos juegan con el suyo`; }
-    return "";
+    if (!b.length) return "";
+    return `<div class="lb2-chips">${b.join("")}</div>`;
   }
 
   // ── pantalla de ranking: pestañas a la izquierda · podio · lista · tu fila fija abajo ──
@@ -529,11 +806,20 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
       <div class="lb2-pod-av">${avatarOf(p.character)}${place === 1 ? '<span class="lb2-crown">👑</span>' : ""}</div>
       <div class="lb2-pod-name">${esc(p.name)}</div>
       <div class="lb2-pod-pts">${fmtN(valueOf(p))}</div>
-      ${detailFn ? `<div class="lb2-pod-detail">${esc(detailFn(p))}</div>` : ""}
+      ${detailFn ? `<div class="lb2-pod-detail">${detailFn(p) || ""}</div>` : ""}
       <div class="lb2-pod-block">${place}</div>
     </div>`;
   }).join("");
-  const rowHtml = (p, pos, value, extra, me, detail) => `<li class="lb2-row${p.name === me ? " me" : ""}"><span class="lb2-pos">${pos}</span>${avatarOf(p.character)}<span class="lb2-name">${esc(p.name)}${detail ? `<small class="lb2-detail">${esc(detail)}</small>` : ""}</span>${extra || ""}<b class="lb2-pts">${fmtN(value)}</b></li>`;
+  const rowHtml = (p, pos, value, extra, me, detail) => `<li class="lb2-row${p.name === me ? " me" : ""}">
+    <span class="lb2-pos">${pos}</span>
+    ${avatarOf(p.character)}
+    <div class="lb2-col-info">
+      <span class="lb2-name">${esc(p.name)}</span>
+      ${detail || ""}
+    </div>
+    ${extra || ""}
+    <b class="lb2-pts">${fmtN(value)}</b>
+  </li>`;
   function renderBoard() {
     const me = GameState.playerName;
     const general = lbTab === "general";
@@ -559,20 +845,19 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
       </div>`;
     } else {
       const myIdx = list.findIndex((p) => p.name === me);
-      const detailOf = (p) => (general ? "" : statLine(w.id, p.stats));
+      const detailOf = (p) => (general ? statChips(null, null, p.best ? Object.keys(p.best).length : p.worlds) : statChips(w.id, p.stats));
       const rest = list.slice(3, 50).map((p, i) => rowHtml(p, i + 4, valueOf(p), extra(p), me, detailOf(p))).join("");
       lbModalContent.innerHTML = `
         <div class="lb2-top">
-          <div class="lb2-podium">${podiumHtml(list.slice(0, 3), valueOf, me, general ? null : detailOf)}</div>
+          <div class="lb2-podium">${podiumHtml(list.slice(0, 3), valueOf, me, detailOf)}</div>
           <div class="lb2-listbox">
             <div class="lb2-listhead">${general ? "Suma del mejor récord de cada uno en cada mundo · cuenta aunque no termines" : `Mejor partida de cada uno en ${esc(w.name)} · cuenta aunque no termines`}</div>
-            ${(() => { const f = funFact(general ? null : w.id); return f ? `<div class="lb2-fun">${f}</div>` : ""; })()}
             <ol class="lb2-list">${rest || `<li class="lb2-row lb2-row-empty">Aún no hay más jugadores… ¡entra en el top!</li>`}</ol>
           </div>
         </div>
         <div class="lb2-me">${myIdx >= 0
-          ? `<span class="lb2-me-tag">TÚ</span><span class="lb2-pos">${myIdx + 1}º</span>${avatarOf(list[myIdx].character)}<span class="lb2-name">${esc(me)}${detailOf(list[myIdx]) ? `<small class="lb2-detail">${esc(detailOf(list[myIdx]))}</small>` : ""}</span><b class="lb2-pts">${fmtN(valueOf(list[myIdx]))}</b>`
-          : `<span class="lb2-me-tag">TÚ</span><span class="lb2-name">${esc(me)} · todavía sin récord ${general ? "" : "aquí"}</span>${general ? "" : `<button class="lb2-play mini" data-id="${w.id}">▶ Jugar</button>`}`}</div>`;
+          ? `<span class="lb2-me-tag">TÚ</span><span class="lb2-pos">${myIdx + 1}º</span>${avatarOf(list[myIdx].character)}<div class="lb2-col-info"><span class="lb2-name">${esc(me)}</span>${detailOf(list[myIdx]) || ""}</div><b class="lb2-pts">${fmtN(valueOf(list[myIdx]))}</b>`
+          : `<span class="lb2-me-tag">TÚ</span><div class="lb2-col-info"><span class="lb2-name">${esc(me)} · todavía sin récord ${general ? "" : "aquí"}</span></div>${general ? "" : `<button class="lb2-play mini" data-id="${w.id}">▶ Jugar</button>`}`}</div>`;
     }
     lbModalContent.querySelectorAll(".lb2-play").forEach((b) => b.addEventListener("click", () => { lbOv.classList.add("hidden"); if (onPlayWorld) onPlayWorld(Number(b.dataset.id)); }));
   }
@@ -619,15 +904,6 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
     renderLeaderboardModal();
   });
 
-  // Controls Modal
-  if (btnOpenCtrl) btnOpenCtrl.addEventListener("click", () => {
-    ctrlOv.classList.remove("hidden");
-    sfx(600, 0.08);
-  });
-  if (btnCloseCtrl) btnCloseCtrl.addEventListener("click", () => {
-    ctrlOv.classList.add("hidden");
-    sfx(400, 0.06);
-  });
 
   // =========================================================================
   // COMPENDIUM MODAL (HISTORIA, PERSONAJES, ESCENARIOS, ENEMIGOS, OBJETOS)
@@ -694,6 +970,7 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
             </div>
             ${hasMultiple ? `<span class="comp2-voice-badge">${(curIdx % phrases.length) + 1}/${phrases.length}</span>` : ""}
           </div>
+          <span class="comp2-go">Ver poses y ficha →</span>
         </div>
       </article>`;
     }).join("");
@@ -737,14 +1014,153 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
       card.addEventListener("click", (e) => {
         if (e.target.closest(".comp2-voice-row")) return;
         const cid = card.getAttribute("data-id");
-        const idx = CHARS.findIndex((c) => c.id === cid);
-        if (idx >= 0) {
-          GameState.charIdx = idx;
-          updateSpotlight?.();
-          compCharsGrid.querySelectorAll(".comp2-char").forEach((c, i) => c.classList.toggle("cur", i === idx));
+        openCharDetail(cid);
+      });
+      card.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          if (e.target.closest(".comp2-voice-row")) return;
+          e.preventDefault();
+          const cid = card.getAttribute("data-id");
+          openCharDetail(cid);
         }
       });
     });
+  }
+
+  // ── ficha interactiva de personaje: pose grande, selector de todas sus poses e info completa ──
+  let charDetailEl = null, chPrevScroll = 0;
+  function openCharDetail(id) {
+    const c = CHARS.find((x) => x.id === id);
+    if (!c || !compCharsGrid) return;
+    stopSpeaking();
+
+    const charIdx = CHARS.findIndex((x) => x.id === id);
+    const prevChar = CHARS[(charIdx - 1 + CHARS.length) % CHARS.length];
+    const nextChar = CHARS[(charIdx + 1) % CHARS.length];
+
+    if (!charDetailEl) {
+      charDetailEl = document.createElement("div");
+      charDetailEl.className = "comp2-chdetail hidden";
+      compCharsGrid.after(charDetailEl);
+      charDetailEl.addEventListener("click", (ev) => {
+        const t = ev.target.closest("button");
+        if (!t) return;
+        if (t.classList.contains("ch-back")) return closeCharDetail();
+        if (t.classList.contains("ch-prev") || t.classList.contains("ch-next")) {
+          const nextId = t.dataset.id;
+          if (nextId) openCharDetail(nextId);
+          return;
+        }
+        if (t.classList.contains("ch-pose")) {
+          const big = charDetailEl.querySelector(".ch-big img"), lab = charDetailEl.querySelector(".ch-big-lab");
+          if (big && t.dataset.src) big.src = t.dataset.src;
+          if (lab && t.dataset.label) lab.textContent = t.dataset.label;
+          charDetailEl.querySelectorAll(".ch-pose").forEach((b) => b.classList.toggle("on", b === t));
+          sfx(650, 0.04);
+          return;
+        }
+        if (t.classList.contains("ch-voice-btn")) {
+          const cid = t.dataset.char;
+          const charObj = CHARS.find((ch) => ch.id === cid);
+          if (!charObj) return;
+          stopSpeaking();
+          const phrases = Array.isArray(charObj.voice) && charObj.voice.length > 0 ? charObj.voice : ["¡Vamos!"];
+          const curIdx = compVoiceIndices[cid] || 0;
+          const phraseToSpeak = phrases[curIdx % phrases.length];
+          const isSilly = cid === "jesus" && phraseToSpeak.toLowerCase().includes("ketchup");
+          speakCharacter(cid, { force: true, phrase: phraseToSpeak, sillyVoice: isSilly });
+          const nextIdx = (curIdx + 1) % phrases.length;
+          compVoiceIndices[cid] = nextIdx;
+          const quoteEl = charDetailEl.querySelector(".ch-quote");
+          if (quoteEl) quoteEl.textContent = `«${phrases[nextIdx]}»`;
+          return;
+        }
+      });
+    }
+
+    const p = POWER_INFO[c.id] || { icon: "★", desc: c.tip };
+    const phrases = Array.isArray(c.voice) && c.voice.length > 0 ? c.voice : ["¡Vamos!"];
+    const curIdx = compVoiceIndices[c.id] || 0;
+    const currentPhrase = phrases[curIdx % phrases.length];
+
+    // Build poses list: exactamente 6 movimientos en 2 filas de 3
+    const poses = [
+      { key: "idle", label: "Reposo", src: `/sprites/${c.id}/idle.png` },
+      { key: "walk", label: "Caminar", src: `/sprites/${c.id}/walk.png` },
+      { key: "jump", label: "Salto", src: c.id === "ana" ? "/sprites/ana/climb.png" : `/sprites/${c.id}/jump.png` },
+      { key: "attack", label: "Ataque especial", src: `/sprites/${c.id}/attack.png` },
+      { key: "shoot", label: "Disparar", src: `/sprites/${c.id}/shoot.png` },
+      { key: "death", label: "Derrota", src: `/sprites/${c.id}/death.png` }
+    ];
+
+    const first = poses[0];
+
+    charDetailEl.innerHTML = `
+      <nav class="wd-crumbs">
+        <button class="ch-back wd-back">← Personajes</button>
+        <div class="comp-nav-arrows">
+          <button class="comp-nav-arrow ch-prev" data-id="${prevChar.id}" aria-label="Personaje anterior" title="Anterior: ${prevChar.name}">‹</button>
+          <span class="comp-nav-step">${charIdx + 1}/${CHARS.length}</span>
+          <button class="comp-nav-arrow ch-next" data-id="${nextChar.id}" aria-label="Siguiente personaje" title="Siguiente: ${nextChar.name}">›</button>
+        </div>
+        <span>›</span>
+        <b>${c.name}</b>
+      </nav>
+      <article class="ch-card">
+        <div class="ch-side">
+          <figure class="ch-big">
+            <button class="card-side-arrow ch-prev" data-id="${prevChar.id}" aria-label="Anterior" title="Anterior: ${prevChar.name}">‹</button>
+            <img src="${first.src}" alt="${c.name}">
+            <button class="card-side-arrow ch-next" data-id="${nextChar.id}" aria-label="Siguiente" title="Siguiente: ${nextChar.name}">›</button>
+            <figcaption class="ch-big-lab">${first.label}</figcaption>
+          </figure>
+          <div class="ch-poses">
+            ${poses.map((pose, i) => `
+              <button class="ch-pose${i === 0 ? " on" : ""}" data-src="${pose.src}" data-label="${pose.label}" title="${pose.label}">
+                <img src="${pose.src}" alt="${pose.label}">
+                <small>${pose.label}</small>
+              </button>
+            `).join("")}
+          </div>
+        </div>
+        <div class="ch-body">
+          <small class="ch-form-tag">${c.form}</small>
+          <h3>${c.emoji} ${c.name}</h3>
+          
+          <div class="ch-power-block">
+            <div class="ch-power-head">
+              <span class="ch-power-ico">${p.icon}</span>
+              <b class="ch-power-name">${c.ab}</b>
+            </div>
+            <p class="ch-power-desc">${p.desc}</p>
+            ${c.tip ? `<p class="ch-power-tip">🎮 ${c.tip}</p>` : ""}
+          </div>
+
+          <h4>💬 Frase célebre</h4>
+          <div class="ch-voice-box">
+            <button class="ch-voice-btn" data-char="${c.id}" title="Escuchar frase y cambiar a la siguiente">🔊 Hablar</button>
+            <span class="ch-quote">«${currentPhrase}»</span>
+          </div>
+        </div>
+      </article>
+    `;
+
+    const compScrollEl = document.getElementById("compScroll");
+    if (!compendiumOv.classList.contains("ch-mode")) chPrevScroll = compScrollEl ? compScrollEl.scrollTop : 0;
+    compendiumOv.classList.add("ch-mode");
+    charDetailEl.classList.remove("hidden");
+    if (compScrollEl) compScrollEl.scrollTop = 0;
+    sfx(600, 0.06);
+  }
+
+  function closeCharDetail() {
+    stopSpeaking();
+    if (!charDetailEl || !compendiumOv.classList.contains("ch-mode")) return;
+    compendiumOv.classList.remove("ch-mode");
+    charDetailEl.classList.add("hidden");
+    const compScrollEl = document.getElementById("compScroll");
+    if (compScrollEl) compScrollEl.scrollTop = chPrevScroll;
+    sfx(450, 0.05);
   }
 
   // qué se hace en cada mapa, contado para la presentación
@@ -917,6 +1333,10 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
   async function openEnemyDetail(id) {
     const e = ENEMIES_DATA.find((x) => x.id === id);
     if (!e || !compEnemiesGrid) return;
+    const enemyIdx = ENEMIES_DATA.findIndex((x) => x.id === id);
+    const prevEnemy = ENEMIES_DATA[(enemyIdx - 1 + ENEMIES_DATA.length) % ENEMIES_DATA.length];
+    const nextEnemy = ENEMIES_DATA[(enemyIdx + 1) % ENEMIES_DATA.length];
+
     if (!enemyDetailEl) {
       enemyDetailEl = document.createElement("div");
       enemyDetailEl.className = "comp2-edetail hidden";
@@ -925,13 +1345,17 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
         const t = ev.target.closest("button");
         if (!t) return;
         if (t.classList.contains("en-back")) return closeEnemyDetail();
+        if (t.classList.contains("en-prev") || t.classList.contains("en-next")) {
+          const nextId = t.dataset.id;
+          if (nextId) openEnemyDetail(nextId);
+          return;
+        }
         if (t.classList.contains("en-pose")) {
           const big = enemyDetailEl.querySelector(".en-big img"), lab = enemyDetailEl.querySelector(".en-big-lab");
           big.src = t.dataset.src; lab.textContent = t.dataset.label;
           enemyDetailEl.querySelectorAll(".en-pose").forEach((b) => b.classList.toggle("on", b === t));
           return;
         }
-        if (t.classList.contains("en-other")) return openEnemyDetail(t.dataset.enemy);
         if (t.classList.contains("en-world")) { closeEnemyDetail(); openWorldDetail(Number(t.dataset.world)); }
       });
     }
@@ -940,10 +1364,24 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
     const first = poses[0] || { src: e.img || "", label: e.name };
     const w = VISIBLE_WORLDS.find((x) => x.id === e.world);
     enemyDetailEl.innerHTML = `
-      <nav class="wd-crumbs"><button class="en-back wd-back">← Enemigos</button><span>›</span><b>${e.name}</b></nav>
+      <nav class="wd-crumbs">
+        <button class="en-back wd-back">← Enemigos</button>
+        <div class="comp-nav-arrows">
+          <button class="comp-nav-arrow en-prev" data-id="${prevEnemy.id}" aria-label="Enemigo anterior" title="Anterior: ${prevEnemy.name}">‹</button>
+          <span class="comp-nav-step">${enemyIdx + 1}/${ENEMIES_DATA.length}</span>
+          <button class="comp-nav-arrow en-next" data-id="${nextEnemy.id}" aria-label="Siguiente enemigo" title="Siguiente: ${nextEnemy.name}">›</button>
+        </div>
+        <span>›</span>
+        <b>${e.name}</b>
+      </nav>
       <article class="en-card${e.boss ? " boss" : ""}">
         <div class="en-side">
-          <figure class="en-big">${first.src ? `<img src="${first.src}" alt="${e.name}">` : `<span>${e.icon}</span>`}<figcaption class="en-big-lab">${first.label}</figcaption></figure>
+          <figure class="en-big">
+            <button class="card-side-arrow en-prev" data-id="${prevEnemy.id}" aria-label="Anterior" title="Anterior: ${prevEnemy.name}">‹</button>
+            ${first.src ? `<img src="${first.src}" alt="${e.name}">` : `<span>${e.icon}</span>`}
+            <button class="card-side-arrow en-next" data-id="${nextEnemy.id}" aria-label="Siguiente" title="Siguiente: ${nextEnemy.name}">›</button>
+            <figcaption class="en-big-lab">${first.label}</figcaption>
+          </figure>
           ${poses.length > 1 ? `<div class="en-poses">${poses.map((p, i) => `<button class="en-pose${i === 0 ? " on" : ""}" data-src="${p.src}" data-label="${p.label}" title="${p.label}"><img src="${p.src}" alt=""><small>${p.label}</small></button>`).join("")}</div>` : ""}
         </div>
         <div class="en-body">
@@ -954,7 +1392,6 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
           <h4>💡 Cómo vencerle</h4><p>${e.tip}</p>
           <h4>😄 Curiosidad</h4><p>${e.fun}</p>
           ${w ? `<button class="en-world" data-world="${w.id}" style="--acc:${w.color}">🗺️ Está en ${w.name} →</button>` : ""}
-          <div class="wd-others"><span>Otros enemigos:</span>${ENEMIES_DATA.filter((x) => x.id !== id).map((x) => `<button class="en-other wd-other" data-enemy="${x.id}">${x.icon} ${x.name}</button>`).join("")}</div>
         </div>
       </article>`;
     if (!compendiumOv.classList.contains("en-mode")) enPrevScroll = compScrollEl ? compScrollEl.scrollTop : 0;
@@ -976,9 +1413,10 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
     renderCompendiumWorlds();
     renderCompendiumEnemies();
     renderCompendiumItems();
-    compendiumOv.classList.remove("wd-mode", "en-mode");
+    compendiumOv.classList.remove("wd-mode", "en-mode", "ch-mode");
     if (worldDetailEl) worldDetailEl.classList.add("hidden");
     if (enemyDetailEl) enemyDetailEl.classList.add("hidden");
+    if (charDetailEl) charDetailEl.classList.add("hidden");
     compendiumOv.classList.remove("hidden");
     const sc = document.getElementById("compScroll");
     if (sc) sc.scrollTop = 0;
@@ -986,6 +1424,7 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
   }
 
   function closeCompendium() {
+    stopSpeaking();
     if (!compendiumOv) return;
     compendiumOv.classList.add("hidden");
     sfx(400, 0.06);
@@ -996,6 +1435,7 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
     const sc = document.getElementById("compScroll");
     const tabBtns = compendiumOv.querySelectorAll(".comp-tab-btn");
     tabBtns.forEach((btn) => btn.addEventListener("click", () => {
+      if (compendiumOv.classList.contains("ch-mode")) closeCharDetail();
       if (compendiumOv.classList.contains("wd-mode")) closeWorldDetail();
       if (compendiumOv.classList.contains("en-mode")) closeEnemyDetail();
       const sec = document.getElementById(`compTab-${btn.dataset.tab}`);
@@ -1014,20 +1454,24 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
   }
 
   if (btnOpenCompendium) btnOpenCompendium.addEventListener("click", openCompendium);
-  // ↩ dentro de la página de un mundo vuelve a la lista; fuera, cierra la historia
-  if (btnCloseCompendium) btnCloseCompendium.addEventListener("click", () => (compendiumOv.classList.contains("en-mode") ? closeEnemyDetail() : compendiumOv.classList.contains("wd-mode") ? closeWorldDetail() : closeCompendium()));
+  // ↩ dentro de la página de un personaje o mundo vuelve a la lista; fuera, cierra la historia
+  if (btnCloseCompendium) btnCloseCompendium.addEventListener("click", () => (compendiumOv.classList.contains("ch-mode") ? closeCharDetail() : compendiumOv.classList.contains("en-mode") ? closeEnemyDetail() : compendiumOv.classList.contains("wd-mode") ? closeWorldDetail() : closeCompendium()));
 
   // Start game from Menu: Opens the 5-World Adventure Map!
   function triggerStart() {
-    const rawName = (nameInput.value.trim() || "ANON").toUpperCase().slice(0, 12);
+    if (_lobbyRafId) {
+      cancelAnimationFrame(_lobbyRafId);
+      _lobbyRafId = null;
+    }
+    const rawName = (nameInput?.value.trim() || "ANON").toUpperCase().slice(0, 12);
     GameState.playerName = rawName;
     try {
       localStorage.setItem("clevergy_player_name", rawName);
     } catch (e) {}
 
-    menuOv.classList.add("hidden");
-    lbOv.classList.add("hidden");
-    ctrlOv.classList.add("hidden");
+    menuOv?.classList.add("hidden");
+    lbOv?.classList.add("hidden");
+    ctrlOv?.classList.add("hidden");
     compendiumOv?.classList.add("hidden");
 
     onStartGame();
@@ -1042,10 +1486,21 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
         closeCompendium();
         return;
       }
-      if (!lbOv.classList.contains("hidden")) closeLeaderboard();
-      if (!ctrlOv.classList.contains("hidden")) ctrlOv.classList.add("hidden");
+      if (lbOv && !lbOv.classList.contains("hidden")) closeLeaderboard();
+      if (ctrlOv && !ctrlOv.classList.contains("hidden")) ctrlOv.classList.add("hidden");
     }
-    if (e.code === "Enter" && !menuOv.classList.contains("hidden") && lbOv.classList.contains("hidden") && ctrlOv.classList.contains("hidden") && (!compendiumOv || compendiumOv.classList.contains("hidden"))) {
+    if (compendiumOv && !compendiumOv.classList.contains("hidden")) {
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        if (compendiumOv.classList.contains("ch-mode") && charDetailEl) {
+          const btn = charDetailEl.querySelector(e.key === "ArrowLeft" ? ".ch-prev" : ".ch-next");
+          if (btn && btn.dataset.id) { openCharDetail(btn.dataset.id); sfx(650, 0.04); }
+        } else if (compendiumOv.classList.contains("en-mode") && enemyDetailEl) {
+          const btn = enemyDetailEl.querySelector(e.key === "ArrowLeft" ? ".en-prev" : ".en-next");
+          if (btn && btn.dataset.id) { openEnemyDetail(btn.dataset.id); sfx(650, 0.04); }
+        }
+      }
+    }
+    if (e.code === "Enter" && menuOv && !menuOv.classList.contains("hidden") && (!lbOv || lbOv.classList.contains("hidden")) && (!ctrlOv || ctrlOv.classList.contains("hidden")) && (!compendiumOv || compendiumOv.classList.contains("hidden"))) {
       triggerStart();
     }
   });

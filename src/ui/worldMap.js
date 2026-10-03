@@ -576,10 +576,9 @@ export function initWorldMap({ onSelectWorld }) {
   window.addEventListener("resize", () => { if (GameState.worldMapOpen) renderMap(); });
 
   function showWorldMap() {
-    renderMap();
     mapOv?.classList.remove("hidden");
     GameState.worldMapOpen = true;
-    requestAnimationFrame(() => select(selectedId, true));
+    renderMap();
   }
 
   function hideWorldMap() {

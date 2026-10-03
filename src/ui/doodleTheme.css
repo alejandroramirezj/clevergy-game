@@ -1593,7 +1593,7 @@ html body #menuOv .lobby-brand-title .lobby-brand-the { display: inline-block; v
   html body #menuOv .side-nav-btn .nav-text { font-size: 14px !important; line-height: 1.05 !important; }
   html body #menuOv .hero-dossier-card { padding: 7px 10px 8px 12px !important; }
   html body #menuOv .dossier-title { font-size: 18px !important; margin-bottom: 2px !important; }
-  html body #menuOv .dossier-tag { display: none !important; }
+  html body #menuOv .dossier-tag { display: inline-block !important; font-size: 11px !important; letter-spacing: 2px !important; margin-bottom: 2px !important; }
   html body #menuOv .dossier-power { padding: 5px 7px 6px !important; }
   html body #menuOv .dossier-power .dossier-lore { font-size: 12px !important; }
   html body #menuOv .lobby-bottom-bar { height: auto !important; min-height: 0 !important; padding-top: 0 !important; }
@@ -1660,19 +1660,21 @@ html body #menuOv .lobby-brand-crest { overflow: visible; }
   html body #menuOv .tr-the { font-size: 24px; }
   html body #menuOv .tr-main { font-size: 46px; }
 }
-/* logo de Clevergy abajo a la izquierda */
-html body #menuOv .lobby-footer-watermark { display: flex; align-items: center; opacity: 1 !important; }
-html body #menuOv .cg-brand { height: 30px; width: auto; display: block; }
-@media (orientation: landscape) and (max-height: 420px) { html body #menuOv .cg-brand { height: 24px; } }
-@media (orientation: portrait) { html body #menuOv .cg-brand { height: 22px; margin: 0 auto; } }
-/* botones de pose: icono arriba y texto entero, con aire */
-html body #menuOv .action-dock-item { display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 3px !important; min-width: 68px !important; height: 58px !important; padding: 4px 10px 6px !important; box-sizing: border-box !important; overflow: visible !important; }
-html body #menuOv .action-dock-item .action-icon { font-size: 18px !important; line-height: 1 !important; }
-html body #menuOv .action-dock-item .action-label { font-size: 14px !important; line-height: 1.1 !important; white-space: nowrap; }
+/* logo de Clevergy abajo a la izquierda más esquinado */
+html body #menuOv .lobby-footer-watermark { display: flex; align-items: center; opacity: 1 !important; margin-left: -14px; margin-bottom: 2px; }
+html body #menuOv .cg-brand { height: 28px; width: auto; display: block; }
+@media (orientation: landscape) and (max-height: 420px) { html body #menuOv .lobby-footer-watermark { margin-left: -16px; margin-bottom: 0; } html body #menuOv .cg-brand { height: 22px; } }
+@media (orientation: portrait) { html body #menuOv .lobby-footer-watermark { margin-left: 0; } html body #menuOv .cg-brand { height: 22px; margin: 0 auto; } }
+/* botones de pose: 5 acciones con icono arriba y texto entero */
+html body #menuOv .lobby-actions-dock { gap: clamp(4px, 0.9vw, 8px) !important; }
+html body #menuOv .action-dock-item { display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; gap: 2px !important; min-width: clamp(54px, 6.4vw, 64px) !important; height: 56px !important; padding: 4px 6px 5px !important; box-sizing: border-box !important; overflow: visible !important; }
+html body #menuOv .action-dock-item .action-icon { font-size: 17px !important; line-height: 1 !important; }
+html body #menuOv .action-dock-item .action-label { font-size: 13px !important; line-height: 1.1 !important; white-space: nowrap; }
 html body #menuOv .active-indicator { display: none !important; }
 @media (orientation: landscape) and (max-height: 420px) {
-  html body #menuOv .action-dock-item { height: 52px !important; min-width: 62px !important; padding: 3px 8px 5px !important; }
-  html body #menuOv .action-dock-item .action-label { font-size: 13px !important; }
+  html body #menuOv .action-dock-item { height: 48px !important; min-width: 50px !important; padding: 2px 5px 4px !important; }
+  html body #menuOv .action-dock-item .action-icon { font-size: 15px !important; }
+  html body #menuOv .action-dock-item .action-label { font-size: 11.5px !important; }
 }
 
 /* elección de mundo: sin el recuadro rojo de selección */
@@ -1813,7 +1815,7 @@ html body #menuOv .tr-main { font-size: 36px !important; }
     gap: 2px !important;
   }
   html body #menuOv .dossier-title { font-size: 18px !important; margin-bottom: 2px !important; }
-  html body #menuOv .dossier-tag { display: none !important; }
+  html body #menuOv .dossier-tag { display: inline-block !important; font-size: 11px !important; letter-spacing: 2px !important; margin-bottom: 2px !important; }
   html body #menuOv .dossier-power { padding: 4px 6px 5px !important; }
   html body #menuOv .dossier-lore { font-size: 12px !important; margin-bottom: 4px !important; }
   html body #menuOv .lobby-bottom-bar {
@@ -1936,10 +1938,18 @@ html body #menuOv .tr-main { font-size: 36px !important; }
 }
 
 
-/* ✔ Bloque consolidado arriba — estas reglas se eliminaron para evitar conflictos */
-.lb2-name small.lb2-detail { display: block; font-size: 12px; line-height: 1.1; color: var(--nb-pen); opacity: 0.7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.lb2-pod-detail { font-size: 11px; line-height: 1.1; text-align: center; opacity: 0.75; max-width: 100%; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.lb2-me .lb2-name { min-width: 0; }
+.lb2-col-info { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 0; gap: 2px; }
+.lb2-col-info .lb2-name { font-size: 15px; font-weight: 700; color: var(--nb-ink); line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lb2-chips { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+.lb2-chip { display: inline-flex; align-items: center; gap: 2px; font-size: 11px; font-weight: 600; line-height: 1; padding: 2px 6px; border-radius: 6px; background: rgba(39, 42, 54, 0.08); border: 1px solid rgba(39, 42, 54, 0.15); color: var(--nb-pen); white-space: nowrap; }
+.lb2-chip-time { background: #e6f4ff !important; border-color: #91caff !important; color: #0050b3 !important; font-weight: 700 !important; }
+.lb2-chip-coins { background: #fffbe6 !important; border-color: #ffe58f !important; color: #d46b08 !important; font-weight: 700 !important; }
+.lb2-chip-frags { background: #f6ffed !important; border-color: #b7eb8f !important; color: #389e0d !important; }
+.lb2-chip-win { background: #fff0f6 !important; border-color: #ffadd2 !important; color: #c41d7f !important; font-weight: 700 !important; }
+.lb2-chip-world { background: #f0f5ff !important; border-color: #adc6ff !important; color: #1d39c4 !important; }
+.lb2-pod-detail { margin-top: 3px; display: flex; justify-content: center; }
+.lb2-pod-detail .lb2-chips { justify-content: center; }
+.lb2-me .lb2-col-info { min-width: 0; }
 
 /* ficha del personaje en móvil vertical: más ancha y baja (no tapa el botón de JUGAR) */
 @media (orientation: portrait) {
@@ -2002,11 +2012,358 @@ html body #menuOv .tr-main { font-size: 36px !important; }
 }
 @media (orientation: portrait), (max-width: 560px) { .en-card { grid-template-columns: 1fr; } .en-side { position: static; } }
 
+/* ════════════════ Historia · Personajes: ficha interactiva con poses ════════════════ */
+.comp2-char { cursor: pointer; transition: transform 0.12s, box-shadow 0.12s; }
+.comp2-char:hover, .comp2-char:focus-visible { transform: translate(-2px, -3px) rotate(-0.4deg); box-shadow: 8px 10px 0 var(--nb-ink); outline: none; }
+.comp2-char .comp2-go {
+  margin-top: 6px;
+  display: inline-block;
+  font: 700 13px var(--nb-hand);
+  color: var(--nb-pen);
+  background: rgba(39, 42, 54, 0.07);
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px dashed rgba(39, 42, 54, 0.3);
+}
+
+.comp2-chdetail.hidden { display: none !important; }
+.comp2.ch-mode .comp2-intro,
+.comp2.ch-mode .comp2-sec:not(#compTab-characters),
+.comp2.ch-mode #compTab-characters > .comp2-h,
+.comp2.ch-mode #compCharsGrid,
+.comp2.ch-mode .comp2-end { display: none !important; }
+
+.ch-card {
+  --acc: var(--nb-ink, #1f38b8);
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 18px;
+  align-items: start;
+  padding: 16px;
+  background: #fff;
+  border: 2.5px solid var(--nb-pen);
+  border-radius: 18px 11px 20px 13px;
+  box-shadow: 6px 7px 0 var(--acc);
+}
+
+.ch-side {
+  position: sticky;
+  top: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ch-big {
+  position: relative;
+  margin: 0;
+  height: 250px;
+  display: grid;
+  place-items: center;
+  border: 3px solid var(--nb-pen);
+  border-radius: 14px 9px 15px 10px;
+  background: repeating-linear-gradient(transparent 0 15px, var(--nb-rule) 15px 16px), var(--nb-paper);
+  overflow: hidden;
+}
+
+.ch-big img {
+  max-width: 92%;
+  max-height: 215px;
+  object-fit: contain;
+  filter: drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(2px 2px 0 var(--nb-pen));
+  animation: en-bob 2.2s ease-in-out infinite;
+}
+
+.ch-big-lab {
+  position: absolute;
+  left: 8px;
+  bottom: 6px;
+  font: 700 17px var(--nb-hand);
+  padding: 2px 10px;
+  background: #fff;
+  border: 2px solid var(--nb-pen);
+  border-radius: 9px;
+  color: var(--acc);
+}
+
+.ch-poses {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 6px;
+}
+
+.ch-pose {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: #fff;
+  border: 2px solid var(--nb-pen);
+  border-radius: 10px 7px 11px 8px;
+  cursor: pointer;
+  transition: transform 0.1s, border-color 0.1s, background-color 0.1s;
+}
+
+.ch-pose:hover {
+  transform: translateY(-2px);
+  background: #fdfaf0;
+}
+
+.ch-pose.on {
+  border-color: #ff9d00;
+  background: #fff9e6;
+  box-shadow: 0 0 8px rgba(255, 157, 0, 0.4);
+}
+
+.ch-pose img {
+  width: 100%;
+  height: 50px;
+  object-fit: contain;
+}
+
+.ch-pose small {
+  font: 700 12px/1.05 var(--nb-hand);
+  text-align: center;
+  color: var(--nb-pen);
+}
+
+.ch-pose.on small {
+  color: #ff8800;
+}
+
+/* ── Navegación directa con flechas en fichas de personajes y enemigos ── */
+.comp-nav-arrows {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: #fdfaf0;
+  border: 2px solid var(--nb-pen);
+  border-radius: 999px;
+  padding: 1px 4px;
+  box-shadow: 1px 2px 0 var(--nb-pen);
+  vertical-align: middle;
+}
+
+.comp-nav-arrow {
+  background: none;
+  border: none;
+  font: 700 18px/1 var(--nb-hand);
+  color: var(--nb-ink);
+  cursor: pointer;
+  padding: 1px 6px;
+  border-radius: 50%;
+  transition: transform 0.08s, background-color 0.08s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.comp-nav-arrow:hover {
+  background: #ffea79;
+  transform: scale(1.18);
+}
+.comp-nav-arrow:active {
+  transform: scale(0.92);
+}
+
+.comp-nav-step {
+  font: 700 13px var(--nb-hand);
+  color: var(--nb-pen);
+  padding: 0 4px;
+  min-width: 42px;
+  text-align: center;
+  user-select: none;
+}
+
+/* Flechas flotantes circulares en los laterales del marco grande */
+.card-side-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 38px;
+  height: 38px;
+  background: #ffffff;
+  border: 2.5px solid var(--nb-pen);
+  border-radius: 50%;
+  box-shadow: 2px 3px 0 var(--nb-pen);
+  font: 700 22px/1 var(--nb-hand);
+  color: var(--nb-ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  transition: transform 0.1s, background-color 0.1s, box-shadow 0.1s;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.card-side-arrow.ch-prev,
+.card-side-arrow.en-prev {
+  left: 8px;
+}
+.card-side-arrow.ch-next,
+.card-side-arrow.en-next {
+  right: 8px;
+}
+.card-side-arrow:hover {
+  background: #ffea79;
+  transform: translateY(-50%) scale(1.12);
+}
+.card-side-arrow:active {
+  transform: translateY(-50%) translate(1px, 2px);
+  box-shadow: 1px 1px 0 var(--nb-pen);
+}
+
+.ch-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ch-form-tag {
+  font: 700 13px/1 var(--nb-hand);
+  color: var(--nb-red);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.ch-body h3 {
+  margin: 0;
+  font: 700 clamp(28px, 4.5vw, 40px)/1 var(--nb-title);
+  color: var(--nb-ink);
+}
+
+.ch-power-block {
+  background: #fdfaf0;
+  border: 2px dashed rgba(39, 42, 54, 0.35);
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+
+.ch-power-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: 700 18px var(--nb-hand);
+  color: var(--nb-ink);
+}
+
+.ch-power-ico {
+  font-size: 20px;
+}
+
+.ch-power-name {
+  color: #1f38b8;
+}
+
+.ch-power-desc {
+  margin: 4px 0 0;
+  font: 15px/1.25 var(--nb-hand);
+  color: var(--nb-pen);
+}
+
+.ch-power-tip {
+  margin: 7px 0 0;
+  padding: 5px 9px;
+  background: rgba(31, 56, 184, 0.06);
+  border-left: 3px solid #1f38b8;
+  border-radius: 4px;
+  font: 600 14px/1.3 var(--nb-hand);
+  color: var(--nb-pen);
+}
+
+.ch-body h4 {
+  margin: 6px 0 2px;
+  font: 17px var(--nb-hand);
+  color: var(--acc);
+}
+
+.ch-tip {
+  margin: 0;
+  font: 15px/1.25 var(--nb-hand);
+  color: var(--nb-pen);
+}
+
+.ch-voice-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 2px solid var(--nb-pen);
+  border-radius: 10px;
+  padding: 6px 12px;
+}
+
+.ch-voice-btn {
+  cursor: pointer;
+  background: var(--nb-paper);
+  border: 1.5px solid var(--nb-pen);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font: 700 13px var(--nb-hand);
+  color: var(--nb-pen);
+  box-shadow: 1px 2px 0 var(--nb-ink);
+  white-space: nowrap;
+}
+
+.ch-voice-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: none;
+}
+
+.ch-quote {
+  font: italic 15px/1.2 var(--nb-hand);
+  color: var(--nb-ink);
+}
+
+.ch-actions {
+  margin: 10px 0 4px;
+}
+
+.ch-select {
+  cursor: pointer;
+  width: 100%;
+  padding: 8px 16px;
+  font: 700 20px var(--nb-title);
+  color: #fff;
+  background: #1f38b8;
+  border: 2.5px solid var(--nb-pen);
+  border-radius: 12px;
+  box-shadow: 4px 5px 0 var(--nb-pen);
+  transition: all 0.12s;
+}
+
+.ch-select:hover {
+  transform: translate(-1px, -2px);
+  box-shadow: 5px 7px 0 var(--nb-pen);
+}
+
+.ch-select.selected {
+  background: #2e8a4e;
+  border-color: #1e5a32;
+  box-shadow: 3px 4px 0 #1e5a32;
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+  .ch-card { gap: 12px; padding: 10px; }
+  .ch-big { height: 170px; }
+  .ch-big img { max-height: 146px; }
+  .ch-poses { grid-template-columns: repeat(3, 1fr) !important; gap: 4px; }
+  .ch-pose img { height: 38px; }
+  .ch-body h3 { font-size: 26px; }
+  .ch-body h4 { margin: 4px 0 2px; font-size: 15px; }
+  .ch-power-desc, .ch-tip, .ch-quote { font-size: 13px; }
+  .ch-select { font-size: 16px; padding: 6px 12px; }
+}
+
+@media (orientation: portrait), (max-width: 560px) {
+  .ch-card { grid-template-columns: 1fr; }
+  .ch-side { position: static; }
+}
+
 /* sólo en La Oficina se cambia de personaje dentro de la partida en vivo; en los demás se elige antes de empezar en el lobby */
 body.char-locked #gbTouchBarContainer,
 body.doodle-mode:not(.world-office) #gbTouchBarContainer { display: none !important; }
-.lb2-fun { margin: 4px 0 6px; padding: 4px 10px; font: 15px var(--nb-hand); color: var(--nb-pen); background: #fff8d6; border: 2px dashed var(--acc, #1f38b8); border-radius: 10px 7px 11px 8px; transform: rotate(-0.4deg); }
-.lb2-fun b { color: var(--acc, #1f38b8); }
 
 /* =============================================================================
    Bocadillo de voz cómic (Doodle Speech Bubble)
@@ -2202,5 +2559,15 @@ body.doodle-mode:not(.world-office) #gbTouchBarContainer { display: none !import
   transform: translate(2px, 2px);
   box-shadow: 0 0 0 var(--nb-pen, #272a36);
   background: #e8f0fe;
+}
+
+@keyframes lobbyRecoilShake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-5px) scale(0.99); }
+  60% { transform: translateX(3px) scale(1.005); }
+  100% { transform: translateX(0) scale(1); }
+}
+.lobby-shot-recoil {
+  animation: lobbyRecoilShake 0.16s cubic-bezier(0.2, 0.9, 0.3, 1.2);
 }
 
