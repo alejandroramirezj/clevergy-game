@@ -169,7 +169,12 @@ export function createSticker(targetScene, opts = {}) {
     material.map = p.tex;
     material.needsUpdate = true;
     // el personaje mide ~1.75 m (1.4 m los pixel art)
-    const rel = relScale && poses.idle && p !== poses.idle ? p.srcH / poses.idle.srcH : 1;
+    let rel = relScale && poses.idle && p !== poses.idle ? p.srcH / poses.idle.srcH : 1;
+    if (name === "attack" || name === "shoot") {
+      rel = Math.max(0.8, Math.min(1.15, rel));
+    } else {
+      rel = Math.max(0.4, Math.min(1.35, rel));
+    }
     const H = ((p.pixel ? baseH * 0.8 : baseH) / p.charH) * rel;
     plane.scale.set(H * p.aspect, H, 1);
     plane.position.y = H / 2 - p.feet * H;
