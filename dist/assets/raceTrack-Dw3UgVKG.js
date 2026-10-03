@@ -1,4 +1,4 @@
-import{G as K,W as eo,R as jt,L as Rt,H as vo,d as yo,f as so,A as Lo,g as po,h as ko,S as go,M as w,i as wo,V as it,D as Bo,j as Io,k as Mo,l as fo,n as zo,o as To,p as Go,q as bo,F as Po,r as No,s as et,m,I as s,t as So,u as Oo,v as Fo,E as Wo,Q as Uo}from"./doodleRender-qpyyd43-.js";import{G as c}from"./doodleLevel-CoXt83r-.js";import{i as st}from"./inkText-vIz_Bv_t.js";import{c as Ko}from"./doodleSticker-DReMtqX3.js";import{s as _o}from"./index-vDivVkUj.js";const jo=7,ho=new it(.42,.84,.34).normalize(),xo=60,qo=`
+import{G as K,W as eo,R as jt,L as Rt,H as vo,d as yo,f as so,A as Lo,g as po,h as ko,S as go,M as w,i as wo,V as it,D as Bo,j as Io,k as Mo,l as fo,n as zo,o as To,p as Go,q as bo,F as Po,r as No,s as et,m,I as s,t as So,u as Oo,v as Fo,E as Wo,Q as Uo}from"./doodleRender-qpyyd43-.js";import{G as c}from"./doodleLevel-CoXt83r-.js";import{i as st}from"./inkText-vIz_Bv_t.js";import{c as Ko}from"./doodleSticker-DgWUYaeB.js";import{s as _o}from"./index-BVfnySlq.js";const jo=7,ho=new it(.42,.84,.34).normalize(),xo=60,qo=`
 varying vec2 coord;
 void main() {
   coord = position.xy * 0.5 + 0.5;

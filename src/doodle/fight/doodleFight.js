@@ -84,8 +84,24 @@ const ITEM_POOL = ["grapadora", "grapadora", "bomba", "boli", "cafe", "cafe", "f
 const TEMPLATE = `
 <canvas class="dd-canvas"></canvas>
 <div class="cf-hud hidden">
+  <div class="rf-top-banner">
+    <div class="rf-banner-inner">
+      <span class="rf-arrow rf-arrow-l">➔</span>
+      <h2 class="rf-banner-title">RETRO <span>FIGHT</span></h2>
+      <span class="rf-arrow rf-arrow-r">➔</span>
+    </div>
+    <div class="rf-banner-sub">5 minutos para escribir tarjetas, 5 minutos para votar, y el resto... <b class="rf-pelea-hl">¡PELEAR!</b></div>
+  </div>
   <div class="sb-timer"><span>3:00</span></div>
   <div class="sb-cards"></div>
+  <div class="rf-desk-note rf-note-left">
+    <span class="rf-note-title">RETRO FIGHT</span>
+    <span class="rf-note-sub">♥</span>
+  </div>
+  <div class="rf-desk-note rf-note-right">
+    <span class="rf-note-title">MISMAS IDEAS</span>
+    <span class="rf-note-sub">MÁS ACCIÓN !! 😊</span>
+  </div>
   <div class="cf-ping"></div>
   <div class="cf-big"></div>
   <div class="cf-small"></div>
@@ -96,8 +112,9 @@ const TEMPLATE = `
 <div class="dd-ov cf-lobby">
   <div class="dd-card cf-card">
     <div class="cf-col cf-pickcol">
-      <div class="dd-kicker">MUNDO 3 · TODOS CONTRA TODOS</div>
-      <h1 class="cf-title">Coworking Fight</h1>
+      <div class="dd-kicker">MUNDO 3 · RETRO FIGHT</div>
+      <h1 class="cf-title">Retro Fight</h1>
+      <div class="rf-lobby-sub">"5 minutos para escribir tarjetas. 5 minutos para votar. Y el resto... PELEA."</div>
       <div class="cf-pick-tag">👑 1. Tu personaje</div>
       <div class="cf-picker">
         <button class="cf-arrow" data-d="-1" aria-label="Anterior">◀</button>
@@ -589,7 +606,12 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
     if (f.y + FH > MAIN.y - MAIN.depth && f.y < MAIN.y - 0.05 && f.vy > 0 && f.x > MAIN.x0 && f.x < MAIN.x1) { f.y = Math.min(f.y, MAIN.y - MAIN.depth - FH); f.vy = 0; }
     if (f.g) {
       f.airJ = 2; f.upB = false; f.airDodge = false; f.ledgeUsed = false;
-      if (!wasG) { f.squash = 0.78; sfx.land(); if (f.state === "tumble") { f.state = "hurt"; f.stun = Math.min(f.stun, 0.25); } }
+      if (!wasG) {
+        f.squash = 0.78;
+        sfx.land();
+        stage.onLand?.(f.x, f.y);
+        if (f.state === "tumble") { f.state = "hurt"; f.stun = Math.min(f.stun, 0.25); }
+      }
     }
     // agarrarse al borde
     if (!f.g && f.vy < 0 && !f.ledgeUsed && f.state !== "tumble" && f.state !== "dead" && !f.move && inp && inp.y > -0.5) {
@@ -945,6 +967,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
   }
   function impactFx(x, y, ink, heavy) {
     sfx.hit(heavy);
+    stage.onHit?.(x, y, heavy);
     spark(x, y, ink, heavy);
     spawnInk(x, y, ink, heavy ? 14 : 7, heavy ? 7 : 4.5);
     if (heavy) spawnDecal(x, ink, 1.2);
@@ -1191,11 +1214,17 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
     audio.init();
     audio.startMusic("pelea");
     phase = "intro";
-    M.fightAt = at + 2400;
-    schedule(at, () => { big("3", "", 0.7); sfx.beep(false); });
-    schedule(at + 800, () => { big("2", "", 0.7); sfx.beep(false); });
-    schedule(at + 1600, () => { big("1", "", 0.7); sfx.beep(false); });
-    schedule(at + 2400, () => { phase = "fight"; big("¡A PELEAR!", "", 0.9, "go"); sfx.beep(true); });
+    stage.onReset?.();
+    const INTRO_DUR = 5000;
+    M.fightAt = at + INTRO_DUR;
+    schedule(at, () => { big("RETRO FIGHT", "5 minutos para escribir tarjetas.", 0.85); sfx.whoosh(); });
+    schedule(at + 900, () => { big("RETRO FIGHT", "5 minutos para votar.", 0.85); sfx.whoosh(); });
+    schedule(at + 1800, () => { big("Y el resto...", "", 0.65); sfx.whoosh(); });
+    schedule(at + 2500, () => { big("¡PELEAR!", "", 0.65, "go"); sfx.charge(); });
+    schedule(at + 3200, () => { big("3", "", 0.55); sfx.beep(false); });
+    schedule(at + 3800, () => { big("2", "", 0.55); sfx.beep(false); });
+    schedule(at + 4400, () => { big("1", "", 0.55); sfx.beep(false); });
+    schedule(at + 5000, () => { phase = "fight"; big("FIGHT!", "", 1.0, "go"); sfx.beep(true); });
     syncPad();
   }
   // el árbitro (CPU local o anfitrión) decide cuándo termina
@@ -1219,6 +1248,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
     M.frozenTime = Math.max(0, MATCH_TIME - (hostNow() - M.fightAt) / 1000);
     const w = F[m.order[0]];
     if (w && w.ctrl !== "remote") { w.state = "win"; w.move = null; }
+    stage.onVictory?.(w);
     big("¡SE ACABÓ!", w ? `Gana ${w.cfg.name}` : "", 2, "ko");
     sfx.ko();
     M.slow = 0.4;

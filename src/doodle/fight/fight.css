@@ -7,12 +7,121 @@
 
 /* ── HUD estilo Smash: reloj arriba y una tarjeta por luchador abajo ── */
 .cf-root { --s0: #d6243a; --s1: #1f38b8; --s2: #1a8c52; --s3: #ec7f19; }
-.sb-timer {
-  position: absolute; left: 50%; top: 8px; transform: translateX(-50%) rotate(-1deg); padding: 2px 14px 4px;
-  background: var(--dd-paper); border: 3px solid var(--dd-black); border-radius: 14px 9px 15px 10px; box-shadow: 3px 4px 0 var(--dd-ink);
+
+/* ── Banner superior Retro Fight ── */
+.rf-top-banner {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.94);
+  border: 2.5px solid var(--dd-black);
+  border-radius: 12px 14px 10px 13px;
+  box-shadow: 2px 3px 0 var(--dd-ink);
+  padding: 3px 18px 4px;
+  pointer-events: none;
+  z-index: 4;
 }
-.sb-timer span { font-family: "Caveat", cursive; font-size: 30px; line-height: 1; color: var(--dd-ink); }
+.rf-banner-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.rf-arrow {
+  color: var(--dd-red);
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1;
+}
+.rf-arrow-l { transform: scaleX(-1); }
+.rf-banner-title {
+  margin: 0;
+  font-family: "Caveat", cursive;
+  font-size: clamp(24px, 4vw, 36px);
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--dd-ink);
+}
+.rf-banner-title span {
+  color: var(--dd-red);
+}
+.rf-banner-sub {
+  font-family: "Caveat", cursive;
+  font-size: clamp(13px, 2vw, 17px);
+  color: var(--dd-black);
+  line-height: 1;
+  white-space: nowrap;
+}
+.rf-pelea-hl {
+  color: var(--dd-red);
+  font-size: 1.1em;
+}
+
+.sb-timer {
+  position: absolute; left: 50%; top: 58px; transform: translateX(-50%) rotate(-1deg); padding: 2px 14px 4px;
+  background: var(--dd-paper); border: 3px solid var(--dd-black); border-radius: 14px 9px 15px 10px; box-shadow: 3px 4px 0 var(--dd-ink);
+  z-index: 5;
+}
+.sb-timer span { font-family: "Caveat", cursive; font-size: 28px; line-height: 1; color: var(--dd-ink); }
 .sb-timer.low span { color: var(--dd-red); animation: dd-blink 0.5s steps(2) infinite; }
+
+/* ── Notas adhesivas en las esquinas de la mesa (estilo post-it de retro) ── */
+.rf-desk-note {
+  position: absolute;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  padding: 6px 12px;
+  background: #fff8bb;
+  border: 2px solid var(--dd-black);
+  border-radius: 4px;
+  box-shadow: 3px 4px 0 rgba(39, 42, 54, 0.4);
+  font-family: "Caveat", cursive;
+  line-height: 1.05;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+  z-index: 3;
+}
+.rf-desk-note::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 25%;
+  width: 50%;
+  height: 12px;
+  background: rgba(240, 133, 24, 0.45);
+  transform: rotate(-1.5deg);
+}
+.rf-note-left {
+  left: max(14px, env(safe-area-inset-left));
+  transform: rotate(-4deg);
+}
+.rf-note-right {
+  right: max(14px, env(safe-area-inset-right));
+  transform: rotate(3.5deg);
+  text-align: center;
+}
+.rf-note-title {
+  font-size: clamp(16px, 2.4vw, 20px);
+  font-weight: 700;
+  color: var(--dd-black);
+}
+.rf-note-sub {
+  font-size: clamp(14px, 2vw, 18px);
+  color: var(--dd-red);
+}
+
+@media (max-width: 680px) {
+  .rf-desk-note { display: none; }
+  .rf-top-banner { padding: 2px 10px 3px; }
+  .sb-timer { top: 52px; }
+}
+
 .sb-cards {
   position: absolute; left: 50%; bottom: max(8px, env(safe-area-inset-bottom)); transform: translateX(-50%);
   display: flex; gap: 10px; max-width: calc(100% - 24px);
@@ -105,6 +214,13 @@
 .cf-card { width: min(860px, 100%); display: grid; grid-template-columns: 1fr 1.15fr; gap: 18px; align-items: center; }
 .cf-col { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .cf-title { font-family: "Caveat", cursive; color: var(--dd-ink); font-size: clamp(40px, 6vw, 64px); line-height: 0.95; margin: 0; }
+.rf-lobby-sub {
+  font-family: "Caveat", cursive;
+  font-size: clamp(16px, 2.5vw, 20px);
+  color: var(--dd-red);
+  line-height: 1.15;
+  margin: -4px 0 2px;
+}
 .cf-picker { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px; }
 .cf-arrow {
   flex: 0 0 auto; width: 34px !important; height: 34px !important; border: 2.5px solid var(--dd-black) !important; border-radius: 50% !important;

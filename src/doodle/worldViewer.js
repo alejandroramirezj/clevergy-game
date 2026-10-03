@@ -11,7 +11,7 @@ import { createObserver, observerBar } from "./observer.js";
 import "./doodle.css";
 import "./observer.css";
 
-const NAMES = { 1: "La Oficina", 6: "Coworking Fight", 7: "BoliBic Tag", 8: "Pantano de San Juan", 9: "La Integración" };
+const NAMES = { 1: "La Oficina", 6: "Retro Fight", 7: "BoliBic Tag", 8: "Pantano de San Juan", 9: "La Integración" };
 
 /** abre el visor del mundo `worldId`; `onClose` al cerrarlo */
 export async function openWorldViewer(worldId, { onClose } = {}) {

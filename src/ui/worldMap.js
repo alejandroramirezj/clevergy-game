@@ -85,42 +85,53 @@ function artArena(hero, rival) {
   return `
     <div class="ws-scene-wrap">
       <svg class="ws-scene-svg" viewBox="0 0 200 130" preserveAspectRatio="xMidYMid slice" fill="none">
-        <defs>
-          <radialGradient id="arenaSpotlight" cx="50%" cy="40%" r="65%">
-            <stop offset="0%" stop-color="#4a2ba3" stop-opacity="0.8"/>
-            <stop offset="100%" stop-color="#14142b" stop-opacity="1"/>
-          </radialGradient>
-        </defs>
-        <!-- Escenario oscuro con foco -->
-        <rect width="200" height="130" fill="url(#arenaSpotlight)"/>
+        <!-- Fondo de sala de retro -->
+        <rect width="200" height="130" fill="#f4efe6"/>
         
-        <!-- Focos de luz púrpura y magenta -->
-        <polygon points="100,0 20,130 70,130" fill="#a455f5" opacity="0.18"/>
-        <polygon points="100,0 130,130 180,130" fill="#f05988" opacity="0.18"/>
+        <!-- Pizarra de retrospectiva con 4 columnas -->
+        <g stroke="#232738" stroke-width="1.6">
+          <rect x="10" y="8" width="180" height="88" rx="3" fill="#ffffff"/>
+          <!-- Columnas divisoras -->
+          <line x1="55" y1="8" x2="55" y2="96" stroke-dasharray="3 2"/>
+          <line x1="100" y1="8" x2="100" y2="96" stroke-dasharray="3 2"/>
+          <line x1="145" y1="8" x2="145" y2="96" stroke-dasharray="3 2"/>
 
-        <!-- Barras de vida superiores estilo Smash / Fighting -->
-        <g stroke="#232738" stroke-width="1.8">
-          <!-- P1 Barra roja -->
-          <rect x="14" y="10" width="65" height="10" rx="3" fill="#e5283b"/>
-          <g fill="#ffffff" opacity="0.6">
-            ${[20, 28, 36, 44, 52, 60, 68].map(x => `<rect x="${x}" y="11" width="3" height="8" rx="1"/>`).join("")}
-          </g>
-          <!-- P2 Barra roja -->
-          <rect x="121" y="10" width="65" height="10" rx="3" fill="#e5283b"/>
-          <g fill="#ffffff" opacity="0.6">
-            ${[127, 135, 143, 151, 159, 167, 175].map(x => `<rect x="${x}" y="11" width="3" height="8" rx="1"/>`).join("")}
-          </g>
-          <!-- Círculo timer "60" -->
-          <circle cx="100" cy="15" r="10" fill="#ffffff" stroke="#232738" stroke-width="2"/>
+          <!-- Cabeceras de columnas -->
+          <!-- Col 1: Qué ha ido bien (verde) -->
+          <rect x="12" y="10" width="41" height="12" rx="2" fill="#d2f2d4"/>
+          <!-- Col 2: A mejorar (rojo/rosa) -->
+          <rect x="57" y="10" width="41" height="12" rx="2" fill="#ffd4db"/>
+          <!-- Col 3: Preguntas (azul) -->
+          <rect x="102" y="10" width="41" height="12" rx="2" fill="#d4e6ff"/>
+          <!-- Col 4: Action Items (morado) -->
+          <rect x="147" y="10" width="41" height="12" rx="2" fill="#edd8ff"/>
         </g>
-        <text x="100" y="19" font-family="'Caveat', cursive, sans-serif" font-weight="900" font-size="12" fill="#232738" text-anchor="middle">60</text>
 
-        <!-- Suelo de la plataforma de combate -->
-        <rect x="10" y="104" width="180" height="26" rx="4" fill="#28224d" stroke="#232738" stroke-width="2.2"/>
-        <line x1="10" y1="108" x2="190" y2="108" stroke="#a455f5" stroke-width="2"/>
+        <!-- Post-its en la pizarra -->
+        <!-- Post-its verdes -->
+        <rect x="16" y="26" width="16" height="14" rx="1" fill="#78d98d" stroke="#232738" stroke-width="1.2" transform="rotate(-3 24 33)"/>
+        <rect x="34" y="30" width="15" height="14" rx="1" fill="#a4edb2" stroke="#232738" stroke-width="1.2" transform="rotate(2 41 37)"/>
+        <!-- Post-its rojos -->
+        <rect x="61" y="28" width="16" height="14" rx="1" fill="#ff7a8e" stroke="#232738" stroke-width="1.2" transform="rotate(3 69 35)"/>
+        <rect x="79" y="32" width="15" height="14" rx="1" fill="#ffa8b7" stroke="#232738" stroke-width="1.2" transform="rotate(-2 86 39)"/>
+        <!-- Post-its azules -->
+        <rect x="106" y="27" width="16" height="14" rx="1" fill="#75b5ff" stroke="#232738" stroke-width="1.2" transform="rotate(-2 114 34)"/>
+        <rect x="124" y="31" width="15" height="14" rx="1" fill="#a5d0ff" stroke="#232738" stroke-width="1.2" transform="rotate(3 131 38)"/>
+        <!-- Post-its morados -->
+        <rect x="151" y="26" width="16" height="14" rx="1" fill="#ba8fff" stroke="#232738" stroke-width="1.2" transform="rotate(2 159 33)"/>
+        <rect x="169" y="32" width="15" height="14" rx="1" fill="#d9bfff" stroke="#232738" stroke-width="1.2" transform="rotate(-3 176 39)"/>
 
-        <!-- Rayo o brillo central de impacto -->
-        <path d="M 98 42 L 94 62 L 104 62 L 96 90 L 106 60 L 98 60 Z" fill="#ffd23f" opacity="0.7"/>
+        <!-- Banner RETRO FIGHT en la parte superior -->
+        <g stroke="#232738" stroke-width="1.5">
+          <rect x="62" y="2" width="76" height="14" rx="3" fill="#ffffff"/>
+        </g>
+        <text x="100" y="12" font-family="'Caveat', cursive, sans-serif" font-weight="900" font-size="10" fill="#1b68e3" text-anchor="middle">RETRO <tspan fill="#e5283b">FIGHT</tspan></text>
+
+        <!-- Mesa de madera de la reunión (plataforma de combate) -->
+        <rect x="6" y="100" width="188" height="30" rx="3" fill="#e8984a" stroke="#232738" stroke-width="2.2"/>
+        <line x1="6" y1="104" x2="194" y2="104" stroke="#ffffff" stroke-width="1.6" opacity="0.6"/>
+        <!-- Papel central "RETRO" -->
+        <ellipse cx="100" cy="106" rx="20" ry="4" fill="#ffffff" stroke="#1b68e3" stroke-width="1.2"/>
       </svg>
       <div class="ws-vs-badge">VS</div>
       ${heroImg(hero, "ws-hero-arena-p1")}

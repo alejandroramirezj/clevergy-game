@@ -30,11 +30,11 @@ export const WORLDS = [
     genreBg: "#ede4fb",
     genreColor: "#6b2bd4",
     genre: "PELEA · HASTA 4",
-    blurb: "Pelea estilo Smash en la terraza del CINK: hasta 4 a la vez, porcentaje de daño, vidas y objetos que coger del suelo.",
-    chips: ["🥊 Hasta 4", "🎁 Objetos", "📱 Online"],
-    name: "Coworking Fight",
-    subtitle: "Todos contra todos en el CINK",
-    desc: "Pelea tipo Super Smash Bros en el coworking: cuanto más porcentaje de daño llevas, más lejos sales volando. Echa a los demás del escenario, coge grapadoras, cafés y bombas de post-its, y juega contra la CPU o con tus compañeros online."
+    blurb: "Una retro que se ha convertido en una pelea: 5 min para escribir tarjetas, 5 min para votar, y el resto... ¡PELEA!",
+    chips: ["🥊 Retro Fight", "📋 Post-its", "📱 Online"],
+    name: "Retro Fight",
+    subtitle: "5 minutos para escribir tarjetas. 5 minutos para votar. Y el resto... PELEA.",
+    desc: "Una retrospectiva del equipo convertida en pelea: lucha sobre la mesa de la sala frente al gran tablero con sus cuatro columnas (Qué ha ido bien, A mejorar, Preguntas y Action Items), esquiva post-its y resuelve la retro a puñetazos contra la CPU o con tus compañeros online."
   },
   {
     id: 7,
