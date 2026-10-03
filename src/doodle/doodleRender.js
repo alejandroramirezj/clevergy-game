@@ -50,8 +50,9 @@ void main() {
   if (!gl_FrontFacing) n = -n;
   float l = dot(n, uLight) * 0.5 + 0.5;
   float shade = clamp(l * 0.95 + uTone, 0.0, 1.0);
-  if (uFill > 0.5) shade = -1.0;
-  gl_FragColor = vec4(shade, uInk, n.x, n.y);
+  float shadeEnc = (uFill > 0.5) ? 0.0 : ((shade + 1.0) * 0.5);
+  float inkEnc = (uInk + 0.5) / 10.0;
+  gl_FragColor = vec4(shadeEnc, inkEnc, n.x * 0.5 + 0.5, n.y * 0.5 + 0.5);
 }`;
 
 const POST_VERT = /* glsl */ `
@@ -77,7 +78,6 @@ uniform float uFadeScale;
 uniform mat4 uInvProj;
 uniform mat4 uInvView;
 uniform vec3 uPaper;
-uniform vec3 uInks[6];
 
 float h21(vec2 p) { p = fract(p * vec2(233.34, 851.73)); p += dot(p, p + 23.45); return fract(p.x * p.y); }
 float vnoise(vec2 p) {
@@ -87,12 +87,18 @@ float vnoise(vec2 p) {
              mix(h21(i + vec2(0.0, 1.0)), h21(i + vec2(1.0, 1.0)), f.x), f.y);
 }
 float lin(float z) { float n = z * 2.0 - 1.0; return 2.0 * uNear * uFar / (uFar + uNear - n * (uFar - uNear)); }
+
+// Tintas constantes: compatibles con cualquier GPU móvil sin depender de uniform arrays
 vec3 inkCol(float id) {
-  int idx = int(id + 0.5);
-  vec3 c = uInks[0];
-  for (int k = 1; k < 6; k++) { if (k == idx) c = uInks[k]; }
-  return c;
+  float idx = floor(id + 0.5);
+  if (idx < 0.5) return vec3(0.12, 0.22, 0.72); // 0: Azul Bic
+  if (idx < 1.5) return vec3(0.84, 0.14, 0.20); // 1: Rojo corrector
+  if (idx < 2.5) return vec3(0.16, 0.17, 0.22); // 2: Negro
+  if (idx < 3.5) return vec3(0.93, 0.50, 0.10); // 3: Naranja
+  if (idx < 4.5) return vec3(0.10, 0.55, 0.32); // 4: Verde
+  return vec3(0.52, 0.24, 0.74);                // 5: Morado
 }
+
 // rayas paralelas con antialias; w = grosor como fracción del espaciado
 float strokes(vec2 p, vec2 dir, float sp, float w) {
   float t = dot(p, vec2(-dir.y, dir.x)) / sp;
@@ -124,47 +130,54 @@ void main() {
   float zu = texture2D(tDepth, uv + oy).x, zd = texture2D(tDepth, uv - oy).x;
   vec4 sl = texture2D(tData, uv - ox), sr = texture2D(tData, uv + ox);
   vec4 su = texture2D(tData, uv + oy), sd = texture2D(tData, uv - oy);
-  // la inversa de la profundidad es lineal sobre cualquier plano, así que su segunda
-  // derivada sólo se dispara en siluetas reales (el suelo en rasante no pinta rayas falsas)
+
+  vec2 nCurr = s.ba * 2.0 - 1.0;
+  vec2 nl = sl.ba * 2.0 - 1.0;
+  vec2 nr = sr.ba * 2.0 - 1.0;
+  vec2 nu = su.ba * 2.0 - 1.0;
+  vec2 nd = sd.ba * 2.0 - 1.0;
+
   float iw = 1.0 / d;
   float lap = abs(1.0 / lin(zl) + 1.0 / lin(zr) - 2.0 * iw) + abs(1.0 / lin(zu) + 1.0 / lin(zd) - 2.0 * iw);
   float edge = smoothstep(0.06, 0.26, lap / (iw + 1e-7));
-  float nEdge = length(sl.ba - sr.ba) + length(su.ba - sd.ba);
+  float nEdge = length(nl - nr) + length(nu - nd);
   edge = max(edge, smoothstep(0.45, 0.9, nEdge));
   float iEdge = abs(sl.g - sr.g) + abs(su.g - sd.g);
-  edge = max(edge, step(0.5, iEdge) * 0.9);
+  edge = max(edge, step(0.05, iEdge) * 0.9);
 
   // la tinta del contorno es la del objeto que está delante
-  float zmin = z; float inkId = s.g;
-  if (zl < zmin) { zmin = zl; inkId = sl.g; }
-  if (zr < zmin) { zmin = zr; inkId = sr.g; }
-  if (zu < zmin) { zmin = zu; inkId = su.g; }
-  if (zd < zmin) { zmin = zd; inkId = sd.g; }
+  float zmin = z; float inkG = s.g;
+  if (zl < zmin) { zmin = zl; inkG = sl.g; }
+  if (zr < zmin) { zmin = zr; inkG = sr.g; }
+  if (zu < zmin) { zmin = zu; inkG = su.g; }
+  if (zd < zmin) { zmin = zd; inkG = sd.g; }
   float dFront = lin(zmin);
 
+  float currInk = floor(s.g * 10.0);
+  float inkId = floor(inkG * 10.0);
+  bool isWater = currInk >= 7.0;
+
   // ── rayado ──
-  float shade = s.r;
   float hatch = 0.0;
-  bool isWater = s.g > 6.5;
   if (!sky && !isWater) {
-    if (shade < 0.0) {
+    if (s.r < 0.25) {
+      // tinta sólida (uFill)
       hatch = 1.0;
     } else {
+      float shade = clamp((s.r - 0.5) * 2.0, 0.0, 1.0);
       vec2 hp; float sp;
       if (d < 1.4) {
         // el arma va pegada a la cámara: para ella la pantalla es el marco estable
         hp = gl_FragCoord.xy + wob * 4.0 * sc;
         sp = 7.5 * sc;
       } else {
-        // reconstruimos la posición en el mundo y rayamos sobre el plano al que mira la superficie,
-        // así el trazo se queda quieto en la pared mientras te mueves
+        // reconstruimos la posición en el mundo y rayamos sobre el plano al que mira la superficie
         vec4 clip = vec4(uv * 2.0 - 1.0, z * 2.0 - 1.0, 1.0);
         vec4 vp = uInvProj * clip; vp /= vp.w;
         vec3 wp = (uInvView * vec4(vp.xyz, 1.0)).xyz;
-        vec3 nv = vec3(s.b, s.a, sqrt(max(0.0, 1.0 - dot(s.ba, s.ba))));
+        vec3 nv = vec3(nCurr.x, nCurr.y, sqrt(max(0.0, 1.0 - dot(nCurr, nCurr))));
         vec3 wn = abs(normalize(mat3(uInvView) * nv));
         hp = wn.y > max(wn.x, wn.z) ? wp.xz : (wn.x > wn.z ? wp.zy : wp.xy);
-        // espaciado en potencias de dos según la distancia: densidad en pantalla casi constante, sin moiré
         float target = d * 0.0125 / max(sc, 0.5);
         sp = 0.16 * exp2(floor(log2(max(1e-4, target / 0.16))));
         hp += (vnoise(hp * (2.2 / sp)) - 0.5) * sp * 0.35;
@@ -195,9 +208,9 @@ void main() {
   if (isWater) {
     col = vec3(s.r, s.b, s.a);
   } else {
-    col = mix(col, inkCol(s.g), hatch * 0.74 * fade);
+    col = mix(col, inkCol(currInk), hatch * 0.74 * fade);
   }
-  if (inkId > 6.5) edge = 0.0;
+  if (inkId >= 7.0) edge = 0.0;
   float ew = 0.75 + 0.35 * vnoise(pp * 0.33 + boil);
   col = mix(col, inkCol(inkId) * 0.9, clamp(edge * ew, 0.0, 1.0) * fadeE);
 
@@ -206,7 +219,7 @@ void main() {
   float vig = smoothstep(0.3, 0.9, length(vc));
   float scr = 0.5 + 0.5 * strokes(pp + wob * 9.0, normalize(vec2(1.0, 0.75)), 7.0 * sc, 0.32);
   float hurt = clamp(uHurt + uLowHp * (0.3 + 0.25 * sin(uTime * 6.0)), 0.0, 1.0);
-  col = mix(col, uInks[1] * 0.9, hurt * vig * scr);
+  col = mix(col, vec3(0.84, 0.14, 0.20) * 0.9, hurt * vig * scr);
   col = mix(col, uPaper, uFlash);
   gl_FragColor = vec4(col, 1.0);
 }`;
@@ -253,10 +266,14 @@ export function createDoodleRenderer(canvas, opts = {}) {
   renderer.setClearColor(0x000000, 0);
 
   const makeTarget = (w, h) => {
+    const isWebGL2 = renderer.capabilities.isWebGL2;
     const depthTexture = new THREE.DepthTexture(w, h);
-    depthTexture.type = THREE.UnsignedIntType;
+    depthTexture.type = isWebGL2 ? THREE.UnsignedIntType : THREE.UnsignedShortType;
+    const hasHalfFloat = isWebGL2
+      ? renderer.extensions.has("EXT_color_buffer_float")
+      : renderer.extensions.has("EXT_color_buffer_half_float");
     return new THREE.WebGLRenderTarget(w, h, {
-      type: THREE.HalfFloatType,
+      type: hasHalfFloat ? THREE.HalfFloatType : THREE.UnsignedByteType,
       minFilter: THREE.NearestFilter,
       magFilter: THREE.NearestFilter,
       depthBuffer: true,
@@ -280,11 +297,10 @@ export function createDoodleRenderer(canvas, opts = {}) {
       uHurt: { value: 0 },
       uLowHp: { value: 0 },
       uFlash: { value: 0 },
-      uFadeScale: { value: opts.fadeScale || 1 },
+      uFadeScale: { value: opts.fadeScale || 1.0 },
       uInvProj: { value: new THREE.Matrix4() },
       uInvView: { value: new THREE.Matrix4() },
-      uPaper: { value: new THREE.Vector3(0.965, 0.952, 0.9) },
-      uInks: { value: INK_RGB.map((c) => new THREE.Vector3(...c)) }
+      uPaper: { value: new THREE.Vector3(0.965, 0.952, 0.9) }
     }
   });
   const postScene = new THREE.Scene();

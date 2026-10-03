@@ -264,7 +264,7 @@ void main() {
   // a lo lejos el agua se funde con el papel de la libreta
   col = mix(col, uPaper, smoothstep(220.0, 1100.0, dist) * 0.8);
   col = clamp(col, 0.0, 1.0);
-  gl_FragColor = vec4(col.r, ${WATER_INK.toFixed(1)}, col.g, col.b);
+  gl_FragColor = vec4(col.r, ${((WATER_INK + 0.5) / 10).toFixed(4)}, col.g, col.b);
 }`;
 
 // ── simulación ping-pong genérica ────────────────────────────────────────────
