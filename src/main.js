@@ -93,6 +93,12 @@ function fitCanvas() {
 window.addEventListener("resize", fitCanvas);
 window.addEventListener("orientationchange", () => setTimeout(fitCanvas, 200));
 window.addEventListener("in_play_change", () => setTimeout(fitCanvas, 0));
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", fitCanvas);
+}
+// En PWAs instaladas, el sistema operativo oculta barras o ajusta el viewport con un ligero retardo
+setTimeout(fitCanvas, 100);
+setTimeout(fitCanvas, 400);
 
 // ── los mundos: id → módulo y cómo se arranca ──
 const WORLD_LOADERS = {

@@ -1784,33 +1784,66 @@ html body #menuOv .tr-main { font-size: 36px !important; }
   }
 }
 
-/* Landscape corto (≤0 440px alto): reducir el header para que quepa todo */
-@media (orientation: landscape) and (max-height: 440px) {
-  html body #menuOv .lobby-header-row {
-    height: 76px !important;
-    padding-top: max(4px, env(safe-area-inset-top)) !important;
-    align-items: flex-end !important;
+/* Landscape móvil (≤ 460px alto): reducir header y adaptar el escenario para que nada se desborde al instalar la PWA */
+@media (orientation: landscape) and (max-height: 460px) {
+  html body #menuOv .clevergy-menu-container {
+    padding-bottom: max(6px, env(safe-area-inset-bottom)) !important;
   }
-  html body #menuOv .lobby-brand-crest { bottom: 4px !important; }
-  html body #menuOv .tr-the { font-size: 15px !important; }
-  html body #menuOv .tr-main { font-size: 30px !important; }
-  html body #menuOv .side-nav-btn { height: 34px !important; }
-  html body #menuOv .hero-stage-container { --ped: min(280px, calc(100dvh - 120px)); top: 52% !important; }
-  html body #menuOv .hero-pedestal-wrap { width: var(--ped) !important; height: var(--ped) !important; }
-  html body #menuOv .hero-nav-arrow.arrow-prev { left: calc(50% - var(--ped) / 2 - 8px) !important; }
-  html body #menuOv .hero-nav-arrow.arrow-next { right: calc(50% - var(--ped) / 2 - 8px) !important; }
-}
-
-/* Landscape muy corto (≤0 400px alto): modo mínimo */
-@media (orientation: landscape) and (max-height: 400px) {
   html body #menuOv .lobby-header-row {
     height: 48px !important;
     padding-top: max(4px, env(safe-area-inset-top)) !important;
     padding-bottom: 2px !important;
+    align-items: flex-end !important;
+    flex-shrink: 0 !important;
   }
   html body #menuOv .lobby-brand-crest { bottom: 2px !important; }
-  html body #menuOv .tr-the { font-size: 12px !important; }
-  html body #menuOv .tr-main { font-size: 24px !important; }
+  html body #menuOv .tr-the { font-size: 13px !important; }
+  html body #menuOv .tr-main { font-size: 26px !important; }
+  html body #menuOv .side-nav-btn { height: 32px !important; font-size: 13px !important; }
+  html body #menuOv .hero-stage-container {
+    --ped: min(230px, calc(100dvh - 135px));
+    top: 48% !important;
+  }
+  html body #menuOv .hero-pedestal-wrap { width: var(--ped) !important; height: var(--ped) !important; }
+  html body #menuOv .hero-nav-arrow.arrow-prev { left: calc(50% - var(--ped) / 2 - 12px) !important; }
+  html body #menuOv .hero-nav-arrow.arrow-next { right: calc(50% - var(--ped) / 2 - 12px) !important; }
+  html body #menuOv .hero-dossier-card {
+    padding: 7px 10px 8px 12px !important;
+    width: clamp(180px, 26vw, 260px) !important;
+    gap: 2px !important;
+  }
+  html body #menuOv .dossier-title { font-size: 18px !important; margin-bottom: 2px !important; }
+  html body #menuOv .dossier-tag { display: none !important; }
+  html body #menuOv .dossier-power { padding: 4px 6px 5px !important; }
+  html body #menuOv .dossier-lore { font-size: 12px !important; margin-bottom: 4px !important; }
+  html body #menuOv .lobby-bottom-bar {
+    height: auto !important;
+    min-height: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: max(4px, env(safe-area-inset-bottom)) !important;
+    flex-shrink: 0 !important;
+  }
+  html body #menuOv .action-dock-item { height: 42px !important; min-height: 0 !important; padding: 3px 8px !important; }
+  html body #menuOv .lobby-cta-play { height: 46px !important; font-size: 26px !important; }
+}
+
+/* Landscape móvil ultracorto (≤ 370px alto): modo ultracompacto */
+@media (orientation: landscape) and (max-height: 370px) {
+  html body #menuOv .lobby-header-row {
+    height: 40px !important;
+    padding-top: max(2px, env(safe-area-inset-top)) !important;
+    padding-bottom: 0 !important;
+  }
+  html body #menuOv .lobby-brand-crest { bottom: 0 !important; }
+  html body #menuOv .tr-the { font-size: 11px !important; }
+  html body #menuOv .tr-main { font-size: 22px !important; }
+  html body #menuOv .hero-stage-container {
+    --ped: min(190px, calc(100dvh - 115px));
+    top: 47% !important;
+  }
+  html body #menuOv .side-nav-btn { height: 28px !important; font-size: 12px !important; }
+  html body #menuOv .action-dock-item { height: 38px !important; }
+  html body #menuOv .lobby-cta-play { height: 40px !important; font-size: 22px !important; }
 }
 
 /* ════════════════ RANKING 2: pestañas · podio · lista · tu fila ════════════════ */
