@@ -2,8 +2,7 @@
 // enemyPoses.js — Fotos de las poses de cada enemigo (Historia → Enemigos)
 // Los enemigos 3D (email, reloj, reunión, INBOX INFINITO, motos del pantano) se
 // colocan en varias poses y se fotografían con el mismo render a boli del juego,
-// una sola vez (se guardan en memoria). Datadis usa sus sprites; el compañero
-// rival, los sprites de los personajes.
+// una sola vez (se guardan en memoria). Datadis usa sus sprites.
 // =============================================================================
 
 import * as THREE from "three";
@@ -120,7 +119,6 @@ export function enemyPoses(id) {
   if (cache.has(id)) return cache.get(id);
   let list;
   if (id === "datadis") list = DATADIS.map(([label, f]) => ({ label, src: `/sprites/datadis/${f}.png` }));
-  else if (id === "rival") list = CHARS.slice(0, 8).map((c) => ({ label: c.name, src: getCharacterAvatar(c.id) })).filter((p) => p.src);
   else if (POSES[id]) list = POSES[id].map(([label, build, view]) => ({ label, src: snap(build(), view) }));
   else list = [];
   cache.set(id, list);
