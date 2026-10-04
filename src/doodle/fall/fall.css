@@ -133,8 +133,38 @@ body.gameboy-mode .fg-lead { display: none; }
 .fg-follow button { width: 40px; height: 40px; border-radius: 50%; border: 2.5px solid var(--dd-black); background: #fff; font-size: 16px; cursor: pointer; }
 .fg-card .rk-online { margin: 0; }
 
-/* mando táctil: AGARRAR bien separado de SALTO (arriba a la izquierda del botón grande) */
-.fg-root .dd-act.slot-1 { right: 118px; bottom: 96px; }
+/* mando táctil: SALTO, AGARRAR y VOZ en abanico ergonómico perfectamente separados */
+.fg-root .dd-acts {
+  width: 210px;
+  height: 195px;
+}
+.fg-root .dd-act.slot-0 {
+  width: 90px;
+  height: 90px;
+  right: 10px;
+  bottom: 16px;
+  transform: rotate(-3deg);
+}
+.fg-root .dd-act.slot-1 {
+  width: 70px;
+  height: 70px;
+  right: 116px;
+  bottom: 18px;
+  transform: rotate(2deg);
+}
+.fg-root .dd-act.slot-2 {
+  width: 58px;
+  height: 58px;
+  right: 78px;
+  bottom: 118px;
+  transform: rotate(-2deg);
+}
+.fg-root .dd-act small {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
 
 /* la presentación de la ronda es una franja abajo: el escenario se ve mientras vuela la cámara */
 .fg-intro { align-items: end; background: none; backdrop-filter: none; pointer-events: none; padding-bottom: max(10px, env(safe-area-inset-bottom)); }

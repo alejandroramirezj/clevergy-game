@@ -189,7 +189,7 @@ export function createSticker(targetScene, opts = {}) {
     let want = "idle";
     if (!s.onGround) want = "jump";
     else if (s.firing) want = "attack";
-    else if (s.speed > 7.5) want = "run";
+    else if (s.speed > 3.8) want = "run";
     else if (s.speed > 0.6) want = "walk";
     // pose forzada (pelea): si el personaje no la tiene, se usa la calculada
     if (s.pose && poses[s.pose]) want = s.pose;

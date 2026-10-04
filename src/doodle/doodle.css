@@ -318,6 +318,8 @@ body.doodle-mode:not(.gameboy-mode) #touch { display: none !important; }
 .dd-act.slot-0 { width: 92px; height: 92px; right: 6px; bottom: 16px; transform: rotate(-4deg); }
 .dd-act.accent-red { color: var(--dd-red); box-shadow: 3px 4px 0 var(--dd-red); }
 .dd-act.accent-red.on { background: var(--dd-red); box-shadow: 1px 1px 0 var(--dd-red); }
+.dd-act.accent-blue { color: var(--dd-ink); box-shadow: 3px 4px 0 var(--dd-ink); }
+.dd-act.accent-blue.on { background: var(--dd-ink); color: #fff; box-shadow: 1px 1px 0 var(--dd-ink); }
 .dd-act.slot-0 svg { width: 48%; }
 .dd-act.slot-0.on { transform: translate(2px, 3px) rotate(-4deg) scale(0.95); }
 .dd-act.slot-1 { width: 64px; height: 64px; right: 110px; bottom: 6px; transform: rotate(3deg); }

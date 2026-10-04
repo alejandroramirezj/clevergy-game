@@ -51,9 +51,10 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
         ? `<img src="${av}" class="touch-chip-img" alt="${c.name}">`
         : `<span class="touch-chip-emoji">${c.emoji}</span>`;
 
+      const chipName = c.id === "alvaroM" ? "MERINO" : c.id === "alvaroP" ? "ÁLVARO P." : c.name.split(" ")[0];
       chip.innerHTML = `
         <div class="touch-chip-avatar">${iconHtml}</div>
-        <span class="touch-chip-name">${c.name.split(" ")[0]}</span>
+        <span class="touch-chip-name">${chipName}</span>
       `;
 
       chip.addEventListener("pointerdown", (e) => {
@@ -190,28 +191,20 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
   let lobbyLockPose = null;
   let lobbyLockT = 0;
 
-  // Configuración de disparos personalizados por personaje en la lobby
-  const CHAR_SHOTS = {
-    alejandro: { emoji: "🥊", color: "#ef4444", trail: "#fbbf24", glow: "#f87171", speed: 950, size: 24, label: "¡POW!" },
-    ale:       { emoji: "🫒", color: "#84cc16", trail: "#eab308", glow: "#a3e635", speed: 880, size: 22, label: "¡CHOF!" },
-    alvaroM:   { emoji: "🧮", color: "#06b6d4", trail: "#3b82f6", glow: "#22d3ee", speed: 960, size: 22, label: "404!" },
-    alvaroP:   { emoji: "🎙️", color: "#a855f7", trail: "#ec4899", glow: "#c084fc", speed: 900, size: 22, label: "¡ONDA!" },
-    ana:       { emoji: "🦁", color: "#f59e0b", trail: "#ef4444", glow: "#fbbf24", speed: 940, size: 24, label: "¡ZARPA!" },
-    beltran:   { emoji: "💬", color: "#0284c7", trail: "#38bdf8", glow: "#38bdf8", speed: 930, size: 22, label: "¡MSG!" },
-    bruno:     { emoji: "🗿", color: "#9ca3af", trail: "#eab308", glow: "#d1d5db", speed: 850, size: 24, label: "¡TÓTEM!" },
-    gonzalo:   { emoji: "🥦", color: "#22c55e", trail: "#a3e635", glow: "#4ade80", speed: 920, size: 24, label: "¡BROC!" },
-    javi:      { emoji: "☭",  color: "#dc2626", trail: "#f59e0b", glow: "#ef4444", speed: 940, size: 22, label: "¡MARCHA!" },
-    jesus:     { emoji: "🍺", color: "#eab308", trail: "#f97316", glow: "#facc15", speed: 900, size: 24, label: "¡CAÑA!" },
-    joseluis:  { emoji: "🖨️", color: "#0ea5e9", trail: "#6366f1", glow: "#38bdf8", speed: 880, size: 22, label: "¡3D!" },
-    josu:      { emoji: "🥮", color: "#d97706", trail: "#b45309", glow: "#f59e0b", speed: 910, size: 22, label: "¡PANETÓN!" },
-    juan:      { emoji: "📻", color: "#f43f5e", trail: "#ec4899", glow: "#fb7185", speed: 930, size: 22, label: "¡WAVE!" },
-    maca:      { emoji: "🏐", color: "#f59e0b", trail: "#06b6d4", glow: "#fbbf24", speed: 980, size: 24, label: "¡REMATE!" },
-    manu:      { emoji: "💪", color: "#10b981", trail: "#34d399", glow: "#6ee7b7", speed: 950, size: 24, label: "¡SALES!" },
-    pablo:     { emoji: "🍊", color: "#f97316", trail: "#fbbf24", glow: "#fb923c", speed: 960, size: 24, label: "¡NANO!" },
-    paloma:    { emoji: "🕊️", color: "#e2e8f0", trail: "#60a5fa", glow: "#ffffff", speed: 940, size: 22, label: "¡VOLAR!" },
-    silvia:    { emoji: "👟", color: "#06b6d4", trail: "#10b981", glow: "#22d3ee", speed: 1020, size: 22, label: "¡FACTURA!" },
-    yair:      { emoji: "🪘", color: "#e11d48", trail: "#f59e0b", glow: "#fb7185", speed: 920, size: 24, label: "¡OLÉ!" }
-  };
+  // Ataque de la home: cada personaje con su attack.png y su coreografía propia (ver ATTACK_FX).
+  // El "Disparar" es otra cosa: el Boli Bic de BoliBic Tag (spawnLobbyShot).
+  let lobbyAtkId = null; // personaje cuya coreografía de ataque se está viendo
+  let lobbyAtkToken = 0; // invalida los efectos programados si cambias de personaje
+  let slackHomeSeq = 0;
+  const SLACK_HOME = [
+    { user: "Beltrán", ch: "#general", text: "Eso lo podemos vender ya", color: "#36C5F0", badge: "3", react: "🚀 4" },
+    { user: "Beltrán", ch: "@canal", text: "¡Reunión en 5 min!", color: "#E01E5A", badge: "!", react: "👀 7" },
+    { user: "deploy-bot", ch: "#dev", text: "Deploy a producción ✅", color: "#2EB67D", badge: "9", react: "🎉 12" },
+    { user: "Beltrán", ch: "#random", text: "¿Qué? ¿Qué? ¿Qué?", color: "#ECB22E", badge: "1", react: "😂 5" },
+    { user: "Beltrán", ch: "#ventas", text: "¡Nuevo cliente cerrado!", color: "#7C3AED", badge: "2", react: "💰 9" },
+    { user: "Beltrán", ch: "#dev", text: "¿Quién ha roto staging?", color: "#2EB67D", badge: "5", react: "🔥 3" },
+    { user: "Beltrán", ch: "#producto", text: "Lo saco en la demo", color: "#36C5F0", badge: "8", react: "👍 6" }
+  ];
 
   const lobbyProjectiles = [];
   const lobbyParticles = [];
@@ -263,18 +256,196 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
     });
   }
 
-  function spawnLobbyShot() {
+  // Ataque especial del personaje en la home: pose attack.png + la animación de SU poder
+  // (nada de proyectil genérico: eso es el Disparo del Boli Bic)
+  const ATK_LOCK = { manu: 1.5, yair: 1.9, beltran: 2.0, jesus: 1.6, joseluis: 1.8, javi: 1.7, maca: 1.7, pablo: 1.5, juan: 1.5 };
+  function triggerLobbyAttack() {
     const c = CHARS[GameState.charIdx] || CHARS[0];
-    const shotCfg = CHAR_SHOTS[c.id] || {
-      emoji: "💥",
-      color: "#00d4ff",
-      trail: "#38bdf8",
-      glow: "#0284c7",
-      speed: 920,
-      size: 22,
-      label: "¡POW!"
-    };
+    const token = ++lobbyAtkToken;
+    lobbyAtkId = c.id;
+    setLobbyPose("attack", ATK_LOCK[c.id] || 1.4);
+    const W = stumbleHeroCanvas ? stumbleHeroCanvas.width : 420;
+    const ctx = { CX: W / 2, GY: 352, HX: W / 2 + 62, HY: 228, MX: W / 2 + 34, MY: 150, at: (ms, fn) => setTimeout(() => { if (token === lobbyAtkToken) fn(); }, ms) };
+    (ATTACK_FX[c.id] || ATTACK_FX.alejandro)(ctx);
+  }
 
+  // ── piezas de efectos para las coreografías ──
+  const fx = (o) => lobbyParticles.push({ life: 1, ...o, maxLife: o.life || 1, age: 0 });
+  const emo = (text, x, y, o = {}) => fx({ type: "emoji", text, x, y, vx: 0, vy: 0, gravity: 0, size: 30, rot: 0, vr: 0, ...o });
+  const glyph = (text, x, y, color, o = {}) => emo(text, x, y, { bold: true, color, size: 26, ...o });
+  const pop = (text, x, y, color) => fx({ type: "pop", text, x, y, vy: -45, rot: (Math.random() - 0.5) * 0.25, color, life: 0.9 });
+  const ring = (x, y, color, maxRadius = 40, life = 0.35, flat = 1) => fx({ type: "ring", x, y, radius: 4, maxRadius, color, life, flat });
+  const sparks = (x, y, color, n = 10, spd = 200, gravity = 160) => {
+    for (let j = 0; j < n; j++) {
+      const a = Math.random() * Math.PI * 2, s = spd * (0.4 + Math.random() * 0.6);
+      fx({ type: "spark", x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, gravity, color: Array.isArray(color) ? color[j % color.length] : color, size: 2.5 + Math.random() * 3, life: 0.4 + Math.random() * 0.3 });
+    }
+  };
+  const shakeStage = () => {
+    if (!stumbleCharViewport) return;
+    stumbleCharViewport.classList.remove("lobby-shot-recoil");
+    void stumbleCharViewport.offsetWidth;
+    stumbleCharViewport.classList.add("lobby-shot-recoil");
+    setTimeout(() => stumbleCharViewport.classList.remove("lobby-shot-recoil"), 180);
+  };
+
+  const ATTACK_FX = {
+    // Puñetazo veloz: ráfaga de 3 puños con ondas de choque
+    alejandro: ({ HX, HY, at }) => {
+      [0, 130, 260].forEach((ms, k) => at(ms, () => {
+        const y = HY - 20 + k * 14;
+        emo("🥊", HX, y, { vx: 520, life: 0.22, size: 34 });
+        at(120, () => { ring(HX + 70, y, "#fbbf24", 30, 0.25); sparks(HX + 70, y, ["#fbbf24", "#ef4444", "#fff"], 8, 180); });
+        sfx(300 + k * 80, 0.06, "square", 0.08);
+      }));
+      at(420, () => pop("¡POW POW!", HX + 50, HY - 60, "#fbbf24"));
+    },
+    // Deslizada: se derrama en aceite caliente y patina
+    ale: ({ CX, GY, at }) => {
+      sfx(160, 0.25, "sawtooth", 0.07);
+      fx({ type: "puddle", x: CX + 10, y: GY + 4, w: 10, maxW: 150, color: "#a3c93a", life: 1.3 });
+      for (let k = 0; k < 6; k++) at(k * 90, () => { emo("💧", CX + 20 + k * 22, GY - 6, { vy: -120, gravity: 420, size: 16, life: 0.6 }); sparks(CX + k * 25, GY - 4, ["#eab308", "#84cc16"], 3, 90, 200); });
+      at(80, () => emo("🫒", CX + 40, GY - 30, { vx: 160, vr: 8, size: 30, life: 0.9 }));
+      at(500, () => pop("¡CHOF! ¡ACEITE!", CX + 70, GY - 90, "#a3e635"));
+    },
+    // Bolas de 444: bola de fuego en parábola que rebota y estalla en números
+    alvaroM: ({ HX, HY, GY, at }) => {
+      sfx(180, 0.18, "sawtooth", 0.12);
+      fx({ type: "fire444", x: HX - 10, y: HY - 20, vx: 150, vy: -330, gravity: 760, floor: GY - 18, bounces: 1, life: 1.15 });
+      at(1100, () => {
+        sfx(90, 0.3, "sawtooth", 0.14);
+        const x = Math.min(390, HX + 140), y = GY - 30;
+        ring(x, y, "#f97316", 60, 0.4); ring(x, y, "#fde047", 36, 0.3);
+        sparks(x, y, ["#f97316", "#ef4444", "#fde047"], 16, 260);
+        for (let k = 0; k < 6; k++) { const a = -Math.PI / 2 + (k - 2.5) * 0.45; glyph("4", x, y, ["#f97316", "#ef4444", "#0ea5e9"][k % 3], { vx: Math.cos(a) * 220, vy: Math.sin(a) * 260, gravity: 420, vr: 6, size: 26, life: 0.9 }); }
+        pop("¡444! SUPERIOR.", x - 40, y - 70, "#f97316");
+      });
+    },
+    // Onda cuestionadora: ondas de podcast ")))" con interrogaciones
+    alvaroP: ({ MX, MY, HX, HY, at }) => {
+      emo("🎙️", HX - 6, HY - 30, { size: 30, life: 1.3 });
+      [0, 160, 320, 480].forEach((ms) => at(ms, () => { fx({ type: "arc", x: MX, y: MY + 10, r: 14, maxR: 190, color: "#a855f7", life: 0.75 }); sfx(520 + ms * 0.4, 0.08, "triangle", 0.07); }));
+      for (let k = 0; k < 5; k++) at(120 + k * 120, () => glyph("?", MX + 40 + Math.random() * 120, MY + 40 - Math.random() * 60, k % 2 ? "#ec4899" : "#a855f7", { vx: 60, vy: -60, vr: (Math.random() - 0.5) * 3, size: 24 + Math.random() * 12, life: 0.9 }));
+      at(600, () => pop("¿CUÁNTO TIEMPO LE HAS DEDICADO?", 210, 70, "#c084fc"));
+    },
+    // Escalada funcional: doble zarpazo de leona
+    ana: ({ HX, HY, at }) => {
+      [0, 220].forEach((ms, k) => at(ms, () => { fx({ type: "claw", x: HX + 20, y: HY - 30 + k * 30, color: k ? "#ef4444" : "#f59e0b", flip: k, life: 0.45 }); sfx(700 - k * 150, 0.07, "sawtooth", 0.07); }));
+      at(160, () => emo("🐾", HX + 70, HY - 50, { vy: -40, size: 26, life: 0.8 }));
+      at(380, () => emo("🐾", HX + 90, HY - 10, { vy: -40, size: 22, life: 0.7 }));
+      at(420, () => pop("¡ZARPA! ESTO FUNCIONA", HX + 20, HY - 90, "#fbbf24"));
+    },
+    // Mensajes de Slack: notificaciones de verdad que brotan alrededor de Beltrán
+    beltran: ({ at }) => {
+      const spots = [{ x: 318, y: 170 }, { x: 104, y: 128 }, { x: 322, y: 250 }, { x: 98, y: 214 }, { x: 300, y: 92 }];
+      const base = slackHomeSeq; slackHomeSeq += spots.length;
+      spots.forEach((s, k) => at(k * 190, () => {
+        fx({ type: "slack", msg: SLACK_HOME[(base + k) % SLACK_HOME.length], x: s.x, y: s.y, vx: s.x > 210 ? 14 : -14, vy: -16, rot: (s.x > 210 ? 1 : -1) * (0.04 + Math.random() * 0.04), life: 1.7 });
+        sfx(880, 0.05, "sine", 0.08); setTimeout(() => sfx(1320, 0.07, "sine", 0.07), 70); // el "knock-brush" de Slack
+      }));
+    },
+    // Besito de travesti: labios que lanzan un beso entre corazones
+    bruno: ({ MX, MY, at }) => {
+      sfx(660, 0.1, "sine", 0.08); setTimeout(() => sfx(990, 0.12, "sine", 0.07), 90);
+      emo("💋", MX + 10, MY + 20, { vx: 150, wob: 12, wf: 9, size: 46, life: 1.3, grow: true });
+      for (let k = 0; k < 9; k++) at(80 + k * 70, () => emo(["💕", "❤️", "💖"][k % 3], MX + 20 + k * 16, MY + 30 + (Math.random() - 0.5) * 60, { vy: -70, vx: 40, size: 16 + Math.random() * 10, life: 0.9 }));
+      at(500, () => pop("¡CHOF CHOF! 💋", MX + 90, MY - 30, "#f472b6"));
+    },
+    // Chistes malos: mini-brócolis que salen saltando
+    gonzalo: ({ CX, GY, MX, MY, at }) => {
+      [-1, 1, 1].forEach((d, k) => at(k * 150, () => { emo("🥦", CX + d * 30, GY - 40, { vx: d * (90 + k * 40), vy: -260, gravity: 700, floor: GY - 14, bounce: 0.6, size: 30, life: 1.3 }); sfx(500 + k * 120, 0.06, "square", 0.06); }));
+      at(200, () => fx({ type: "bubble", text: "¿Broco Lee? 😂", x: MX + 70, y: MY - 40, life: 1.4 }));
+      at(700, () => emo("😂", MX + 20, MY - 10, { vy: -50, size: 28, life: 0.8 }));
+    },
+    // Minitrabajadores: cuadrilla de obreros que marcha al curro
+    javi: ({ CX, GY, at }) => {
+      for (let k = 0; k < 4; k++) at(k * 180, () => { emo("👷", CX + 40, GY - 22, { vx: 130, hop: 10, size: 30, life: 1.4 }); sfx(240 + k * 30, 0.05, "square", 0.06); });
+      at(100, () => emo("🚩", CX + 30, GY - 230, { vy: -20, wob: 4, wf: 6, size: 30, life: 1.4 }));
+      at(300, () => emo("🔨", CX + 70, GY - 70, { vr: 10, vx: 80, vy: -120, gravity: 400, size: 24, life: 0.9 }));
+      at(700, () => pop("¡ARRIBA LA CLASE TRABAJADORA!", 210, 90, "#ef4444"));
+    },
+    // Chorro de cerveza: géiser de Cruzcampo con espuma
+    jesus: ({ MX, MY, at }) => {
+      sfx(480, 0.14, "sine", 0.1); setTimeout(() => sfx(240, 0.4, "sawtooth", 0.05), 80);
+      emo("🍺", MX + 18, MY + 40, { size: 32, life: 1.2, rot: -0.3 });
+      fx({ type: "beam", x: MX + 34, y: MY + 30, len: 0, maxLen: 190, life: 1.1 });
+      at(700, () => pop("¿NOS ECHAMOS UNA CRUZCAMPO?", 220, 80, "#facc15"));
+    },
+    // Plataformas 3D: la impresora construye una plataforma de vóxeles
+    joseluis: ({ HX, HY, at }) => {
+      emo("🖨️", HX, HY - 20, { size: 34, life: 1.6 });
+      for (let k = 0; k < 5; k++) at(150 + k * 170, () => {
+        fx({ type: "block", x: 268 + k * 28, ty: 292, fromX: HX + 10, fromY: HY - 20, life: 1.6 - k * 0.17 });
+        sfx(520 + k * 70, 0.07, "square", 0.06);
+      });
+      at(1050, () => { sparks(338, 292, ["#38bdf8", "#6366f1", "#fff"], 12, 160); pop("¡PLATAFORMA IMPRESA!", 330, 250, "#38bdf8"); });
+    },
+    // Cartel de vegano: golpe giratorio con el cartel
+    josu: ({ HX, HY, at }) => {
+      sfx(300, 0.12, "triangle", 0.08);
+      fx({ type: "sign", x: HX - 20, y: HY + 10, life: 0.9 });
+      at(260, () => { ring(HX + 70, HY - 30, "#22c55e", 46, 0.35); shakeStage(); sfx(120, 0.15, "square", 0.1); for (let k = 0; k < 6; k++) emo(["🌿", "🥬"][k % 2], HX + 70, HY - 30, { vx: (Math.random() - 0.3) * 260, vy: -150 - Math.random() * 120, gravity: 380, vr: 5, size: 18, life: 0.9 }); });
+      at(420, () => pop("¡ESO NO ES VEGANO!", HX + 30, HY - 110, "#4ade80"));
+    },
+    // Onda microondas: estallido térmico alrededor de Juan
+    juan: ({ CX, at }) => {
+      sfx(180, 0.18, "sawtooth", 0.14);
+      [0, 180, 360].forEach((ms) => at(ms, () => { fx({ type: "heatring", x: CX, y: 230, r: 20, maxR: 200, life: 0.7 }); sfx(140, 0.12, "sawtooth", 0.08); }));
+      at(200, shakeStage);
+      for (let k = 0; k < 6; k++) at(100 + k * 110, () => emo("♨️", CX - 90 + Math.random() * 180, 260, { vy: -90, size: 22, life: 0.9 }));
+      at(500, () => pop("¡ESO ES DE CHARCA!", CX, 80, "#fb7185"));
+    },
+    // Pelota rebotadora: la pelota bota y bota y remata
+    maca: ({ HX, HY, GY, at }) => {
+      emo("🏐", HX, HY - 40, { vx: 140, vy: -200, gravity: 900, floor: GY - 16, bounce: 0.78, vr: 9, size: 34, life: 1.6 });
+      [300, 620, 880].forEach((ms) => at(ms, () => sfx(420, 0.05, "square", 0.07)));
+      at(900, () => pop("¡JA JA JA! ¡QUÉ GUAY!", 260, 110, "#fbbf24"));
+    },
+    // Salta encima: salto gigante y pisotón
+    manu: ({ CX, GY, at }) => {
+      sfx(360, 0.15, "square", 0.08);
+      at(150, () => emo("👍", CX + 60, 120, { vy: -60, size: 30, life: 0.7 }));
+      at(640, () => {
+        sfx(90, 0.25, "sawtooth", 0.14); shakeStage();
+        ring(CX, GY, "#10b981", 150, 0.45, 0.28); ring(CX, GY, "#fde047", 90, 0.35, 0.28);
+        for (const d of [-1, 1]) for (let k = 0; k < 3; k++) emo("💨", CX + d * (40 + k * 26), GY - 10, { vx: d * 120, vy: -30, size: 22, life: 0.6 });
+        pop("¡SÍ, SEÑOR!", CX, GY - 280, "#34d399");
+      });
+    },
+    // Naranja rodante: rueda y suelta la naranja
+    pablo: ({ CX, GY, at }) => {
+      sfx(260, 0.2, "triangle", 0.08);
+      at(250, () => emo("🍊", CX + 40, GY - 22, { vx: 230, vr: 14, size: 40, life: 1.0 }));
+      for (let k = 0; k < 6; k++) at(300 + k * 90, () => emo("💦", CX + 60 + k * 30, GY - 30, { vy: -110, gravity: 400, size: 14, life: 0.5 }));
+      at(500, () => pop("¡NANO, NANO, NANO!", CX + 40, 100, "#fb923c"));
+    },
+    // Bolso de la abuela: bolsazo y caramelos por los aires
+    paloma: ({ HX, HY, at }) => {
+      sfx(340, 0.1, "triangle", 0.08);
+      fx({ type: "claw", x: HX + 10, y: HY - 20, color: "#a855f7", single: true, life: 0.4 });
+      at(80, () => emo("👜", HX, HY - 20, { vx: 210, vy: -200, gravity: 500, vr: 8, size: 34, life: 1.0 }));
+      at(200, () => { for (let k = 0; k < 6; k++) emo(["🍬", "🧻", "💫"][k % 3], HX + 40, HY - 30, { vx: 60 + Math.random() * 180, vy: -120 - Math.random() * 160, gravity: 420, vr: 6, size: 18, life: 0.9 }); });
+      at(450, () => pop("¡BOLSAZO!", HX + 40, HY - 100, "#c084fc"));
+    },
+    // Facturas impagadas: lluvia de facturas que revolotean
+    silvia: ({ HX, HY, at }) => {
+      for (let k = 0; k < 5; k++) at(k * 110, () => { emo("📄", HX, HY - 30 + (k - 2) * 12, { vx: 260 + k * 20, vy: (k - 2) * 30, wob: 10, wf: 12, vr: 4, size: 26, life: 0.9 }); sfx(900 - k * 60, 0.04, "square", 0.06); });
+      at(250, () => emo("💶", HX + 40, HY - 70, { vy: -60, size: 24, life: 0.8 }));
+      at(560, () => pop("¡ESTE CLIENTE NO HA PAGADO!", 230, 90, "#f87171"));
+    },
+    // Te baila: bulerías con palmas y notas
+    yair: ({ CX, at }) => {
+      for (let k = 0; k < 8; k++) at(k * 180, () => {
+        glyph(k % 2 ? "♫" : "♪", CX + (k % 2 ? 80 : -80) + (Math.random() - 0.5) * 30, 200, k % 2 ? "#e11d48" : "#f59e0b", { vy: -90, wob: 8, wf: 8, size: 30, life: 1.0 });
+        sfx(k % 2 ? 660 : 880, 0.05, "square", 0.06); // palmas
+      });
+      [200, 560, 920].forEach((ms) => at(ms, () => emo("👏", CX + (Math.random() > 0.5 ? 100 : -100), 150, { vy: -40, size: 26, life: 0.6 })));
+      at(700, () => pop("¡OLÉ! ¡POR BULERÍAS!", CX, 70, "#fb7185"));
+    }
+  };
+
+  // Disparo de arma Boli Bic (pose shoot + proyectil láser de tinta)
+  function spawnLobbyShot() {
     setLobbyPose("shoot", 1.2);
     lobbyRecoil = 22;
 
@@ -300,7 +471,7 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
       vx: 0,
       vy: 0,
       gravity: 0,
-      color: "#ffffff",
+      color: "#00d4ff",
       size: 16,
       life: 0.12,
       maxLife: 0.12
@@ -311,21 +482,21 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
       y: startY,
       radius: 4,
       maxRadius: 24,
-      color: shotCfg.glow,
+      color: "#0284c7",
       life: 0.18,
       maxLife: 0.18
     });
 
     lobbyProjectiles.push({
-      emoji: shotCfg.emoji,
-      color: shotCfg.color,
-      trail: shotCfg.trail,
-      glow: shotCfg.glow,
-      label: shotCfg.label,
-      size: shotCfg.size,
+      emoji: "🖊️",
+      color: "#0284c7",
+      trail: "#38bdf8",
+      glow: "#00ffff",
+      label: "¡BOLI BIC!",
+      size: 26,
       x: startX,
       y: startY,
-      vx: shotCfg.speed,
+      vx: 1050,
       life: 0
     });
   }
@@ -345,6 +516,7 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
 
   // Navigation: cycle character
   function cycleHero(dir) {
+    lobbyAtkToken++; lobbyAtkId = null; lobbyParticles.length = 0; lobbyProjectiles.length = 0;
     const nextIdx = (GameState.charIdx + dir + CHARS.length) % CHARS.length;
     switchToChar(nextIdx);
     updateSpotlight();
@@ -376,10 +548,11 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
         const pName = p.dataset.pose;
         if (pName === "shoot") {
           spawnLobbyShot();
+        } else if (pName === "attack") {
+          triggerLobbyAttack();
         } else {
-          setLobbyPose(pName, pName === "attack" || pName === "jump" ? 1.4 : 0);
-          if (pName === "attack") sfx(220, 0.1, "triangle", 0.08);
-          else if (pName === "jump") sfx(520, 0.08, "square", 0.06);
+          setLobbyPose(pName, pName === "jump" ? 1.4 : 0);
+          if (pName === "jump") sfx(520, 0.08, "square", 0.06);
           else sfx(600, 0.04);
         }
       });
@@ -408,8 +581,15 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
         // Horizontal swipe -> cycle character
         if (dx < 0) cycleHero(1);
         else cycleHero(-1);
-      } else if (Math.abs(dx) <= 10 && Math.abs(dy) <= 10 && lobbyPose === "shoot") {
-        spawnLobbyShot();
+      } else if (Math.abs(dx) <= 10 && Math.abs(dy) <= 10) {
+        if (lobbyPose === "shoot") {
+          spawnLobbyShot();
+        } else if (lobbyPose === "attack") {
+          triggerLobbyAttack();
+        } else if (lobbyPose === "jump") {
+          setLobbyPose("jump", 1.4);
+          sfx(520, 0.08, "square", 0.06);
+        }
       }
     });
 
@@ -453,6 +633,287 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
   // durante la partida. Se re-arranca al volver al menú.
   let lastLobbyFrame = performance.now();
   let _lobbyRafId = null;
+  function drawAttackFx(ctx, pt, dt, alpha, progress) {
+    pt.age = (pt.age || 0) + dt;
+    if (pt.type === "emoji") {
+      pt.x += (pt.vx || 0) * dt;
+      pt.y += (pt.vy || 0) * dt;
+      if (pt.gravity) pt.vy += pt.gravity * dt;
+      if (pt.floor && pt.y >= pt.floor) {
+        pt.y = pt.floor;
+        if (pt.bounce) pt.vy = -Math.abs(pt.vy) * pt.bounce;
+        else pt.vy = 0;
+      }
+      pt.rot = (pt.rot || 0) + (pt.vr || 0) * dt;
+      let wob = 0;
+      if (pt.wob && pt.wf) wob = Math.sin(pt.age * pt.wf) * pt.wob;
+      let hop = 0;
+      if (pt.hop) hop = -Math.abs(Math.sin(pt.age * 8)) * pt.hop;
+      const s = pt.grow ? 1 + progress * 0.4 : 1;
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(pt.x + wob, pt.y + hop);
+      ctx.scale(s, s);
+      ctx.rotate(pt.rot);
+      ctx.font = `${pt.bold ? "900 " : ""}${pt.size || 26}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      if (pt.color) {
+        ctx.fillStyle = pt.color;
+        ctx.shadowColor = pt.color;
+        ctx.shadowBlur = 8;
+      }
+      ctx.fillText(pt.text, 0, 0);
+      ctx.restore();
+      return true;
+    }
+    if (pt.type === "fire444") {
+      pt.x += pt.vx * dt;
+      pt.y += pt.vy * dt;
+      pt.vy += (pt.gravity || 600) * dt;
+      if (pt.floor && pt.y >= pt.floor) {
+        pt.y = pt.floor;
+        if (pt.bounces > 0) {
+          pt.bounces--;
+          pt.vy = -Math.abs(pt.vy) * 0.62;
+          sparks(pt.x, pt.y, ["#f97316", "#ef4444", "#fde047"], 6, 140);
+        }
+      }
+      if (Math.random() < 0.6) {
+        lobbyParticles.push({
+          type: "spark",
+          x: pt.x + (Math.random() - 0.5) * 12,
+          y: pt.y + (Math.random() - 0.5) * 12,
+          vx: -pt.vx * 0.2 + (Math.random() - 0.5) * 40,
+          vy: (Math.random() - 0.5) * 50,
+          color: Math.random() > 0.5 ? "#f97316" : "#fde047",
+          size: 3 + Math.random() * 3,
+          life: 0.25,
+          maxLife: 0.25
+        });
+      }
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(pt.x, pt.y);
+      ctx.rotate(pt.age * 12);
+      const g = ctx.createRadialGradient(0, 0, 4, 0, 0, 26);
+      g.addColorStop(0, "#fde047");
+      g.addColorStop(0.4, "#f97316");
+      g.addColorStop(0.8, "#ef4444");
+      g.addColorStop(1, "transparent");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(0, 0, 26, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.font = '900 16px "Nunito", "Bangers", Arial, sans-serif';
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#ffffff";
+      ctx.shadowColor = "#f97316";
+      ctx.shadowBlur = 10;
+      ctx.fillText("444", 0, 0);
+      ctx.restore();
+      return true;
+    }
+    if (pt.type === "slack") {
+      pt.x += (pt.vx || 0) * dt;
+      pt.y += (pt.vy || 0) * dt;
+      const m = pt.msg || SLACK_HOME[0];
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, alpha * 1.2);
+      ctx.translate(pt.x, pt.y);
+      ctx.rotate(pt.rot || 0);
+
+      const cw = 160, ch = 52;
+      ctx.fillStyle = "rgba(255, 255, 255, 0.96)";
+      ctx.shadowColor = "rgba(0, 0, 0, 0.35)";
+      ctx.shadowBlur = 14;
+      ctx.shadowOffsetY = 4;
+      ctx.beginPath();
+      ctx.roundRect(-cw / 2, -ch / 2, cw, ch, 8);
+      ctx.fill();
+
+      ctx.fillStyle = m.color || "#36C5F0";
+      ctx.beginPath();
+      ctx.roundRect(-cw / 2, -ch / 2, 6, ch, [8, 0, 0, 8]);
+      ctx.fill();
+
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.font = '900 11px "Inter", Arial, sans-serif';
+      ctx.fillStyle = m.color || "#36C5F0";
+      ctx.fillText(m.ch, -cw / 2 + 12, -ch / 2 + 7);
+
+      ctx.font = '600 10px "Inter", Arial, sans-serif';
+      ctx.fillStyle = "#1e293b";
+      const textTrunc = m.text.length > 22 ? m.text.slice(0, 21) + "…" : m.text;
+      ctx.fillText(textTrunc, -cw / 2 + 12, -ch / 2 + 22);
+
+      if (m.react) {
+        ctx.fillStyle = "#f1f5f9";
+        ctx.beginPath();
+        ctx.roundRect(-cw / 2 + 12, -ch / 2 + 35, 42, 13, 6);
+        ctx.fill();
+        ctx.font = '600 9px "Segoe UI Emoji", sans-serif';
+        ctx.fillStyle = "#334155";
+        ctx.fillText(m.react, -cw / 2 + 16, -ch / 2 + 36);
+      }
+
+      if (m.badge) {
+        ctx.fillStyle = "#e11d48";
+        ctx.beginPath();
+        ctx.arc(cw / 2 - 8, -ch / 2 + 8, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.font = '900 9px Arial, sans-serif';
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = "#ffffff";
+        ctx.fillText(m.badge, cw / 2 - 8, -ch / 2 + 8);
+      }
+      ctx.restore();
+      return true;
+    }
+    if (pt.type === "arc") {
+      pt.r += ((pt.maxR || 180) - pt.r) * dt * 5;
+      ctx.save();
+      ctx.globalAlpha = alpha * 0.85;
+      ctx.strokeStyle = pt.color || "#a855f7";
+      ctx.lineWidth = 4 * alpha;
+      ctx.shadowColor = pt.color || "#a855f7";
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, pt.r, -Math.PI * 0.35, Math.PI * 0.35);
+      ctx.stroke();
+      ctx.restore();
+      return true;
+    }
+    if (pt.type === "claw") {
+      const s = 1 + progress * 0.3;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(pt.x, pt.y);
+      if (pt.flip) ctx.scale(1, -1);
+      ctx.strokeStyle = pt.color || "#ef4444";
+      ctx.lineWidth = 4;
+      ctx.shadowColor = pt.color;
+      ctx.shadowBlur = 10;
+      ctx.lineCap = "round";
+      const n = pt.single ? 1 : 3;
+      for (let k = 0; k < n; k++) {
+        const yOff = (k - (n - 1) / 2) * 12;
+        ctx.beginPath();
+        ctx.moveTo(-30 * s, yOff - 15 * s);
+        ctx.quadraticCurveTo(0, yOff, 30 * s, yOff + 15 * s);
+        ctx.stroke();
+      }
+      ctx.restore();
+      return true;
+    }
+    if (pt.type === "puddle") {
+      pt.w += ((pt.maxW || 140) - pt.w) * dt * 6;
+      ctx.save();
+      ctx.globalAlpha = alpha * 0.8;
+      ctx.fillStyle = pt.color || "#a3c93a";
+      ctx.beginPath();
+      ctx.ellipse(pt.x, pt.y, pt.w / 2, 9, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      return true;
+    }
+    if (pt.type === "bubble") {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(pt.x, pt.y - progress * 15);
+      ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
+      ctx.shadowColor = "rgba(0, 0, 0, 0.25)";
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.roundRect(-70, -20, 140, 36, 12);
+      ctx.fill();
+      ctx.font = '700 13px "Nunito", Arial, sans-serif';
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#166534";
+      ctx.fillText(pt.text, 0, -2);
+      ctx.restore();
+      return true;
+    }
+    if (pt.type === "beam") {
+      pt.len += ((pt.maxLen || 180) - pt.len) * dt * 8;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = "#facc15";
+      ctx.lineWidth = 14;
+      ctx.lineCap = "round";
+      ctx.shadowColor = "#f59e0b";
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.moveTo(pt.x, pt.y);
+      ctx.lineTo(pt.x + pt.len, pt.y - 6);
+      ctx.stroke();
+      ctx.fillStyle = "#ffffff";
+      ctx.beginPath();
+      ctx.arc(pt.x + pt.len, pt.y - 6, 9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      return true;
+    }
+    if (pt.type === "block") {
+      const pProg = Math.min(1, pt.age * 4);
+      const curX = pt.fromX + (pt.x - pt.fromX) * pProg;
+      const curY = pt.fromY + (pt.ty - pt.fromY) * pProg;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = "#38bdf8";
+      ctx.strokeStyle = "#0284c7";
+      ctx.lineWidth = 2;
+      ctx.shadowColor = "#38bdf8";
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.roundRect(curX - 12, curY - 12, 24, 24, 4);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+      return true;
+    }
+    if (pt.type === "sign") {
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(pt.x + 30 * Math.sin(pt.age * 8), pt.y);
+      ctx.rotate(Math.sin(pt.age * 9) * 0.4);
+      ctx.fillStyle = "#15803d";
+      ctx.strokeStyle = "#ffffff";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(-30, -20, 60, 40, 6);
+      ctx.fill();
+      ctx.stroke();
+      ctx.font = '900 12px Arial, sans-serif';
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText("VEGAN", 0, 0);
+      ctx.restore();
+      return true;
+    }
+    if (pt.type === "heatring") {
+      pt.r += ((pt.maxR || 180) - pt.r) * dt * 5;
+      ctx.save();
+      ctx.globalAlpha = alpha * 0.7;
+      ctx.strokeStyle = "#fb7185";
+      ctx.lineWidth = 6 * alpha;
+      ctx.shadowColor = "#f43f5e";
+      ctx.shadowBlur = 14;
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, pt.r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+      return true;
+    }
+    return false;
+  }
 
   function renderLobbyHero(now) {
     if (!menuOv || menuOv.classList.contains("hidden")) {
@@ -511,12 +972,36 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
       shadowScale = 1 - Math.abs(step) * 0.25;
       shadowOpacity = 0.55;
     } else if (lobbyPose === "attack") {
-      const atkPhase = Math.sin(Math.min(Math.PI, lobbyPoseTime * 6));
-      offsetX = atkPhase * 16;
-      offsetY = -atkPhase * 8;
-      scaleX = 1 + atkPhase * 0.12;
-      scaleY = 1 - atkPhase * 0.06;
-      shadowScale = 1.1;
+      const t = lobbyPoseTime;
+      const atkPhase = Math.sin(Math.min(Math.PI, t * 6));
+      // cada personaje se mueve a su manera mientras enseña su attack.png
+      if (lobbyAtkId === "manu") { // salto gigante y pisotón
+        const j = t < 0.64 ? Math.sin((t / 0.64) * Math.PI * 0.5) : Math.max(0, 1 - (t - 0.64) * 8);
+        offsetY = t < 0.64 ? -Math.sin((t / 0.64) * Math.PI) * 130 : 0;
+        const land = t >= 0.64 && t < 0.85 ? 1 - (t - 0.64) / 0.21 : 0;
+        scaleY = 1 - land * 0.25 + (t < 0.2 ? -0.1 : 0); scaleX = 1 + land * 0.22;
+        shadowScale = 1 - (t < 0.64 ? Math.sin((t / 0.64) * Math.PI) * 0.6 : 0); shadowOpacity = 0.85 - j * 0.3;
+      } else if (lobbyAtkId === "pablo") { // rueda como su naranja
+        rot = Math.min(1, t / 0.5) * Math.PI * 2; offsetX = Math.sin(Math.min(Math.PI, t * 4)) * 30; offsetY = -Math.abs(Math.sin(t * 8)) * 6;
+      } else if (lobbyAtkId === "maca") { // bota sin parar
+        const b = Math.abs(Math.sin(t * 9)); offsetY = -b * 46 * Math.max(0, 1 - t / 1.6); scaleY = 1 + (1 - b) * 0.08; shadowScale = 1 - b * 0.35;
+      } else if (lobbyAtkId === "yair") { // bulerías: balanceo y taconeo
+        rot = Math.sin(t * 7) * 0.14; offsetX = Math.sin(t * 3.5) * 16; offsetY = -Math.abs(Math.sin(t * 14)) * 7;
+      } else if (lobbyAtkId === "juan") { // vibra como un microondas
+        offsetX = (Math.random() - 0.5) * 6 * Math.max(0, 1 - t / 1.2); scaleX = scaleY = 1 + Math.sin(t * 20) * 0.03;
+      } else if (lobbyAtkId === "ale") { // se desliza sobre el aceite
+        offsetX = Math.sin(Math.min(Math.PI, t * 2.6)) * 60; rot = 0.12 * Math.sin(Math.min(Math.PI, t * 2.6)); offsetY = 4;
+      } else if (lobbyAtkId === "beltran" || lobbyAtkId === "alvaroP") { // habla/escribe: pequeño balanceo
+        offsetY = -Math.abs(Math.sin(t * 8)) * 5; rot = Math.sin(t * 5) * 0.04;
+      } else if (lobbyAtkId === "jesus") { // se echa hacia atrás con el chorro
+        offsetX = -atkPhase * 10; rot = -0.08 * Math.min(1, t * 4); offsetX += (Math.random() - 0.5) * 2;
+      } else {
+        offsetX = atkPhase * 16;
+        offsetY = -atkPhase * 8;
+        scaleX = 1 + atkPhase * 0.12;
+        scaleY = 1 - atkPhase * 0.06;
+      }
+      shadowScale = Math.min(shadowScale, 1.1);
     } else if (lobbyPose === "shoot") {
       const shootPhase = Math.sin(Math.min(Math.PI, lobbyPoseTime * 8));
       offsetX = -shootPhase * 14;
@@ -681,9 +1166,11 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
           ctx.shadowColor = pt.color;
           ctx.shadowBlur = 10;
           ctx.beginPath();
-          ctx.arc(pt.x, pt.y, pt.radius, 0, Math.PI * 2);
+          ctx.ellipse(pt.x, pt.y, pt.radius, pt.radius * (pt.flat || 1), 0, 0, Math.PI * 2);
           ctx.stroke();
           ctx.restore();
+        } else if (drawAttackFx(ctx, pt, dt, alpha, progress)) {
+          // efecto de ataque propio de un personaje (ver drawAttackFx)
         } else if (pt.type === "pop") {
           pt.y += pt.vy * dt;
           ctx.save();
@@ -956,40 +1443,46 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
       const currentPhrase = phrases[curIdx % phrases.length];
       const hasMultiple = phrases.length > 1;
 
-      return `<article class="comp2-char" data-id="${c.id}">
-        <div class="comp2-char-av">${avImg(c)}</div>
-        <div class="comp2-char-txt">
-          <h3>${c.name}</h3>
-          <div class="comp2-form">${c.form}</div>
-          <div class="comp2-power"><span>${p.icon}</span><b>${c.ab}</b></div>
-          <p>${p.desc}</p>
-          <div class="comp2-voice-row" data-char="${c.id}" role="button" title="Toca para escuchar frase y ver la siguiente">
-            <span class="comp2-voice-icon">💬</span>
+      return `<article class="comp2-char" data-id="${c.id}" role="button" tabindex="0" aria-label="Ver detalles de ${c.name}">
+        <div class="comp2-char-left">
+          <div class="comp2-char-sticker">
+            <span class="comp2-char-sparks" aria-hidden="true">✨</span>
+            ${avImg(c)}
+          </div>
+        </div>
+        <div class="comp2-char-right">
+          <h3 class="comp2-char-name">${c.name}</h3>
+          <span class="comp2-char-form">${c.form}</span>
+          <div class="comp2-char-power">
+            <span class="comp2-power-ico">${p.icon}</span>
+            <b class="comp2-power-name">${c.ab}</b>
+          </div>
+          <p class="comp2-char-desc">${p.desc}</p>
+          <div class="comp2-voice-bubble" data-char="${c.id}" role="button" tabindex="0" title="Toca para escuchar la voz y ver la siguiente frase">
+            <span class="comp2-voice-ico">💬</span>
             <div class="comp2-voice-scroller">
-              <small class="comp2-voice-txt">«${currentPhrase}»</small>
+              <span class="comp2-voice-txt">«${currentPhrase}»</span>
             </div>
             ${hasMultiple ? `<span class="comp2-voice-badge">${(curIdx % phrases.length) + 1}/${phrases.length}</span>` : ""}
           </div>
-          <span class="comp2-go">Ver poses y ficha →</span>
         </div>
       </article>`;
     }).join("");
 
-    compCharsGrid.querySelectorAll(".comp2-voice-row").forEach((elRow) => {
+    // Wire up audio quote bubble
+    compCharsGrid.querySelectorAll(".comp2-voice-bubble").forEach((elRow) => {
       elRow.addEventListener("click", (e) => {
         e.stopPropagation();
         const cid = elRow.getAttribute("data-char");
         const c = CHARS.find((ch) => ch.id === cid);
         if (!c) return;
         const phrases = Array.isArray(c.voice) && c.voice.length > 0 ? c.voice : ["¡Vamos!"];
-        const curIdx = compVoiceIndices[cid] || 0;
+        let curIdx = compVoiceIndices[cid] || 0;
         const phraseToSpeak = phrases[curIdx % phrases.length];
         const isSilly = cid === "jesus" && phraseToSpeak.toLowerCase().includes("ketchup");
 
-        // 1. Hablar la frase que está en pantalla (con voz ridícula si es el ketchup de Jesús)
         speakCharacter(cid, { force: true, phrase: phraseToSpeak, sillyVoice: isSilly });
 
-        // 2. Avanzar el texto en el mismo espacio al siguiente
         const nextIdx = (curIdx + 1) % phrases.length;
         compVoiceIndices[cid] = nextIdx;
         const nextPhrase = phrases[nextIdx];
@@ -1007,20 +1500,28 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
         if (badgeEl) {
           badgeEl.textContent = `${nextIdx + 1}/${phrases.length}`;
         }
+        elRow.classList.add("is-speaking");
+        setTimeout(() => elRow.classList.remove("is-speaking"), 2000);
+      });
+      elRow.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          e.stopPropagation();
+          elRow.click();
+        }
       });
     });
 
     compCharsGrid.querySelectorAll(".comp2-char").forEach((card) => {
+      const cid = card.getAttribute("data-id");
       card.addEventListener("click", (e) => {
-        if (e.target.closest(".comp2-voice-row")) return;
-        const cid = card.getAttribute("data-id");
+        if (e.target.closest(".comp2-voice-bubble")) return;
         openCharDetail(cid);
       });
       card.addEventListener("keydown", (e) => {
+        if (e.target.closest(".comp2-voice-bubble")) return;
         if (e.key === "Enter" || e.key === " ") {
-          if (e.target.closest(".comp2-voice-row")) return;
           e.preventDefault();
-          const cid = card.getAttribute("data-id");
           openCharDetail(cid);
         }
       });
@@ -1043,7 +1544,7 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
       charDetailEl.className = "comp2-chdetail hidden";
       compCharsGrid.after(charDetailEl);
       charDetailEl.addEventListener("click", (ev) => {
-        const t = ev.target.closest("button");
+        const t = ev.target.closest("button, .ch-voice-bubble");
         if (!t) return;
         if (t.classList.contains("ch-back")) return closeCharDetail();
         if (t.classList.contains("ch-prev") || t.classList.contains("ch-next")) {
@@ -1059,20 +1560,38 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
           sfx(650, 0.04);
           return;
         }
-        if (t.classList.contains("ch-voice-btn")) {
-          const cid = t.dataset.char;
+        if (t.classList.contains("ch-voice-btn") || t.classList.contains("ch-voice-next") || t.classList.contains("ch-voice-bubble")) {
+          const cid = t.dataset.char || charDetailEl.querySelector(".ch-voice-btn")?.dataset.char;
           const charObj = CHARS.find((ch) => ch.id === cid);
           if (!charObj) return;
           stopSpeaking();
           const phrases = Array.isArray(charObj.voice) && charObj.voice.length > 0 ? charObj.voice : ["¡Vamos!"];
-          const curIdx = compVoiceIndices[cid] || 0;
+          let curIdx = compVoiceIndices[cid] || 0;
+          if (t.classList.contains("ch-voice-next")) {
+            curIdx = (curIdx + 1) % phrases.length;
+          }
           const phraseToSpeak = phrases[curIdx % phrases.length];
           const isSilly = cid === "jesus" && phraseToSpeak.toLowerCase().includes("ketchup");
           speakCharacter(cid, { force: true, phrase: phraseToSpeak, sillyVoice: isSilly });
-          const nextIdx = (curIdx + 1) % phrases.length;
-          compVoiceIndices[cid] = nextIdx;
+          
           const quoteEl = charDetailEl.querySelector(".ch-quote");
-          if (quoteEl) quoteEl.textContent = `«${phrases[nextIdx]}»`;
+          if (quoteEl) {
+            quoteEl.textContent = `«${phraseToSpeak}»`;
+            quoteEl.classList.remove("comp2-pop");
+            void quoteEl.offsetWidth;
+            quoteEl.classList.add("comp2-pop");
+          }
+          const numEl = charDetailEl.querySelector(".ch-voice-num");
+          if (numEl) numEl.textContent = `${(curIdx % phrases.length) + 1}`;
+          
+          const cardEl = charDetailEl.querySelector(".ch-voice-card");
+          if (cardEl) {
+            cardEl.classList.add("is-playing");
+            setTimeout(() => cardEl.classList.remove("is-playing"), 2400);
+          }
+          // Increment for next press
+          compVoiceIndices[cid] = (curIdx + 1) % phrases.length;
+          sfx(800, 0.05);
           return;
         }
       });
@@ -1124,8 +1643,10 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
           </div>
         </div>
         <div class="ch-body">
-          <small class="ch-form-tag">${c.form}</small>
-          <h3>${c.emoji} ${c.name}</h3>
+          <div class="ch-header">
+            <small class="ch-form-tag">${c.form}</small>
+            <h3>${c.emoji} ${c.name}</h3>
+          </div>
           
           <div class="ch-power-block">
             <div class="ch-power-head">
@@ -1136,10 +1657,30 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
             ${c.tip ? `<p class="ch-power-tip">🎮 ${c.tip}</p>` : ""}
           </div>
 
-          <h4>💬 Frase célebre</h4>
-          <div class="ch-voice-box">
-            <button class="ch-voice-btn" data-char="${c.id}" title="Escuchar frase y cambiar a la siguiente">🔊 Hablar</button>
-            <span class="ch-quote">«${currentPhrase}»</span>
+          <div class="ch-voice-card" data-char="${c.id}">
+            <div class="ch-voice-header">
+              <span class="ch-voice-title">🎙️ AUDIO Y VOZ OFICIAL</span>
+              <span class="ch-voice-badge">Frase <b class="ch-voice-num">${(curIdx % phrases.length) + 1}</b> / ${phrases.length}</span>
+            </div>
+            <div class="ch-voice-bubble" data-char="${c.id}" role="button" tabindex="0" title="Toca para reproducir esta frase">
+              <div class="ch-voice-bubble-tail"></div>
+              <p class="ch-quote">«${currentPhrase}»</p>
+            </div>
+            <div class="ch-voice-controls">
+              <button class="ch-voice-btn" data-char="${c.id}" title="Escuchar la voz con audio">
+                <span class="ch-voice-icon">🔊</span>
+                <span class="ch-voice-label">Escuchar voz</span>
+                <span class="ch-voice-waves" aria-hidden="true">
+                  <i></i><i></i><i></i><i></i>
+                </span>
+              </button>
+              ${phrases.length > 1 ? `
+                <button class="ch-voice-next" data-char="${c.id}" title="Cambiar a la siguiente frase">
+                  ⏭️ Siguiente frase
+                </button>
+              ` : ""}
+            </div>
+            <small class="ch-voice-hint">💡 Pulsa el botón para escuchar la voz del personaje con audio real.</small>
           </div>
         </div>
       </article>

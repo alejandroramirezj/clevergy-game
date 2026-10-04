@@ -91,15 +91,48 @@ export function buildLevel(scene) {
     }
     if (cur < x1) B(cur, y0, z - t / 2, x1, y1, z + t / 2, ink, o);
   }
-  const glassX = (x, z0, z1, y0, y1, gaps) => {
-    wallX(x, z0, z1, y0, y1, gaps, INK.BLUE, { tone: 0.34 }, 0.12);
-    B(x - 0.08, y0 + 0.02, z0, x + 0.08, y0 + 0.12, z1, INK.BLACK, { fill: true, collide: false });
-    for (let z = z0; z <= z1; z += 2) B(x - 0.07, y0, z - 0.04, x + 0.07, y1, z + 0.04, INK.BLACK, { fill: true, collide: false });
+  // Cristal transparente como la oficina de Clevergy: apertura visual, collider y montantes negros
+  const glassX = (x, z0, z1, y0, y1, gaps = [], step = 2) => {
+    let cur = z0;
+    for (const [a, b, top = 2.7] of gaps.slice().sort((p, q) => p[0] - q[0])) {
+      if (a > cur) {
+        colliders.push({ x0: x - 0.1, x1: x + 0.1, y0, y1, z0: cur, z1: a });
+        B(x - 0.08, y0 + 0.02, cur, x + 0.08, y0 + 0.12, a, INK.BLACK, { fill: true, collide: false });
+        B(x - 0.08, y1 - 0.1, cur, x + 0.08, y1, a, INK.BLACK, { fill: true, collide: false });
+        for (let z = cur; z <= a + 0.01; z += step) B(x - 0.07, y0, z - 0.04, x + 0.07, y1, z + 0.04, INK.BLACK, { fill: true, collide: false });
+      }
+      if (y0 + top < y1) {
+        B(x - 0.15, y0 + top, a, x + 0.15, y1, b, STONE.ink, { tone: STONE.tone });
+      }
+      cur = b;
+    }
+    if (cur < z1) {
+      colliders.push({ x0: x - 0.1, x1: x + 0.1, y0, y1, z0: cur, z1 });
+      B(x - 0.08, y0 + 0.02, cur, x + 0.08, y0 + 0.12, z1, INK.BLACK, { fill: true, collide: false });
+      B(x - 0.08, y1 - 0.1, cur, x + 0.08, y1, z1, INK.BLACK, { fill: true, collide: false });
+      for (let z = cur; z <= z1 + 0.01; z += step) B(x - 0.07, y0, z - 0.04, x + 0.07, y1, z + 0.04, INK.BLACK, { fill: true, collide: false });
+    }
   };
-  const glassZ = (z, x0, x1, y0, y1, gaps) => {
-    wallZ(z, x0, x1, y0, y1, gaps, INK.BLUE, { tone: 0.34 }, 0.12);
-    B(x0, y0 + 0.02, z - 0.08, x1, y0 + 0.12, z + 0.08, INK.BLACK, { fill: true, collide: false });
-    for (let x = x0; x <= x1; x += 2) B(x - 0.04, y0, z - 0.07, x + 0.04, y1, z + 0.07, INK.BLACK, { fill: true, collide: false });
+  const glassZ = (z, x0, x1, y0, y1, gaps = [], step = 2) => {
+    let cur = x0;
+    for (const [a, b, top = 2.7] of gaps.slice().sort((p, q) => p[0] - q[0])) {
+      if (a > cur) {
+        colliders.push({ x0: cur, x1: a, y0, y1, z0: z - 0.1, z1: z + 0.1 });
+        B(cur, y0 + 0.02, z - 0.08, a, y0 + 0.12, z + 0.08, INK.BLACK, { fill: true, collide: false });
+        B(cur, y1 - 0.1, z - 0.08, a, y1, z + 0.08, INK.BLACK, { fill: true, collide: false });
+        for (let x = cur; x <= a + 0.01; x += step) B(x - 0.04, y0, z - 0.07, x + 0.04, y1, z + 0.07, INK.BLACK, { fill: true, collide: false });
+      }
+      if (y0 + top < y1) {
+        B(a, y0 + top, z - 0.15, b, y1, z + 0.15, STONE.ink, { tone: STONE.tone });
+      }
+      cur = b;
+    }
+    if (cur < x1) {
+      colliders.push({ x0: cur, x1, y0, y1, z0: z - 0.1, z1: z + 0.1 });
+      B(cur, y0 + 0.02, z - 0.08, x1, y0 + 0.12, z + 0.08, INK.BLACK, { fill: true, collide: false });
+      B(cur, y1 - 0.1, z - 0.08, x1, y1, z + 0.08, INK.BLACK, { fill: true, collide: false });
+      for (let x = cur; x <= x1 + 0.01; x += step) B(x - 0.04, y0, z - 0.07, x + 0.04, y1, z + 0.07, INK.BLACK, { fill: true, collide: false });
+    }
   };
   // losa con huecos: se trocea en rectángulos
   function slab(y, rect, holes, ink = INK.BLACK, o = { tone: 0.62 }) {
@@ -333,44 +366,58 @@ export function buildLevel(scene) {
   // fachadas (granito) y bandas de forjado
   wallZ(-28, -22, 20, 0, ROOF, [], STONE.ink, { tone: STONE.tone }, 0.4);
   wallX(-22, -28, 6, 0, ROOF, [], STONE.ink, { tone: STONE.tone }, 0.4);
-  // (en la planta 1, toda la pared de la oficina de Clevergy es una cristalera transparente)
-  const CLV_GLASS = [-12, 0];
-  wallX(20, -28, CLV_GLASS[0], 0, ROOF, [], STONE.ink, { tone: STONE.tone }, 0.4);
-  B(19.8, 0, CLV_GLASS[0], 20.2, F1 + 0.2, CLV_GLASS[1], STONE.ink, { tone: STONE.tone });
-  B(19.8, F1 + 3.6, CLV_GLASS[0], 20.2, ROOF, CLV_GLASS[1], STONE.ink, { tone: STONE.tone });
-  colliders.push({ x0: 19.9, x1: 20.1, y0: F1 + 0.2, y1: F1 + 3.6, z0: CLV_GLASS[0], z1: CLV_GLASS[1] }); // el cristal (invisible)
-  B(19.85, F1 + 0.15, CLV_GLASS[0], 20.15, F1 + 0.25, CLV_GLASS[1], INK.BLACK, { fill: true, collide: false });
-  for (let z = CLV_GLASS[0]; z <= CLV_GLASS[1] + 0.01; z += 2) B(19.9, F1 + 0.2, z - 0.05, 20.1, F1 + 3.6, z + 0.05, INK.BLACK, { fill: true, collide: false }); // montantes
-  // la escalera tiene cristaleras a la fachada, con terrazas que se ven desde la calle
+
+  // Bandas de forjado horizontales y pilares de fachada (dejan los huecos de cristal transparente)
+  for (const y of [F1 - 0.4, F2 - 0.4, ROOF - 0.4]) {
+    B(-22.3, y, 5.8, 14.3, y + 0.5, 6.2, STONE.ink, { tone: STONE.tone }); // banda forjado z=6
+    B(19.8, y, -28.3, 20.2, y + 0.5, 0.3, STONE.ink, { tone: STONE.tone }); // banda forjado x=20
+    B(-22.3, y + 0.05, 6.21, 14, y + 0.4, 6.35, INK.BLACK, { tone: 0.1, collide: false });
+    B(20.21, y + 0.05, -28, 20.35, y + 0.4, 0, INK.BLACK, { tone: 0.1, collide: false });
+  }
+  // Antepechos bajos a nivel de suelo
+  B(-22.3, 0, 5.8, 14.3, 0.4, 6.2, STONE.ink, { tone: STONE.tone });
+  B(19.8, 0, -28.3, 20.2, 0.4, 0.3, STONE.ink, { tone: STONE.tone });
+
+  // Pilares verticales en las fachadas
+  for (const x of [-22, -10, 3.2, 9.8, 14]) {
+    B(x - 0.25, 0, 5.75, x + 0.25, ROOF, 6.25, STONE.ink, { tone: STONE.tone });
+  }
+  for (const z of [-28, -20, -12, 0]) {
+    B(19.75, 0, z - 0.25, 20.25, ROOF, z + 0.25, STONE.ink, { tone: STONE.tone });
+  }
+
+  // ── FACHADA Z=6 (Pedro Villar / Limonero): CRISTALERAS TRANSPARENTES ──
+  // Planta Baja: ventanales transparentes (a la derecha nada más empezar en la calle se ve el comedor con las vending!)
+  glassZ(6, -21.75, -10.25, 0.4, F1 - 0.4, [], 1.8);
+  glassZ(6, -9.75, 2.95, 0.4, F1 - 0.4, [], 1.8); // ¡Ventanales de la sala de comer!
+  glassZ(6, 10.05, 13.75, 0.4, F1 - 0.4, [], 1.8);
+  // Escalera central acristalada
   const CORE_GLASS = [3.6, 9.6];
-  wallZ(6, -22, CORE_GLASS[0], 0, ROOF, [], STONE.ink, { tone: STONE.tone }, 0.4);
-  wallZ(6, CORE_GLASS[1], 14, 0, ROOF, [], STONE.ink, { tone: STONE.tone }, 0.4);
-  B(CORE_GLASS[0], 0, 5.8, CORE_GLASS[1], F1 - 0.4, 6.2, STONE.ink, { tone: STONE.tone });
-  B(CORE_GLASS[0], ROOF - 0.4, 5.8, CORE_GLASS[1], ROOF, 6.2, STONE.ink, { tone: STONE.tone });
-  colliders.push({ x0: CORE_GLASS[0], x1: CORE_GLASS[1], y0: F1 - 0.4, y1: ROOF - 0.4, z0: 5.9, z1: 6.1 });
-  for (let x = CORE_GLASS[0]; x <= CORE_GLASS[1] + 0.01; x += 1.5) B(x - 0.05, F1 - 0.4, 5.9, x + 0.05, ROOF - 0.4, 6.1, INK.BLACK, { fill: true, collide: false });
+  colliders.push({ x0: CORE_GLASS[0], x1: CORE_GLASS[1], y0: 0.4, y1: ROOF - 0.4, z0: 5.9, z1: 6.1 });
+  for (let x = CORE_GLASS[0]; x <= CORE_GLASS[1] + 0.01; x += 1.5) B(x - 0.05, 0.4, 5.9, x + 0.05, ROOF - 0.4, 6.1, INK.BLACK, { fill: true, collide: false });
   for (const y of [F1 - 0.4, F1 + 1.8, F2 - 0.4, F2 + 1.8]) B(CORE_GLASS[0], y, 5.92, CORE_GLASS[1], y + 0.08, 6.08, INK.BLACK, { fill: true, collide: false });
-  for (const y of [F1, F2]) { // terrazas
+  for (const y of [F1, F2]) { // terrazas de la escalera
     B(CORE_GLASS[0] - 0.4, y - 0.25, 6.2, CORE_GLASS[1] + 0.4, y, 7.8, STONE.ink, { tone: 0.2 });
     railing(CORE_GLASS[0] - 0.4, 7.8, CORE_GLASS[1] + 0.4, 7.8, y);
     plant(CORE_GLASS[0] + 0.3, 7, y, 0.7); plant(CORE_GLASS[1] - 0.3, 7, y, 0.7);
   }
-  // ventanales: planta baja grandes, plantas altas en banda (como la foto)
-  for (let x = -20; x < 12; x += 3.2) {
-    B(x, 0.9, 6.21, x + 2.6, 3.4, 6.26, INK.BLUE, { tone: 0.32, collide: false });
-    if (x + 2.6 <= CORE_GLASS[0] || x >= CORE_GLASS[1]) {
-      B(x, 5.1, 6.21, x + 2.6, 7.6, 6.26, INK.BLUE, { tone: 0.32, collide: false });
-      B(x, 9.5, 6.21, x + 2.6, 12, 6.26, INK.BLUE, { tone: 0.32, collide: false });
-    }
+  // Plantas 1 y 2 en Z=6: ventanales transparentes
+  for (const fy of [F1, F2]) {
+    glassZ(6, -21.75, -10.25, fy + 0.1, fy + 3.8, [], 1.8);
+    glassZ(6, -9.75, 2.95, fy + 0.1, fy + 3.8, [], 1.8);
+    glassZ(6, 10.05, 13.75, fy + 0.1, fy + 3.8, [], 1.8);
   }
-  for (let z = -26; z < -1; z += 3.2) {
-    B(20.21, 0.9, z, 20.26, 3.4, z + 2.6, INK.BLUE, { tone: 0.32, collide: false });
-    if (z + 2.6 <= CLV_GLASS[0]) B(20.21, 5.1, z, 20.26, 7.6, z + 2.6, INK.BLUE, { tone: 0.32, collide: false });
-    B(20.21, 9.5, z, 20.26, 12, z + 2.6, INK.BLUE, { tone: 0.32, collide: false });
-  }
-  for (const y of [F1, F2, ROOF]) {
-    B(-22.3, y - 0.45, 6.2, 14, y - 0.1, 6.5, INK.BLACK, { tone: 0.1, collide: false });
-    B(20.2, y - 0.45, -28, 20.5, y - 0.1, 0, INK.BLACK, { tone: 0.1, collide: false });
+
+  // ── FACHADA X=20 (Pedro Villar): CRISTALERAS TRANSPARENTES ──
+  // Planta Baja: ventanales transparentes hacia Pedro Villar
+  glassX(20, -27.75, -20.25, 0.4, F1 - 0.4, [], 1.8);
+  glassX(20, -19.75, -12.25, 0.4, F1 - 0.4, [], 1.8);
+  glassX(20, -11.75, -0.25, 0.4, F1 - 0.4, [], 1.8);
+  // Plantas 1 y 2 en X=20: ventanales transparentes de la oficina de Clevergy y Hot Desk
+  for (const fy of [F1, F2]) {
+    glassX(20, -27.75, -20.25, fy + 0.1, fy + 3.8, [], 1.8);
+    glassX(20, -19.75, -12.25, fy + 0.1, fy + 3.8, [], 1.8);
+    glassX(20, -11.75, -0.25, fy + 0.1, fy + 3.8, [], 1.8);
   }
   // esquina redonda: planta baja con la entrada, plantas altas acristaladas
   const ENTRY_GAP = [0.55, 1.02];
@@ -570,66 +617,67 @@ export function buildLevel(scene) {
   B(3.6, F1 - 0.4, -28, 6, F1, -26, INK.BLACK, { tone: 0.28 }); // rellano de arriba
   railing(3.6, -26, 3.6, -28, F1);
 
-  // ── otra vez a la izquierda: aseos y la cocina (mesa larga, vending al fondo) ──
+  // ── a la izquierda de la entrada: SALA DE COMER Y VENDING (frente a las ventanas de la calle) ──
+  B(-10, 0, -4, 3.2, 0.03, 6, INK.ORANGE, { tone: 0.16, collide: false }); // tarima del comedor
+  glassZ(-4, -10, 3.2, 0, H, [[-1.2, 0.8]]); // pared divisoria de cristal con puerta
+  wallX(-10, -4, 6, 0, H, []); // pared izquierda del comedor
+  place(inkText("SALA DE COMER", { size: 0.32, ink: INK.BLUE }), -4, 3.1, -4.1, 0, 1);
+  place(inkText("VENDING & CAFÉ", { size: 0.22, ink: INK.ORANGE }), -1.0, 2.7, -4.1, 0, 1);
+
+  // Mesa larga del comedor con sillas
+  table(-4.5, 1.2, 7.5, 1.4, 0, 0.76, WOOD);
+  for (let sx = -7.5; sx <= -1.5; sx += 1.4) { chair(sx, 0.2, 0, 0); chair(sx, 2.2, 0, Math.PI); }
+
+  // Encimera de cocina con microondas y cafetera (contra la pared)
+  B(-9.6, 0, -3.8, -4.8, 0.95, -3.1, INK.BLACK, { tone: 0.42 });
+  B(-9.65, 0.95, -3.85, -4.75, 1.0, -3.05, WOOD.ink, { tone: 0.1, collide: false });
+  for (let k = 0; k < 3; k++) B(-9.2 + k * 1.4, 1.0, -3.7, -8.1 + k * 1.4, 1.5, -3.2, INK.BLACK, { tone: -0.05, collide: false });
+  B(-5.1, 1.0, -3.6, -4.5, 1.5, -3.1, INK.BLACK, { tone: -0.2, collide: false });
+
+  const vendingPacks = [];
+  // Máquinas de vending (de cara hacia las ventanas de la calle en z=6)
+  {
+    const FZ = -2.8;
+    // Máquina de galletas (ChocoBom de Gullón)
+    B(-4.2, 0, -3.8, -2.4, 2.2, FZ, INK.BLACK, { tone: 0.12 });
+    B(-4.05, 0.55, FZ, -2.85, 2.05, FZ + 0.03, INK.BLUE, { tone: 0.5, collide: false }); // escaparate
+    for (let r = 0; r < 4; r++) {
+      const y = 0.65 + r * 0.36;
+      B(-4.05, y - 0.03, FZ + 0.03, -2.85, y, FZ + 0.06, INK.BLACK, { fill: true, collide: false });
+      for (let c = 0; c < 4; c++) vendingPacks.push({ x: -3.85 + c * 0.31, y: y + 0.16, z: FZ + 0.08, w: 0.26, h: 0.31 }); // bolsas ChocoBom
+    }
+    B(-2.8, 0.9, FZ, -2.45, 1.6, FZ + 0.04, INK.BLACK, { tone: -0.3, collide: false }); // teclado
+    B(-4.0, 0.15, FZ, -2.9, 0.4, FZ + 0.04, INK.BLACK, { tone: -0.35, collide: false }); // cajetín
+    place(inkText("CHOCO BOM", { size: 0.2, ink: INK.BLUE }), -3.3, 2.35, FZ + 0.05, 0, 1);
+
+    // Máquina de café
+    B(-2.0, 0, -3.8, -0.2, 2.2, FZ, INK.RED, { tone: 0.05 });
+    B(-1.8, 1.1, FZ, -0.4, 2.0, FZ + 0.03, INK.ORANGE, { tone: 0.3, collide: false });
+    C(-1.1, 1.25, FZ + 0.08, 0.22, 0.45, INK.BLACK, { tone: 0.55, collide: false }); // taza
+    B(-0.7, 1.35, FZ + 0.04, -0.55, 1.6, FZ + 0.1, INK.BLACK, { fill: true, collide: false });
+    for (let k = 0; k < 3; k++) B(-1.22 + k * 0.1, 1.75, FZ + 0.06, -1.18 + k * 0.1, 1.95, FZ + 0.08, INK.BLACK, { tone: 0.2, collide: false }); // humo
+    B(-1.5, 0.35, FZ - 0.25, -0.7, 0.85, FZ + 0.02, INK.BLACK, { tone: -0.4, collide: false }); // hueco vaso
+    C(-1.1, 0.38, FZ - 0.1, 0.07, 0.14, INK.BLACK, { tone: 0.6, collide: false });
+    for (let k = 0; k < 4; k++) B(-0.35, 0.9 + k * 0.12, FZ, -0.25, 0.98 + k * 0.12, FZ + 0.04, INK.BLACK, { fill: true, collide: false });
+    place(inkText("CAFÉ", { size: 0.24, ink: INK.RED }), -1.1, 2.35, FZ + 0.05, 0, 1);
+  }
+
+  // ── Aseos (junto al patio) ──
   wallZ(-10, -8, -3, 0, H, [[-6.5, -4.8]]);
   wallX(-3, -14, -10, 0, H, []);
   B(-7.6, 0, -13.6, -6.6, 0.9, -12.6, INK.BLACK, { tone: 0.5 });
   B(-5.2, 0, -13.6, -3.6, 0.85, -12.8, INK.BLACK, { tone: 0.5 });
   place(inkText("ASEOS", { size: 0.24, ink: INK.BLUE }), -5.6, 3.1, -9.8, 0, 1);
-  wallZ(-6, -22, -8, 0, H, []);
-  wallX(-8, -14, -6, 0, H, [[-9.2, -7]]);
-  place(inkText("COCINA", { size: 0.32, ink: INK.BLUE }), -7.8, 3.1, -10.6, 1, 0);
-  table(-15, -16.5, 1.2, 15, 0, 0.76, WOOD); // la mesa larga
-  B(-16.5, 0, -24, -16.1, 0.45, -9, INK.ORANGE, { tone: 0.2 });
-  B(-13.9, 0, -24, -13.5, 0.45, -9, INK.ORANGE, { tone: 0.2 });
-  B(-21.9, 0, -24, -21, 0.95, -8, INK.BLACK, { tone: 0.42 }); // encimera
-  B(-21.95, 0.95, -24, -20.95, 1.0, -8, WOOD.ink, { tone: 0.1, collide: false });
-  B(-21.9, 2.2, -24, -21.4, 2.28, -8, WOOD.ink, { tone: 0.1, collide: false }); // balda
-  for (let k = 0; k < 4; k++) { // microondas
-    B(-21.9, 2.28, -22 + k * 3, -21.4, 2.85, -21 + k * 3, INK.BLACK, { tone: -0.05, collide: false });
-    B(-21.42, 2.35, -21.9 + k * 3, -21.38, 2.78, -21.3 + k * 3, INK.BLACK, { fill: true, collide: false });
-  }
-  B(-21.8, 1.0, -10, -21.2, 1.5, -9.4, INK.BLACK, { tone: -0.2, collide: false }); // cafetera
-  const vendingPacks = [];
-  // vending, al fondo de la cocina: una de galletas (ChocoBom de Gullón) y otra de café
-  {
-    const FZ = -26.8;
-    B(-20.3, 0, -27.8, -18.3, 2.2, FZ, INK.BLACK, { tone: 0.12 });
-    B(-20.15, 0.55, FZ, -18.85, 2.05, FZ + 0.03, INK.BLUE, { tone: 0.5, collide: false }); // escaparate
-    for (let r = 0; r < 4; r++) {
-      const y = 0.65 + r * 0.36;
-      B(-20.15, y - 0.03, FZ + 0.03, -18.85, y, FZ + 0.06, INK.BLACK, { fill: true, collide: false }); // bandeja
-      for (let c = 0; c < 4; c++) vendingPacks.push({ x: -19.92 + c * 0.31, y: y + 0.16, z: FZ + 0.08, w: 0.26, h: 0.31 }); // las bolsas de ChocoBom (foto, ver doodleWorld)
-    }
-    B(-18.8, 0.9, FZ, -18.4, 1.6, FZ + 0.04, INK.BLACK, { tone: -0.3, collide: false }); // teclado
-    B(-20.1, 0.15, FZ, -18.9, 0.4, FZ + 0.04, INK.BLACK, { tone: -0.35, collide: false }); // cajetín
-    place(inkText("CHOCO BOM", { size: 0.2, ink: INK.BLUE }), -19.3, 2.35, FZ + 0.05, 0, 1);
-    B(-17.4, 0, -27.8, -15.6, 2.2, FZ, INK.RED, { tone: 0.05 }); // la de café
-    B(-17.2, 1.1, FZ, -15.8, 2.0, FZ + 0.03, INK.ORANGE, { tone: 0.3, collide: false });
-    C(-16.5, 1.25, FZ + 0.08, 0.22, 0.45, INK.BLACK, { tone: 0.55, collide: false }); // la taza del cartel
-    B(-16.1, 1.35, FZ + 0.04, -15.95, 1.6, FZ + 0.1, INK.BLACK, { fill: true, collide: false });
-    for (let k = 0; k < 3; k++) B(-16.62 + k * 0.1, 1.75, FZ + 0.06, -16.58 + k * 0.1, 1.95, FZ + 0.08, INK.BLACK, { tone: 0.2, collide: false }); // humo
-    B(-16.9, 0.35, FZ - 0.25, -16.1, 0.85, FZ + 0.02, INK.BLACK, { tone: -0.4, collide: false }); // hueco del vaso
-    C(-16.5, 0.38, FZ - 0.1, 0.07, 0.14, INK.BLACK, { tone: 0.6, collide: false });
-    for (let k = 0; k < 4; k++) B(-15.75, 0.9 + k * 0.12, FZ, -15.65, 0.98 + k * 0.12, FZ + 0.04, INK.BLACK, { fill: true, collide: false });
-    place(inkText("CAFÉ", { size: 0.24, ink: INK.RED }), -16.5, 2.35, FZ + 0.05, 0, 1);
-  }
 
-  // ── salas de reuniones: 1–4 en la fachada, 5 y 6 al fondo ──
-  wallZ(-4, -22, 2, 0, H, [[-19.8, -18.2], [-13.8, -12.2], [-7.8, -6.2], [-1.8, -0.2]]);
-  for (const x of [-16, -10, -4, 2]) wallX(x, -4, 6, 0, H, []);
-  [[-22, "SALA 1"], [-16, "SALA 2"], [-10, "SALA 3"], [-4, "SALA 4"]].forEach(([x0, n], i) => {
-    const cx = x0 + 3;
-    B(x0 + 0.2, 0, 5.62, x0 + 5.8, 3.9, 5.68, i % 2 ? INK.GREEN : INK.ORANGE, { tone: 0.02, collide: false });
-    table(cx, 1.4, 3, 1.4, 0, 0.76, { ink: INK.ORANGE, tone: 0.25 });
-    for (const dx of [-0.9, 0.9]) { chair(cx + dx, 0.4, 0, 0); chair(cx + dx, 2.4, 0, Math.PI); }
-    whiteboard(cx, 1.8, 5.55, 0, -1, 2.6);
-    place(inkText(n, { size: 0.3, ink: INK.BLUE }), cx, 3.1, -4.2, 0, -1);
-  });
+  // ── Salas de reuniones: distribuidas en el ala oeste y patio ──
+  wallZ(-16, -22, -8, 0, H, [[-15.5, -13.5]]);
+  wallX(-10, -28, -6, 0, H, [[-21, -19], [-11, -9]]);
+  meetingRoom(-22, -28, -10, -16, "SALA 1", "yellow", "north");
+  meetingRoom(-22, -16, -10, -4, "SALA 2", "teal", "north");
   wallZ(-14, 6, 20, 0, H, [[8.6, 10.4], [15.6, 17.4]]);
   wallX(13, -28, -14, 0, H, []);
-  meetingRoom(6, -28, 13, -14, "SALA 5", "yellow", "north");
-  meetingRoom(13, -28, 20, -14, "SALA 6", "teal", "north");
+  meetingRoom(6, -28, 13, -14, "SALA 3", "yellow", "north");
+  meetingRoom(13, -28, 20, -14, "SALA 4", "teal", "north");
 
   // ════════════════ PRIMERA PLANTA ════════════════
   // Subiendo la escalera, un descansillo con dos puertas: la de la izquierda da a otras oficinas y
@@ -775,7 +823,8 @@ export function buildLevel(scene) {
 
   // la señora de las vending (se queja si te pones en medio)
   const senor = makeSenor();
-  senor.group.position.set(-14.6, 0, -26.1);
+  senor.group.position.set(-1.1, 0, -1.6);
+  senor.group.rotation.y = Math.PI; // mira hacia la máquina de café
   root.add(senor.group);
 
   return { root, colliders, updateDoors, victoria, mariaEugenia, clevergyPhoto, senor, tendedora, vendingPacks };

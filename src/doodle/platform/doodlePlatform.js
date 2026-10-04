@@ -45,7 +45,10 @@ const ZONES = [
 
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const rnd = (a, b) => a + Math.random() * (b - a);
-const charById = (id) => CHARS.find((c) => c.id === id) || CHARS[0];
+// alias que llegan desde URLs, QR o versiones antiguas → id oficial del personaje
+const CHAR_ALIAS = { alvaro: "alvaroP", alvarop: "alvaroP", "alvaro-p": "alvaroP", alvarom: "alvaroM", "alvaro-merino": "alvaroM", alvaromerino: "alvaroM", merino: "alvaroM", "jose-luis": "joseluis", jair: "yair", alex: "ale" };
+const normCharId = (id) => { const s = String(id || ""); return CHARS.some((c) => c.id === s) ? s : (CHAR_ALIAS[s.toLowerCase()] || s); };
+const charById = (id) => { const n = normCharId(id); return CHARS.find((c) => c.id === n) || CHARS.find((c) => c.id.toLowerCase() === n.toLowerCase()) || CHARS[0]; };
 const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
 const TEMPLATE = `
@@ -739,7 +742,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     if (keys.KeyA || keys.ArrowLeft || mando.L) x -= 1;
     if (keys.KeyD || keys.ArrowRight || mando.R) x += 1;
     const jumpHeld = !!(keys.Space || keys.KeyW || keys.ArrowUp || mando.A || mando.Up || gp.jump || tp.jump);
-    const powerHeld = !!(keys.KeyJ || keys.KeyX || keys.KeyK || mando.B || gp.power || tp.power);
+    const powerHeld = !!(keys.KeyJ || keys.KeyX || keys.KeyZ || keys.KeyK || keys.KeyC || keys.KeyF || keys.KeyE || keys.KeyQ || keys.Enter || mando.B || gp.power || tp.power);
     const down = !!(keys.KeyS || keys.ArrowDown || mando.Down || gp.down || joy.y < -0.6);
     const inp = { x: clamp(x, -1, 1), jumpHeld, jump: jumpHeld && !prev.jump, power: powerHeld && !prev.power, powerHeld, down };
     prev.jump = jumpHeld; prev.power = powerHeld;
@@ -766,6 +769,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     P.zenT = Math.max(0, P.zenT - dt);
     if (P.g) { P.fly = Math.min(1, P.fly + dt * 0.9); P.mega = P.mega && P.vy > 0 ? P.mega : 0; }
     P.prevY = P.y;
+    P.prevVy = P.vy;
 
     // escudo de Beltrán: mantén ▼ en el suelo (gasta energía)
     const shielding = char.id === "beltran" && inp.down && P.g && !inp.jumpHeld && P.energy > 0.05;
@@ -789,6 +793,10 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
       const acc = P.g ? (Math.abs(target) > Math.abs(P.vx) && Math.sign(target) === Math.sign(P.vx || target) ? 55 : 70) : 28;
       P.vx += clamp(target - P.vx, -acc * dt, acc * dt);
       if (Math.abs(inp.x) > 0.2) P.facing = Math.sign(inp.x);
+      // Efecto táctil de derrape: polvo de tinta al frenar o cambiar de sentido a toda marcha
+      if (P.g && inp.x && Math.sign(inp.x) !== Math.sign(P.vx) && Math.abs(P.vx) > 3.0) {
+        if (Math.random() < dt * 22) spawnInk(P.x - Math.sign(P.vx) * 0.35, P.y + 0.05, pInk(), 1, 2);
+      }
     }
 
     // ▼ + salto sobre una plataforma atravesable: bajar de ella (en vez de saltar)
@@ -861,7 +869,11 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
       bumpTile(solidT(t) ? tx : res.head.tx, res.head.ty, false);
     }
     if (P.g && !wasG) {
-      P.squash = 0.72;
+      P.squash = clamp(1 - Math.abs(P.prevVy || 0) * 0.032, 0.64, 0.84);
+      if ((P.prevVy || 0) < -6) {
+        spawnInk(P.x - 0.28, P.y + 0.05, pInk(), 3, 2);
+        spawnInk(P.x + 0.28, P.y + 0.05, pInk(), 3, 2);
+      }
       if (P.slam) { P.slam = 0; slamImpact(); }
       if (P.mega) { P.mega = 0; slamImpact(3.8); big("¡SUPER STEP!", "", 0.8); }
       // Maca en modo pelota bota sin parar (▼ para frenar el bote)
@@ -922,40 +934,110 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
   };
   const pInk = () => PINK[char.id] || INK.BLUE;
   const attacking = () => P.dashT > 0 || P.riseT > 0 || P.slam || P.ball || P.zenT > 0 || P.shieldT > 0 || P.mega;
+  // mensajes de Slack de Beltrán: cada tarjeta sale con su canal, color y aviso
+  const SLACK_MSGS = [
+    { ch: "@CANAL", ink: INK.RED, badge: "!", l1: 1, l2: 0, txt: "@canal: ¡reunión en 5 min!" },
+    { ch: "#DEV", ink: INK.GREEN, badge: "9", l1: 0, l2: 1, txt: "#dev: ¿quién ha roto staging?" },
+    { ch: "#GENERAL", ink: INK.BLUE, badge: "3", l1: 1, l2: 1, txt: "#general: eso lo podemos vender ya" },
+    { ch: "#RANDOM", ink: INK.ORANGE, badge: "1", l1: 0, l2: 0, txt: "#random: ¿qué? ¿qué? ¿qué?" },
+    { ch: "DEPLOY", ink: INK.PURPLE, badge: "5", l1: 1, l2: 0, txt: "deploy-bot: ¡a producción!" },
+    { ch: "#VENTAS", ink: INK.GREEN, badge: "2", l1: 0, l2: 1, txt: "#ventas: ¡nuevo cliente cerrado!" }
+  ];
+  let slackSeq = 0;
 
   function usePower(inp) {
-    const id = char.id;
+    const rawId = String((char && char.id) || "").toLowerCase();
+    const id = normCharId(char.id).toLowerCase();
+    const isAlvaroMerino = id === "alvarom" || id === "alvaro-merino" || id === "merino" || rawId === "alvarom" || rawId === "alvaro-merino" || rawId.includes("merino");
     if (id === "ana" && P.wall && !P.g) return; // en la pared, el botón es para trepar
     P.cd = cdMax;
     sfx.power();
-    P.pose = "attack"; P.poseT = 0.3;
+    P.pose = "attack"; P.poseT = 0.35;
     const f = P.facing;
     if (id === "alejandro") { melee(1.8); P.vx += f * 3; }
-    else if (id === "paloma") { melee(1.5, 1.9); if (!P.g) P.vy = Math.max(P.vy, 5); }
+    else if (id === "paloma") {
+      melee(2.0, 2.0);
+      shoot({ x: P.x + f * 0.8, y: P.y + 0.9, vx: f * 11, vy: 3, arc: true, life: 1.3, ink: INK.BLUE, shape: "purse" });
+      if (!P.g) P.vy = Math.max(P.vy, 5);
+      msg("👜 ¡Bolso de la abuela!", 1.2);
+    }
     else if (id === "ana") melee(1.4, 1.7);
     else if (id === "ale") dash(0.65, 1.75, false, INK.GREEN);
-    else if (id === "pablo") dash(0.9, 1.85, false, INK.ORANGE);
-    else if (id === "silvia") { dash(0.3, 2.3, true, INK.RED); P.inv = Math.max(P.inv, 0.4); }
-    else if (id === "beltran") for (let k = 0; k < 3; k++) shoot({ x: P.x + f * 0.8, y: P.y + 0.7 + k * 0.45, vx: f * (12 - k * 1.5), vy: (k - 1) * 0.6, pierce: true, life: 1.1, ink: INK.BLUE, shape: "slack" }); // mensajes de Slack
-    else if (id === "alvaroM") shoot({ x: P.x + f * 0.6, y: P.y + 1.2, vx: f * 9, vy: 7, arc: true, bounce: 2, boom: 2.3, life: 2.2, ink: INK.BLUE, shape: "404" });
-    else if (id === "alvaroP") shoot({ x: P.x + f * 0.7, y: P.y + 1, vx: f * 15, pierce: true, life: 0.95, ink: INK.PURPLE, shape: "wave", grow: true });
-    else if (id === "juan") blast(P.x, P.y + 0.8, 3.3, INK.PURPLE);
-    else if (id === "yair") { blast(P.x, P.y + 0.8, 3.0, INK.RED); if (P.g) P.vy = Math.max(P.vy, 4); }
+    else if (id === "pablo") {
+      dash(1.0, 2.2, false, INK.ORANGE);
+      shoot({ x: P.x + f * 0.7, y: P.y + 0.4, vx: f * 13, vy: 0, life: 1.8, ink: INK.ORANGE, shape: "orange", bounce: 1 });
+      msg("🍊 ¡No para de rodar con su naranja!", 1.3);
+    }
+    else if (id === "silvia") {
+      for (let k = 0; k < 3; k++) shoot({ x: P.x + f * 0.8, y: P.y + 0.8 + (k - 1) * 0.35, vx: f * (13 - k * 1.5), vy: (k - 1) * 0.7, pierce: true, life: 1.2, ink: INK.RED, shape: "invoice" });
+      P.inv = Math.max(P.inv, 0.35);
+      msg("📄 ¡Facturas sin pagar!", 1.2);
+    }
+    else if (id === "beltran") {
+      // cada ráfaga: 3 mensajes distintos (canal, color y aviso diferentes)
+      const base = (slackSeq++) * 3;
+      for (let k = 0; k < 3; k++) shoot({ x: P.x + f * (0.9 + k * 0.25), y: P.y + 0.6 + k * 0.55, vx: f * (11.5 - k * 1.6), vy: (k - 1) * 0.7, pierce: true, life: 1.25, ink: INK.BLUE, shape: "slack", variant: (base + k) % SLACK_MSGS.length, ph: k * 1.7 });
+      msg(`💬 ${SLACK_MSGS[base % SLACK_MSGS.length].txt}`, 1.2);
+    }
+    else if (isAlvaroMerino) {
+      shoot({ x: P.x + f * 0.85, y: P.y + 0.95, vx: f * 13.5, vy: 4.8, arc: true, bounce: 3, boom: 2.5, life: 3.0, ink: INK.ORANGE, shape: "444" });
+      spawnInk(P.x + f * 0.65, P.y + 0.95, INK.ORANGE, 8, 4);
+      msg("🧮 ¡Bolas de 444!", 1.4);
+    }
+    else if (id === "alvarop" || id === "alvaro") {
+      shoot({ x: P.x + f * 0.8, y: P.y + 1, vx: f * 13, pierce: true, life: 1.0, ink: INK.PURPLE, shape: "wave", grow: true });
+      spawnInk(P.x + f * 0.6, P.y + 1.1, INK.PURPLE, 6, 3);
+      msg("🎙️ ¡Onda cuestionadora! ¿Cuánto tiempo le has dedicado?", 1.4);
+    }
+    else if (id === "juan") {
+      blast(P.x, P.y + 0.8, 3.6, INK.PURPLE);
+      msg("📻 ¡Onda microondas!", 1.2);
+    }
+    else if (id === "yair") {
+      blast(P.x, P.y + 0.8, 3.4, INK.RED);
+      if (P.g) P.vy = Math.max(P.vy, 4);
+      msg("💃 ¡Yair te baila!", 1.3);
+    }
     else if (id === "jesus") {
-      if (P.g) blast(P.x, P.y + 0.4, 2.7, INK.ORANGE);
-      else { P.slam = 1; P.vy = -30; }
-    } else if (id === "manu") { P.vy = jumpV() * 1.55; P.g = false; P.mega = 1; P.riseT = 0.35; P.squash = 1.5; spawnInk(P.x, P.y, INK.RED, 10, 4); }
-    else if (id === "josu") { P.vy = jumpV() * 1.05; P.vx = f * 13; P.lockT = 0.42; P.riseT = 0.42; P.g = false; spawnInk(P.x, P.y, INK.ORANGE, 8, 4); }
-    else if (id === "maca") { P.ball = !P.ball; P.cd = 0.4; msg(P.ball ? "🏐 Modo pelota: ¡arrollas todo!" : "🏐 Modo normal", 1.1); if (P.ball && P.g) P.vy = 10; }
-    else if (id === "gonzalo") { for (let i = 0; i < 3; i++) spawnMinion("broc", i); msg("🥦 ¡Mini-brócolis!", 1); }
-    else if (id === "javi") { for (let i = 0; i < 2; i++) spawnMinion("worker", i); msg("☭ ¡Trabajadores del mundo!", 1); }
-    else if (id === "joseluis") printPlatform();
+      for (let k = 0; k < 4; k++) {
+        shoot({ x: P.x + f * (0.8 + k * 0.3), y: P.y + 0.7 + (k % 2 === 0 ? 0.15 : -0.15), vx: f * (12 + k * 1.8), vy: (k - 1.5) * 0.5, pierce: true, life: 0.9, ink: INK.ORANGE, shape: "beer" });
+      }
+      if (!P.g) { P.slam = 1; P.vy = -30; }
+      msg("🍺 ¡Chorro de cerveza!", 1.2);
+    }
+    else if (id === "manu") {
+      P.vy = jumpV() * 1.65; P.g = false; P.mega = 1; P.riseT = 0.35; P.squash = 1.6; P.slam = 1;
+      spawnInk(P.x, P.y, INK.RED, 12, 5);
+      msg("🦘 ¡Salta y te salta encima!", 1.2);
+    }
+    else if (id === "josu") {
+      melee(2.2, 2.0);
+      shoot({ x: P.x + f * 0.8, y: P.y + 0.9, vx: f * 13, vy: 2, arc: true, life: 1.3, ink: INK.GREEN, shape: "vegan" });
+      msg("🪧 ¡Te da con el cartel de vegano!", 1.2);
+    }
+    else if (id === "maca") {
+      P.ball = true; if (P.g) P.vy = 11;
+      shoot({ x: P.x + f * 0.8, y: P.y + 0.8, vx: f * 12, vy: 6, arc: true, bounce: 4, boom: 1.5, life: 2.5, ink: INK.ORANGE, shape: "ball" });
+      msg("🏐 ¡Rebota, rebota y te da con la pelota!", 1.4);
+    }
+    else if (id === "gonzalo") {
+      for (let i = 0; i < 3; i++) spawnMinion("broc", i);
+      msg("🥦 ¡Mini-brócolis!", 1);
+    }
+    else if (id === "javi") {
+      shoot({ x: P.x + f * 0.8, y: P.y + 0.5, vx: f * 10, vy: 2, arc: true, life: 1.8, ink: INK.RED, shape: "worker" });
+      for (let i = 0; i < 2; i++) spawnMinion("worker", i);
+      msg("👷 ¡Lanza minitrabajadores!", 1.2);
+    }
+    else if (id === "joseluis") {
+      printPlatform();
+      msg("🖨️ ¡Plataforma 3D creada!", 1.2);
+    }
     else if (id === "bruno") {
-      const face = Math.floor(Math.random() * 4);
-      if (face === 0) { if (P.hearts < HEARTS) P.hearts++; else P.score += 300; msg("🙂 Cara feliz: +1 ♥", 1.4); sfx.item(); }
-      else if (face === 1) { blast(P.x, P.y + 0.8, 3.4, INK.RED); msg("😡 Cara furiosa", 1.2); }
-      else if (face === 2) { P.buffT = 4; msg("😎 Cara veloz: +velocidad", 1.4); }
-      else { P.zenT = 3; P.inv = Math.max(P.inv, 3); msg("😌 Cara zen: invencible", 1.4); }
+      // el besito flota hacia delante haciendo eses (antes caía al suelo nada más salir)
+      shoot({ x: P.x + f * 0.9, y: P.y + 1.1, vx: f * 9.5, vy: 0, pierce: true, life: 1.7, ink: INK.RED, shape: "kiss", ph: 0 });
+      spawnInk(P.x + f * 0.7, P.y + 1.2, INK.RED, 8, 3);
+      msg("💋 ¡Besito de travesti! Chof chof.", 1.4);
     }
   }
   function dash(t, mult, float, ink) {
@@ -994,26 +1076,95 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     shake(0.6);
     sfx.brick();
   }
-  function shoot(o) { powers.push({ vy: 0, bounce: 0, ...o, mesh: powerMesh(o.ink, o.shape) }); }
-  function powerMesh(ink, shape) {
+  function shoot(o) {
+    const mesh = powerMesh(o.ink, o.shape, o.variant || 0);
+    mesh.position.set(o.x, o.y, 0.3);
+    powers.push({ vy: 0, bounce: 0, ph: 0, ...o, mesh, age: 0 });
+  }
+  function powerMesh(ink, shape, variant = 0) {
     const g = new THREE.Group();
     if (shape === "wave") {
-      for (let k = 0; k < 3; k++) { const r = new THREE.Mesh(GEO.torus, mat(ink, { fill: true })); r.scale.setScalar(0.35 + k * 0.2); r.position.x = -k * 0.25; r.rotation.y = Math.PI / 2; g.add(r); }
-    } else if (shape === "404") {
-      // bola de fuego de ERROR 404: núcleo oscuro, corona de llamas y el texto
-      const core = new THREE.Mesh(GEO.sph, mat(INK.BLACK, { tone: -0.15 })); core.scale.setScalar(0.62); g.add(core);
-      for (let k = 0; k < 10; k++) {
-        const a = (k / 10) * Math.PI * 2, fl = new THREE.Mesh(GEO.box, mat(k % 2 ? INK.ORANGE : INK.RED, { fill: true }));
-        fl.scale.set(0.12, 0.28 + (k % 3) * 0.08, 0.06); fl.position.set(Math.cos(a) * 0.4, Math.sin(a) * 0.4, 0); fl.rotation.z = a - Math.PI / 2; g.add(fl);
+      // ondas de podcast ")))" de frente a la cámara + la interrogación cuestionadora
+      for (let k = 0; k < 3; k++) { const r = new THREE.Mesh(GEO.torus, mat(ink, { fill: true })); const s = 0.45 + k * 0.28; r.scale.set(s * 0.55, s, 0.4); r.position.x = k * 0.22; g.add(r); }
+      const q = inkText("?", { size: 0.42, ink, weight: 1.6 }); q.position.set(-0.25, 0, 0.1); g.add(q);
+    } else if (shape === "444" || shape === "404") {
+      // bola de fuego de 444: núcleo brillante de tinta naranja, corona de llamas y texto 444 legible en ambas caras
+      const core = new THREE.Mesh(GEO.sph, mat(INK.ORANGE, { fill: true }));
+      core.scale.setScalar(0.85);
+      g.add(core);
+      for (let k = 0; k < 12; k++) {
+        const a = (k / 12) * Math.PI * 2;
+        const fl = new THREE.Mesh(GEO.box, mat(k % 2 ? INK.RED : INK.ORANGE, { fill: true }));
+        fl.scale.set(0.14, 0.38 + (k % 3) * 0.08, 0.06);
+        fl.position.set(Math.cos(a) * 0.5, Math.sin(a) * 0.5, 0);
+        fl.rotation.z = a - Math.PI / 2;
+        g.add(fl);
       }
-      const t = inkText("404", { size: 0.22, ink: INK.ORANGE, weight: 1.4 }); t.position.z = 0.34; g.add(t);
-    } else if (shape === "slack") { // un mensaje de Slack: bocadillo blanco, el logo de colores y dos líneas de texto
-      box(g, 0, 0, 0, 0.9, 0.55, 0.08, INK.BLACK, { tone: 0.62 });
-      box(g, -0.33, -0.3, 0, 0.14, 0.12, 0.08, INK.BLACK, { tone: 0.62 }); // el piquito
+      const tFront = inkText("444", { size: 0.28, ink: INK.RED, weight: 1.8 });
+      tFront.position.set(0, 0, 0.44);
+      g.add(tFront);
+      const tBack = inkText("444", { size: 0.28, ink: INK.RED, weight: 1.8 });
+      tBack.position.set(0, 0, -0.44);
+      tBack.rotation.y = Math.PI;
+      g.add(tBack);
+    } else if (shape === "slack") { // un mensaje de Slack distinto cada vez: canal, color, logo, líneas y aviso rojo
+      const m = SLACK_MSGS[variant % SLACK_MSGS.length];
+      box(g, 0, 0, 0, 1.25, 0.72, 0.08, INK.BLACK, { tone: 0.62 }); // la tarjeta
+      box(g, -0.6, 0, 0.03, 0.06, 0.72, 0.03, m.ink, { fill: true }); // franja del canal
+      box(g, -0.4, -0.42, 0, 0.18, 0.14, 0.08, INK.BLACK, { tone: 0.62 }); // el piquito
+      // logo de Slack (almohadilla de 4 colores) como avatar
       const C4 = [INK.BLUE, INK.GREEN, INK.RED, INK.ORANGE];
-      for (let k = 0; k < 4; k++) { const v = k % 2 === 0; box(g, -0.26 + (v ? (k ? 0.06 : -0.06) : 0), (v ? 0 : (k === 1 ? 0.06 : -0.06)), 0.05, v ? 0.05 : 0.2, v ? 0.2 : 0.05, 0.02, C4[k], { fill: true }); }
-      box(g, 0.12, 0.09, 0.05, 0.4, 0.06, 0.02, INK.BLACK, { tone: 0.2 });
-      box(g, 0.06, -0.07, 0.05, 0.28, 0.06, 0.02, INK.BLACK, { tone: 0.35 });
+      for (let k = 0; k < 4; k++) { const v = k % 2 === 0; box(g, -0.4 + (v ? (k ? 0.06 : -0.06) : 0), 0.12 + (v ? 0 : (k === 1 ? 0.06 : -0.06)), 0.05, v ? 0.05 : 0.2, v ? 0.2 : 0.05, 0.02, C4[k], { fill: true }); }
+      const ch = inkText(m.ch, { size: 0.15, ink: m.ink, weight: 1.4 }); ch.position.set(0.12, 0.18, 0.06); g.add(ch);
+      // líneas del mensaje (largo distinto según la variante)
+      box(g, 0.05 + m.l1 * 0.1, -0.06, 0.05, 0.5 + m.l1 * 0.2, 0.06, 0.02, INK.BLACK, { tone: 0.2 });
+      box(g, -0.02 + m.l2 * 0.1, -0.2, 0.05, 0.36 + m.l2 * 0.2, 0.06, 0.02, INK.BLACK, { tone: 0.35 });
+      // aviso rojo de no leídos con su número
+      const badge = new THREE.Mesh(GEO.sph, mat(INK.RED, { fill: true })); badge.scale.set(0.24, 0.24, 0.06); badge.position.set(0.6, 0.34, 0.07); g.add(badge);
+      const bn = inkText(m.badge, { size: 0.11, ink: INK.BLACK, weight: 1.5 }); bn.position.set(0.6, 0.34, 0.12); g.add(bn);
+      g.scale.setScalar(0.85);
+    } else if (shape === "kiss") {
+      g.scale.setScalar(1.35);
+      // Besito de travesti: labios y corazoncito rosa/rojo
+      const lipU = new THREE.Mesh(GEO.torus, mat(INK.RED, { fill: true })); lipU.scale.set(0.4, 0.18, 0.2); lipU.position.y = 0.08; g.add(lipU);
+      const lipD = new THREE.Mesh(GEO.torus, mat(INK.RED, { fill: true })); lipD.scale.set(0.38, 0.16, 0.2); lipD.position.y = -0.08; g.add(lipD);
+      const h1 = new THREE.Mesh(GEO.sph, mat(INK.RED, { fill: true })); h1.scale.setScalar(0.22); h1.position.set(-0.15, 0.22, 0.05); g.add(h1);
+      const h2 = new THREE.Mesh(GEO.sph, mat(INK.RED, { fill: true })); h2.scale.setScalar(0.22); h2.position.set(0.15, 0.22, 0.05); g.add(h2);
+    } else if (shape === "beer") {
+      // Chorro de cerveza Cruzcampo
+      box(g, 0, 0, 0, 0.45, 0.65, 0.4, INK.ORANGE, { tone: 0.25 });
+      box(g, 0, 0.35, 0, 0.5, 0.18, 0.45, INK.BLACK, { tone: 0.65 });
+      box(g, 0.3, 0, 0, 0.16, 0.42, 0.1, INK.BLACK, { tone: 0.4 });
+    } else if (shape === "vegan") {
+      // Cartel de vegano
+      box(g, 0, -0.3, 0, 0.08, 0.7, 0.08, INK.ORANGE, { tone: -0.1 });
+      box(g, 0, 0.3, 0, 0.85, 0.55, 0.08, INK.GREEN, { tone: 0.1 });
+      const vt = inkText("VEGAN", { size: 0.18, ink: INK.BLACK, weight: 1.5 }); vt.position.set(0, 0.3, 0.05); g.add(vt);
+    } else if (shape === "ball") {
+      // Pelota que rebota
+      const b = new THREE.Mesh(GEO.sph, mat(INK.ORANGE, { tone: 0.1 })); b.scale.setScalar(0.7); g.add(b);
+      for (let k = 0; k < 3; k++) {
+        const ring = new THREE.Mesh(GEO.torus, mat(INK.BLUE, { fill: true }));
+        ring.scale.setScalar(0.72); ring.rotation.x = (k * Math.PI) / 3; g.add(ring);
+      }
+    } else if (shape === "orange") {
+      // Naranja rodante
+      const o = new THREE.Mesh(GEO.sph, mat(INK.ORANGE, { tone: -0.05 })); o.scale.setScalar(0.65); g.add(o);
+      const leaf = new THREE.Mesh(GEO.box, mat(INK.GREEN, { fill: true })); leaf.scale.set(0.18, 0.06, 0.12); leaf.position.set(0.1, 0.35, 0); leaf.rotation.z = 0.3; g.add(leaf);
+    } else if (shape === "purse") {
+      // Bolso de la abuela
+      box(g, 0, -0.05, 0, 0.75, 0.55, 0.3, INK.BLUE, { tone: -0.2 });
+      box(g, 0, 0.22, 0, 0.35, 0.22, 0.08, INK.BLACK, { tone: 0.3 });
+    } else if (shape === "invoice") {
+      // Factura sin pagar
+      box(g, 0, 0, 0, 0.7, 0.95, 0.04, INK.BLACK, { tone: 0.65 });
+      for (let k = 0; k < 4; k++) box(g, 0, 0.25 - k * 0.14, 0.03, 0.45, 0.04, 0.02, INK.BLACK, { tone: 0.2 });
+      const ft = inkText("FACTURA", { size: 0.14, ink: INK.RED, weight: 1.4 }); ft.position.set(0, -0.25, 0.03); g.add(ft);
+    } else if (shape === "worker") {
+      // Minitrabajador
+      box(g, 0, 0.2, 0, 0.4, 0.5, 0.3, INK.RED, { tone: -0.05 });
+      const h = new THREE.Mesh(GEO.sph, mat(INK.ORANGE, { tone: 0.15 })); h.scale.setScalar(0.3); h.position.y = 0.6; g.add(h);
+      box(g, 0.2, 0.5, 0, 0.06, 0.5, 0.06, INK.BLACK, { fill: true });
     } else box(g, 0, 0, 0, 0.5, 0.5, 0.5, ink, { tone: 0.05 });
     scene.add(g);
     return g;
@@ -1052,9 +1203,10 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     }
     minions = minions.filter((m) => m.life > 0);
   }
-  // José Luis: imprime plataformas en 3D (máx. 3, duran 9 s)
+  // José Luis: imprime plataformas en 3D (máx. 2 a la vez, duran 5 s; recarga 1.6 s en characters.js)
+  const PRINT_MAX = 2, PRINT_LIFE = 5;
   function printPlatform() {
-    if (prints.length >= 3) { const o = prints.shift(); levelRoot.remove(o.g); }
+    if (prints.length >= PRINT_MAX) { const o = prints.shift(); levelRoot.remove(o.g); spawnInk(o.x + 1.5, o.top, INK.BLUE, 6, 2); }
     const x = P.g ? P.x + P.facing * 1.8 : P.x;
     const top = P.g ? P.y + 2.2 : P.y - 0.05;
     const g = new THREE.Group();
@@ -1063,14 +1215,14 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     for (let k = -1; k <= 1; k++) box(g, k, -0.2, 1.01, 0.05, 0.36, 0.02, INK.BLUE, { fill: true }); // capas impresas
     box(g, 0, -0.02, 1.01, 3, 0.05, 0.02, INK.BLUE, { fill: true });
     levelRoot.add(g);
-    prints.push({ x: x - 1.5, w: 3, top, life: 9, g });
+    prints.push({ x: x - 1.5, w: 3, top, life: PRINT_LIFE, g });
     spawnInk(x, top, INK.BLUE, 10, 3);
     audio.tone({ freq: 520, to: 880, dur: 0.18, type: "square", gain: 0.06 });
   }
   function updatePrints(dt) {
     for (const p of prints) {
       p.life -= dt;
-      p.g.visible = p.life > 1.6 || Math.floor(p.life * 8) % 2 === 0;
+      p.g.visible = p.life > 1.5 || Math.floor(p.life * 8) % 2 === 0;
       if (p.life <= 0) { levelRoot.remove(p.g); spawnInk(p.x + 1.5, p.top, INK.BLUE, 6, 2); if (P.onPrint === p) P.onPrint = null; }
     }
     prints = prints.filter((p) => p.life > 0);
@@ -1197,23 +1349,76 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     shots = shots.filter((s) => s.life > 0);
     for (const p of powers) {
       p.life -= dt;
-      if (p.arc) p.vy -= 20 * dt;
+      if (p.arc) p.vy -= 22 * dt;
       p.x += p.vx * dt;
       p.y += p.vy * dt;
-      if (p.arc && solidAt(p.x, p.y - 0.25) && p.vy < 0) {
-        if (p.bounce-- > 0) { p.y = Math.floor(p.y - 0.25) + 1.25; p.vy = 6; } else p.life = 0;
+      if (p.shape === "444" && Math.random() < dt * 25) {
+        spawnInk(p.x - Math.sign(p.vx) * 0.35, p.y, INK.ORANGE, 2, 2.5);
+      }
+      if (p.arc && p.vy < 0 && (p.y <= 1.0 || solidAt(p.x, p.y - 0.25))) {
+        if (p.bounce > 0) {
+          p.bounce--;
+          p.y = Math.max(1.0, Math.floor(p.y - 0.25) + 1.25);
+          p.vy = 7.0;
+          spawnInk(p.x, p.y - 0.2, p.ink, 6, 3);
+          sfx.stomp();
+        } else {
+          p.life = 0;
+        }
       }
       p.mesh.position.set(p.x, p.y, 0.3);
-      if (p.grow) p.mesh.scale.setScalar(1 + (0.95 - p.life) * 1.6);
-      else if (p.shape === "slack") { p.mesh.rotation.z = Math.sin(p.life * 12) * 0.08; p.mesh.scale.x = Math.sign(p.vx) || 1; }
+      if (p.grow) {
+        p.mesh.scale.setScalar(1 + (1 - p.life) * 1.6);
+        if (p.vx < 0) p.mesh.scale.x = -Math.abs(p.mesh.scale.x);
+      }
+      else if (p.shape === "slack") {
+        // las tarjetas de Slack "saltan" al aparecer y flotan meciéndose (sin girar como una bala)
+        p.age += dt;
+        const pop = Math.min(1, p.age * 6), s = 0.85 * (pop < 1 ? pop * 1.15 : 1);
+        p.mesh.scale.set(s, s, s);
+        p.mesh.rotation.z = Math.sin(p.age * 9 + p.ph) * 0.1;
+        p.mesh.position.y += Math.sin(p.age * 7 + p.ph) * 0.12;
+      }
+      else if (p.shape === "kiss") {
+        // el besito hace eses y late como un corazón
+        p.age += dt;
+        p.y += Math.cos(p.age * 9) * 2.2 * dt;
+        const s = 1.35 * (1 + Math.sin(p.age * 16) * 0.12);
+        p.mesh.scale.set(s, s, s);
+        p.mesh.rotation.z = Math.sin(p.age * 6) * 0.25;
+        if (Math.random() < dt * 14) spawnInk(p.x - Math.sign(p.vx) * 0.4, p.y, INK.RED, 1, 1.5);
+      }
       else p.mesh.rotation.z -= dt * 10 * Math.sign(p.vx);
       const tx = Math.floor(p.x), ty = Math.floor(p.y);
       const t = T(tx, ty);
-      if (t && (t.t === "b" || t.t === "q")) { bumpTile(tx, ty, true); if (!p.pierce) p.life = 0; }
-      else if (solidT(t)) p.life = 0;
-      for (const e of enemies) if (e.alive && Math.abs(e.x - p.x) < 0.9 && p.y > e.y - 0.4 && p.y < e.y + e.h + 0.4) { killEnemy(e, true); if (!p.pierce) p.life = 0; }
-      if (boss && boss.state === "tired" && Math.abs(boss.x - p.x) < 1.6 && p.y < boss.y + 3.2) { hitBoss(); p.life = 0; }
-      if (p.life <= 0) { scene.remove(p.mesh); if (p.boom) blast(p.x, p.y, p.boom, p.ink); else spawnInk(p.x, p.y, p.ink, 6, 3); }
+      if (t && (t.t === "b" || t.t === "q")) {
+        bumpTile(tx, ty, true);
+        if (!p.pierce) p.life = 0;
+      }
+      else if (solidT(t)) {
+        if (p.bounce > 0) {
+          p.vx = -p.vx * 0.7;
+          p.x += Math.sign(p.vx) * 0.2;
+          p.bounce--;
+          spawnInk(p.x, p.y, p.ink, 5, 2);
+          sfx.stomp();
+        } else if (!p.pierce) {
+          p.life = 0;
+        }
+      }
+      for (const e of enemies) if (e.alive && Math.abs(e.x - p.x) < 0.9 && p.y > e.y - 0.4 && p.y < e.y + e.h + 0.4) {
+        killEnemy(e, true);
+        if (!p.pierce) p.life = 0;
+      }
+      if (boss && boss.state === "tired" && Math.abs(boss.x - p.x) < 1.6 && p.y < boss.y + 3.2) {
+        hitBoss();
+        p.life = 0;
+      }
+      if (p.life <= 0) {
+        scene.remove(p.mesh);
+        if (p.boom) blast(p.x, p.y, p.boom, p.ink);
+        else spawnInk(p.x, p.y, p.ink, 6, 3);
+      }
     }
     powers = powers.filter((p) => p.life > 0);
     for (const k of pickups) {
@@ -1288,7 +1493,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     const dir = Math.sign(P.x - b.x) || 1;
     bossShots.push({ g, x: b.x + dir * 1.2, y: b.y + 2.6, vx: dir * rnd(5.5, 8), vy: rnd(5, 8), life: 3 });
   }
-  function updateShots(dt) {
+  function updateBossShots(dt) {
     for (const s of bossShots) {
       s.life -= dt; s.vy -= 14 * dt; s.x += s.vx * dt; s.y += s.vy * dt;
       s.g.position.set(s.x, s.y, 0.4); s.g.rotation.z = Math.sin(s.life * 6) * 0.3;
@@ -1403,7 +1608,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     m.group.position.set(b.x, b.y, 1.2);
     m.group.scale.x = b.state === "tired" ? 0.97 + Math.sin(performance.now() / 90) * 0.02 : 1; // sin voltear, para que el logo se lea
     m.group.visible = !(b.flash > 0 && Math.floor(b.flash * 16) % 2);
-    updateShots(dt);
+    updateBossShots(dt);
     $(".pf-boss-bar i").style.width = `${(b.hp / BOSS_HP) * 100}%`;
   }
 
@@ -1555,12 +1760,24 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
   function drawPlayer(dt) {
     const air = !P.g;
     let pose = P.dead > 0 ? (sticker.hasPose("death") ? "death" : "damage")
-      : P.poseT > 0 ? "attack" : P.inv > 1.1 ? "damage" : air && P.wall && sticker.hasPose("climb") ? "climb" : air ? "jump" : Math.abs(P.vx) > 6 ? "run" : Math.abs(P.vx) > 0.5 ? "walk" : "idle";
+      : P.poseT > 0 ? "attack" : P.inv > 1.1 ? "damage" : air && P.wall && sticker.hasPose("climb") ? "climb" : air ? "jump" : Math.abs(P.vx) > 3.6 ? "run" : Math.abs(P.vx) > 0.4 ? "walk" : "idle";
     P.flash = Math.max(0, P.flash - dt);
+
+    // Inclinación dinámica realista: lean hacia delante al correr, contrainclinación al saltar o derrapar
+    let dynamicTilt = 0;
+    if (P.dead > 0) dynamicTilt = P.dead * 3;
+    else if (pose === "climb") dynamicTilt = 0;
+    else if (P.wall && !P.g) dynamicTilt = -P.wall * 0.22;
+    else if (P.dashT > 0) dynamicTilt = -P.facing * 0.28;
+    else if (air) dynamicTilt = clamp(-P.vx * 0.015 + (P.vy > 0 ? -0.04 : 0.04) * P.facing, -0.2, 0.2);
+    else {
+      dynamicTilt = clamp(-P.vx * 0.018, -0.18, 0.18);
+    }
+
     sticker.update(dt, {
       pos: _v.set(P.x, P.y, 0.3), camera, moveX: 0, facing: pose === "climb" ? P.wall : P.facing, speed: Math.abs(P.vx) * (P.g ? 1 : 0), onGround: P.g,
       firing: false, pose, hurt: P.flash > 0 ? 1 : 0,
-      tilt: P.dead > 0 ? P.dead * 3 : pose === "climb" ? 0 : P.wall && !P.g ? -P.wall * 0.2 : P.dashT > 0 ? -P.facing * 0.25 : 0,
+      tilt: dynamicTilt,
       squash: P.squash
     });
     sticker.pivot.rotation.y = 0;
@@ -1713,6 +1930,24 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
   window.addEventListener("keyup", onKeyUp);
   window.addEventListener("blur", onBlur);
   root.addEventListener("pointerdown", () => { audio.init(); audio.resume(); }, { capture: true });
+  canvas.addEventListener("pointerdown", (e) => {
+    if (screen === "play" && e.button === 0 && !isTouch) {
+      tp.power = true;
+    }
+  });
+  window.addEventListener("pointerup", () => {
+    if (!isTouch && tp.power) tp.power = false;
+  });
+
+  const onCharSwitched = (e) => {
+    if (devChar) return;
+    const cid = e?.detail?.charIdx !== undefined ? CHARS[e.detail.charIdx] : (getChar ? getChar() : null);
+    if (cid && cid.id !== char.id) {
+      setChar(cid);
+      msg(`${cid.emoji} ${cid.name} · ★ ${cid.ab}`, 1.6);
+    }
+  };
+  window.addEventListener("char_switched", onCharSwitched);
 
   const touchPad = isTouch ? createTouchPad(root, {
     actions: [
@@ -1808,6 +2043,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     window.removeEventListener("keyup", onKeyUp);
     window.removeEventListener("blur", onBlur);
     window.removeEventListener("resize", resize);
+    window.removeEventListener("char_switched", onCharSwitched);
     if (ro) ro.disconnect();
     setInPlay(false);
     relabels.forEach(([el, t]) => (el.textContent = t));
@@ -1821,7 +2057,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     if (window.__plat) delete window.__plat;
   }
   function exit() { if (screen === "play" || screen === "pause") reportScore(false); destroy(); if (onExit) onExit(); }
-  if (import.meta.env && import.meta.env.DEV) window.__plat = { P, step: (n = 1) => { for (let i = 0; i < n; i++) stepSim(STEP); }, setChar: (id) => { devChar = true; setChar(charById(id)); }, get prints() { return prints; }, get minions() { return minions; }, get L() { return L; }, get boss() { return boss; }, get enemies() { return enemies; }, get screen() { return screen; } };
+  if (import.meta.env && import.meta.env.DEV) window.__plat = { P, step: (n = 1) => { for (let i = 0; i < n; i++) stepSim(STEP); }, setChar: (id) => { devChar = true; setChar(charById(id)); }, get prints() { return prints; }, get powers() { return powers; }, get rings() { return rings; }, get minions() { return minions; }, get L() { return L; }, get boss() { return boss; }, get enemies() { return enemies; }, get screen() { return screen; } };
 
   // modo observador (Historia y personajes → Explorar): sin partida, cámara libre por el nivel
   let obs = null;

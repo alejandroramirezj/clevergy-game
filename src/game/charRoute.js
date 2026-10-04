@@ -26,7 +26,8 @@ export function charFromUrl(loc = location) {
     (c) => norm(CHAR_SLUGS[c.id]) === key,
     (c) => norm(c.id) === key,
     (c) => norm(c.name) === key,
-    (c) => norm(c.name.split(" ")[0]) === key
+    (c) => norm(c.name.split(" ")[0]) === key,
+    (c) => norm(c.name.split(" ")[1]) === key
   ];
   for (const t of tests) { const i = CHARS.findIndex(t); if (i >= 0) return i; }
   return -1;

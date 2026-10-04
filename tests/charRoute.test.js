@@ -15,6 +15,7 @@ describe("enlaces por personaje (QR)", () => {
   it("distingue a los dos Álvaros y no inventa personajes", () => {
     expect(CHARS[charFromUrl(at("/alvaro"))].id).toBe("alvaroP");
     expect(CHARS[charFromUrl(at("/alvaro-merino"))].id).toBe("alvaroM");
+    expect(CHARS[charFromUrl(at("/merino"))].id).toBe("alvaroM");
     expect(charFromUrl(at("/"))).toBe(-1);
     expect(charFromUrl(at("/qr.html"))).toBe(-1);
   });
