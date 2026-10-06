@@ -9,11 +9,12 @@
 // delante) y agarrar (frena a quien tengas delante).
 // =============================================================================
 
+import { motionScale } from "../../engine/motion.js";
 import * as THREE from "three";
 import { createDoodleRenderer, INK, mat } from "../doodleRender.js";
 import { DoodleAudio } from "../doodleAudio.js";
 import { GEO } from "../doodleLevel.js";
-import { createSticker } from "../doodleSticker.js";
+import { createSticker, clearStickerCache, prewarmStickers } from "../doodleSticker.js";
 import { createTouchPad, ICON } from "../touchPad.js";
 import { touch as mando } from "../../engine/input.js";
 import { CHARS } from "../../config/characters.js";
@@ -683,7 +684,7 @@ export function startDoodleFall({ charId, onPickChar, onExit, onVictory, onScore
       online.roster = [{ id: net.myId, c: myChar }];
       hostRoster();
       setStatus("Comparte el código. Los huecos libres los ocupa la CPU.");
-    } catch (err) { setStatus(err.message, true); }
+    } catch (err) { if (!err.cancelled) setStatus(err.message, true); }
   });
   async function joinRoom() {
     const code = cleanCode(lobby.code.value);
@@ -696,7 +697,7 @@ export function startDoodleFall({ charId, onPickChar, onExit, onVictory, onScore
       net.send({ t: "ping", c: performance.now() });
       renderRoom();
       setStatus("¡Dentro! El show lo empieza el anfitrión.");
-    } catch (err) { setStatus(err.message, true); }
+    } catch (err) { if (!err.cancelled) setStatus(err.message, true); }
   }
   $(".fg-join").addEventListener("click", joinRoom);
   lobby.code.addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter") joinRoom(); });
@@ -741,7 +742,7 @@ export function startDoodleFall({ charId, onPickChar, onExit, onVictory, onScore
     }
   }
   let shakeAmt = 0;
-  const shake = (a) => (shakeAmt = Math.max(shakeAmt, a));
+  const shake = (a) => (shakeAmt = Math.max(shakeAmt, a * motionScale()));
 
   // ── dibujo ──
   const _v = new THREE.Vector3();
@@ -1090,6 +1091,7 @@ export function startDoodleFall({ charId, onPickChar, onExit, onVictory, onScore
   // ── salida ──
   let destroyed = false;
   function destroy() {
+    clearStickerCache();
     if (destroyed) return;
     destroyed = true;
     cancelAnimationFrame(raf);
@@ -1120,5 +1122,7 @@ export function startDoodleFall({ charId, onPickChar, onExit, onVictory, onScore
   setInPlay(false);
   showOv("lobby");
   renderRoom();
+  // las pegatinas de todos se preparan mientras estás en el menú: así la ronda empieza sin tirón
+  prewarmStickers(CHARS.map((c) => c.id));
   return { destroy, exit };
 }

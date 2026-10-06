@@ -104,7 +104,7 @@ body:has(.overlay:not(.hidden)) .gameboy-deck{
   inset: 0;
   width: 100%;
   height: 100vh;
-  height: 100dvh; /* la altura visible de verdad (sin las barras del navegador) */
+  height: var(--app-h, 100dvh); /* la altura visible de verdad (sin las barras del navegador) */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -222,7 +222,7 @@ body:has(.overlay:not(.hidden)) .gameboy-deck{
   z-index: 10;
   width: 100%;
   height: 100vh;
-  height: 100dvh;
+  height: var(--app-h, 100dvh);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -764,7 +764,7 @@ body:has(.overlay:not(.hidden)) .gameboy-deck{
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    height: 100dvh;
+    height: var(--app-h, 100dvh);
     padding: 0 16px max(12px, env(safe-area-inset-bottom)) 16px;
     box-sizing: border-box;
     overflow: hidden;
@@ -1331,7 +1331,7 @@ body.gameboy-mode {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  height: 100dvh;
+  height: var(--app-h, 100dvh);
   background: #0d1122;
   overflow: hidden;
 }
@@ -1348,6 +1348,7 @@ body.gameboy-mode #wrap {
   border-bottom: 3px solid #232a48;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
   z-index: 5;
+  padding-top: env(safe-area-inset-top); /* el HUD no se mete bajo el notch / la isla */
 }
 
 body.gameboy-mode #wrap canvas {
@@ -1367,7 +1368,8 @@ body.gameboy-mode .gameboy-deck {
   width: 100vw;
   background: linear-gradient(180deg, #171d33 0%, #0d1020 100%);
   border-top: 3px solid #283359;
-  padding: 6px 16px 16px;
+  /* que la fila de abajo no quede bajo la barra de inicio del iPhone */
+  padding: 6px max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
   justify-content: space-around;
   box-sizing: border-box;
   user-select: none;

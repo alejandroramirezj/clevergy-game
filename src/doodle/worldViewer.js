@@ -32,11 +32,19 @@ export async function openWorldViewer(worldId, { onClose } = {}) {
 
   let world = null; // { update(t, dt), start }
   let obs = null;
+  let closed = false;
+  let buildSeq = 0;
+  let raf = 0, ro = null; // se rellenan al arrancar el bucle (close() puede llegar antes)
   async function build(sub = 0) {
+    const seq = ++buildSeq;
     // vacía la escena (menos la cámara)
     for (const o of scene.children.slice()) if (o !== camera) scene.remove(o);
     if (world && world.dispose) world.dispose();
-    world = await BUILDERS[worldId](scene, sub);
+    world = null;
+    const w = await BUILDERS[worldId](scene, sub);
+    // cerrado (o cambiado de pestaña) mientras cargaba: se tira y no se engancha nada
+    if (closed || seq !== buildSeq) { if (w.dispose) w.dispose(); return; }
+    world = w;
     if (obs) obs.dispose();
     obs = createObserver(root, camera, world.start);
   }
@@ -44,6 +52,7 @@ export async function openWorldViewer(worldId, { onClose } = {}) {
   const tabs = worldId === 9 ? ["1 · Usuario", "2 · Consumo", "3 · Inversor", "4 · Batería"] : null;
   observerBar(root, { title: NAMES[worldId] || "Mundo", tabs, onTab: (i) => build(i), onClose: close });
   await build(0);
+  if (closed) return { close };
 
   function resize() {
     const w = Math.max(1, root.clientWidth), h = Math.max(1, root.clientHeight);
@@ -52,12 +61,12 @@ export async function openWorldViewer(worldId, { onClose } = {}) {
     camera.updateProjectionMatrix();
     R.setSize(w, h);
   }
-  const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(resize) : null;
+  ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(resize) : null;
   if (ro) ro.observe(root);
   window.addEventListener("resize", resize);
   resize();
 
-  let raf = 0, prev = performance.now(), t = 0;
+  let prev = performance.now(), t = 0;
   function frame(now) {
     raf = requestAnimationFrame(frame);
     const dt = Math.min(0.1, (now - prev) / 1000);
@@ -69,7 +78,6 @@ export async function openWorldViewer(worldId, { onClose } = {}) {
   }
   raf = requestAnimationFrame(frame);
 
-  let closed = false;
   function close() {
     if (closed) return;
     closed = true;

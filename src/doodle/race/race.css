@@ -115,7 +115,7 @@
     display: flex !important;
     flex-direction: column !important;
     width: min(480px, calc(100vw - 16px)) !important;
-    max-height: calc(100dvh - 16px) !important;
+    max-height: calc(var(--app-h, 100dvh) - 16px) !important;
     overflow-y: auto !important;
     padding: 12px 14px !important;
     gap: 8px !important;

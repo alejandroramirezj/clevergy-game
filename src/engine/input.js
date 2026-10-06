@@ -16,14 +16,23 @@ export const touch = {
   B: false
 };
 
+const inWorld = () => document.body.classList.contains("doodle-mode");
+// el botón de voz del mando: en un mundo, se le pasa como si fuera la tecla V
+function voice() {
+  if (!inWorld()) return speakCurrentChar();
+  window.dispatchEvent(new KeyboardEvent("keydown", { code: "KeyV", key: "v" }));
+  window.dispatchEvent(new KeyboardEvent("keyup", { code: "KeyV", key: "v" }));
+}
+
 export function initInput({ onSwitchChar, onSwitchSlot, onOpenMap }) {
   window.addEventListener("keydown", (e) => {
     if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;
     if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Space", "Tab"].includes(e.code)) e.preventDefault();
     if (keys[e.code]) return;
     keys[e.code] = true;
-    // Tecla V: hablar frase / voz del personaje
-    if (e.code === "KeyV") speakCurrentChar();
+    // Tecla V: hablar frase / voz del personaje (dentro de un mundo la gestiona el mundo,
+    // que además la envía a los demás jugadores online)
+    if (e.code === "KeyV" && !inWorld()) speakCurrentChar();
     // Tab / 1-2-3: cambiar de compañero (los mundos lo leen a través de getChar)
     if (e.code === "Tab") onSwitchChar(e.shiftKey ? -1 : 1);
     const slot = { Digit1: 0, Digit2: 1, Digit3: 2, Numpad1: 0, Numpad2: 1, Numpad3: 2 }[e.code];
@@ -61,7 +70,7 @@ export function initInput({ onSwitchChar, onSwitchSlot, onOpenMap }) {
   }
 
   // Portrait Game Boy Action & System Buttons
-  bindT("gbVoice", null, () => speakCurrentChar());
+  bindT("gbVoice", null, voice);
   bindT("gbA", "A");
   bindT("gbB", "B");
   bindT("gbStart", null, () => onSwitchChar(1));

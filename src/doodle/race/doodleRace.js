@@ -8,11 +8,12 @@
 //   Quien lanza un objeto decide si impacta y avisa a la víctima (el anfitrión reenvía).
 // =============================================================================
 
+import { motionScale } from "../../engine/motion.js";
 import * as THREE from "three";
 import { createDoodleRenderer, INK, mat } from "../doodleRender.js";
 import { DoodleAudio } from "../doodleAudio.js";
 import { GEO } from "../doodleLevel.js";
-import { createSticker } from "../doodleSticker.js";
+import { createSticker, clearStickerCache } from "../doodleSticker.js";
 import { createTouchPad, ICON } from "../touchPad.js";
 import { createNet, randomCode, cleanCode } from "../doodleNet.js";
 import { touch as mando } from "../../engine/input.js";
@@ -856,7 +857,7 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
     }
   }
   let shakeAmt = 0;
-  const shake = (a) => (shakeAmt = Math.max(shakeAmt, a));
+  const shake = (a) => (shakeAmt = Math.max(shakeAmt, a * motionScale()));
 
   // ── rival remoto (interpolado) ──
   function updateRemote(r) {
@@ -1234,7 +1235,7 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
       online.roster = [{ id: net.myId, c: myChar }];
       hostRoster();
       setStatus("Comparte el código. Los huecos libres los ocupa la CPU.");
-    } catch (err) { setStatus(err.message, true); }
+    } catch (err) { if (!err.cancelled) setStatus(err.message, true); }
   });
   async function joinRoom() {
     const code = cleanCode(lobby.code.value);
@@ -1247,7 +1248,7 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
       net.send({ t: "ping", c: performance.now() });
       renderRoom();
       setStatus("¡Dentro! La salida la da el anfitrión.");
-    } catch (err) { setStatus(err.message, true); }
+    } catch (err) { if (!err.cancelled) setStatus(err.message, true); }
   }
   $(".rk-join").addEventListener("click", joinRoom);
   lobby.code.addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter") joinRoom(); });
@@ -1494,6 +1495,7 @@ export function startDoodleRace({ charId, onPickChar, onExit, onVictory, onScore
   // ── salida ──
   let destroyed = false;
   function destroy() {
+    clearStickerCache();
     if (destroyed) return;
     destroyed = true;
     cancelAnimationFrame(raf);

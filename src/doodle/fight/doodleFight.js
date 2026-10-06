@@ -14,12 +14,13 @@
 //   mensajes y hace de árbitro. Quien golpea lo detecta y la víctima aplica el golpe.
 // =============================================================================
 
+import { motionScale } from "../../engine/motion.js";
 import * as THREE from "three";
 import { createDoodleRenderer, INK, mat } from "../doodleRender.js";
 import { DoodleAudio } from "../doodleAudio.js";
 import { GEO } from "../doodleLevel.js";
 import { inkText } from "../inkText.js";
-import { createSticker } from "../doodleSticker.js";
+import { createSticker, clearStickerCache } from "../doodleSticker.js";
 import { createTouchPad, ICON } from "../touchPad.js";
 import { createNet, randomCode, cleanCode } from "../doodleNet.js";
 import { touch as mando } from "../../engine/input.js";
@@ -1120,7 +1121,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
     const lx = clamp(midX, -7, 7), ly = clamp(midY + 0.6, 1.2, 8);
     camLook.lerp(_p.set(lx, ly, FIGHT_Z), Math.min(1, dt * 4));
     camPos.lerp(_p.set(lx * 0.9, ly + 1.2 + dist * 0.08, FIGHT_Z + dist), Math.min(1, dt * 3));
-    const sh = M.shake ** 2 * 0.35;
+    const sh = M.shake ** 2 * 0.35 * motionScale();
     M.shake = Math.max(0, M.shake - dt * 2.8);
     camera.position.set(camPos.x + rnd(-sh, sh), camPos.y + rnd(-sh, sh), camPos.z);
     camera.lookAt(camLook);
@@ -1245,7 +1246,9 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
     sfx.ko();
     M.slow = 0.4;
     setTimeout(() => (M.slow = 1), 900);
-    setTimeout(() => showResults(m), 2200);
+    const fighters = F;
+    // si en esos 2,2 s se vuelve al lobby (o empieza otra pelea), no se pinta nada
+    setTimeout(() => { if (!destroyed && F === fighters && screen === "match" && phase === "over") showResults(m); }, 2200);
   }
   function showResults(m) {
     screen = "end";
@@ -1485,7 +1488,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
       online.slots = [{ c: myChar, id: net.myId, cpu: false }];
       renderRoom();
       setStatus("Comparte el código. Añade CPUs si sois pocos.");
-    } catch (err) { setStatus(err.message, true); }
+    } catch (err) { if (!err.cancelled) setStatus(err.message, true); }
   });
   async function joinRoom() {
     const code = cleanCode(lobby.code.value);
@@ -1502,7 +1505,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
       tx({ t: "ping", c: performance.now() });
       renderRoom();
       setStatus("Conectando con el anfitrión…");
-    } catch (err) { setStatus(err.message, true); }
+    } catch (err) { if (!err.cancelled) setStatus(err.message, true); }
   }
   $(".cf-join").addEventListener("click", joinRoom);
   lobby.code.addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter") joinRoom(); });
@@ -1862,6 +1865,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
 
   let destroyed = false;
   function destroy() {
+    clearStickerCache();
     if (destroyed) return;
     destroyed = true;
     cancelAnimationFrame(raf);

@@ -76,7 +76,7 @@ body.gameboy-mode .pf-score { top: 40px; font-size: 26px; }
 .pf-time.late { color: var(--dd-red, #d6243a); }
 
 /* ── pantalla de inicio: info + ruta a la izquierda, personaje y jugar a la derecha ── */
-.pf-start .pf-card { width: min(880px, calc(100vw - max(32px, env(safe-area-inset-left) + env(safe-area-inset-right) + 24px))); grid-template-columns: 1.05fr 1fr; align-items: stretch; max-height: calc(100dvh - 16px); overflow: auto; box-sizing: border-box; }
+.pf-start .pf-card { width: min(880px, calc(100vw - max(32px, env(safe-area-inset-left) + env(safe-area-inset-right) + 24px))); grid-template-columns: 1.05fr 1fr; align-items: stretch; max-height: calc(var(--app-h, 100dvh) - 16px); overflow: auto; box-sizing: border-box; }
 .pf-info { justify-content: center; }
 .pf-lead b { color: var(--dd-red); font-weight: 400; }
 .pf-route { list-style: none; margin: 2px 0 0; padding: 0; display: flex; gap: 6px; }

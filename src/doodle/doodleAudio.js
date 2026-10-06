@@ -8,6 +8,28 @@ const rnd = (a, b) => a + Math.random() * (b - a);
 
 // La música de fondo fue eliminada — sólo se usan efectos de sonido (tone, noise)
 
+// iOS deja el audio "interrupted" (no "suspended") al volver de segundo plano o tras una
+// llamada, y sólo se recupera dentro de un gesto: en cada toque/tecla se reanuda lo que
+// esté parado, y al ocultarse la app se suspende (no gasta batería ni suena de fondo)
+const contexts = new Set();
+function wake(ctx) {
+  if (ctx.state === "interrupted") ctx.suspend().then(() => ctx.resume()).catch(() => {});
+  else if (ctx.state === "suspended") ctx.resume().catch(() => {});
+}
+function forEachCtx(fn) {
+  for (const c of contexts) {
+    if (c.state === "closed") contexts.delete(c);
+    else fn(c);
+  }
+}
+if (typeof window !== "undefined") {
+  for (const ev of ["pointerdown", "touchend", "keydown"]) window.addEventListener(ev, () => forEachCtx(wake), { capture: true, passive: true });
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") forEachCtx((c) => { if (c.state === "running") c.suspend().catch(() => {}); });
+    else forEachCtx(wake);
+  });
+}
+
 export class DoodleAudio {
   constructor() {
     this.ctx = null;
@@ -19,6 +41,7 @@ export class DoodleAudio {
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     this.ctx = new AC();
+    contexts.add(this.ctx);
     this.master = this.ctx.createGain();
     this.master.gain.value = 0.55;
     this.master.connect(this.ctx.destination);
@@ -30,7 +53,7 @@ export class DoodleAudio {
   }
 
   resume() {
-    if (this.ctx && this.ctx.state === "suspended") this.ctx.resume();
+    if (this.ctx) wake(this.ctx);
   }
 
   tone({ freq = 440, to = null, dur = 0.15, type = "square", gain = 0.2, delay = 0, at, out }) {

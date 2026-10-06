@@ -27,32 +27,86 @@ function tinted(src, color) {
   return c;
 }
 
-// imagen → canvas recortado a la silueta y con borde de pegatina
-function bakeSticker(img, pixelArt) {
-  const { w, h } = sizeOf(img);
-  if (!w || !h) return null;
+// silueta (caja de píxeles opacos) buscada sobre una copia pequeña: leer el sprite HD
+// entero con getImageData era lo que más tardaba al empezar cada ronda
+function silhouetteBox(img, w, h) {
+  const k = Math.min(1, 256 / Math.max(w, h));
+  const sw = Math.max(1, Math.round(w * k)), sh = Math.max(1, Math.round(h * k));
   const tmp = document.createElement("canvas");
-  tmp.width = w;
-  tmp.height = h;
-  const tg = tmp.getContext("2d");
-  tg.drawImage(img, 0, 0);
-  let x0 = w, y0 = h, x1 = -1, y1 = -1;
-  try {
-    const data = tg.getImageData(0, 0, w, h).data;
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        if (data[(y * w + x) * 4 + 3] > 100) {
-          if (x < x0) x0 = x;
-          if (x > x1) x1 = x;
-          if (y < y0) y0 = y;
-          if (y > y1) y1 = y;
-        }
+  tmp.width = sw;
+  tmp.height = sh;
+  const tg = tmp.getContext("2d", { willReadFrequently: true });
+  tg.drawImage(img, 0, 0, sw, sh);
+  let x0 = sw, y0 = sh, x1 = -1, y1 = -1;
+  const data = tg.getImageData(0, 0, sw, sh).data;
+  for (let y = 0; y < sh; y++) {
+    for (let x = 0; x < sw; x++) {
+      if (data[(y * sw + x) * 4 + 3] > 100) {
+        if (x < x0) x0 = x;
+        if (x > x1) x1 = x;
+        if (y < y0) y0 = y;
+        if (y > y1) y1 = y;
       }
     }
-  } catch (e) {
-    x0 = 0; y0 = 0; x1 = w - 1; y1 = h - 1;
   }
   if (x1 < x0) return null;
+  // de vuelta a píxeles del original, con un píxel de margen por el redondeo de la copia
+  const m = Math.ceil(1 / k);
+  return [Math.max(0, Math.floor(x0 / k) - m), Math.max(0, Math.floor(y0 / k) - m), Math.min(w - 1, Math.ceil((x1 + 1) / k) + m - 1), Math.min(h - 1, Math.ceil((y1 + 1) / k) + m - 1)];
+}
+
+// cada imagen se convierte en pegatina una sola vez (se reutiliza entre rondas y jugadores);
+// el mundo la vacía al salir para no guardar decenas de MB de lienzos
+const baked = new Map();
+let warmJob = 0;
+export function clearStickerCache() {
+  warmJob++;
+  baked.clear();
+}
+
+// imágenes de las poses de un personaje: [img, pixelArt]
+function poseImages(charId) {
+  const rec = ANIM[charId], out = [];
+  if (rec && rec.type === "poses" && rec.images) for (const list of Object.values(rec.images)) if (list && list[0]) out.push([list[0], false]);
+  if (!out.length && SPR[charId] && SPR[charId].img) out.push([SPR[charId].img, true]);
+  return out;
+}
+/** prepara en los ratos libres (sin tirones) las pegatinas de estos personajes */
+export function prewarmStickers(charIds) {
+  const job = ++warmJob;
+  const queue = charIds.flatMap(poseImages);
+  const idle = window.requestIdleCallback || ((fn) => setTimeout(() => fn({ timeRemaining: () => 8 }), 60));
+  const step = (dl) => {
+    if (job !== warmJob) return;
+    while (queue.length && dl.timeRemaining() > 4) {
+      const [img, pixel] = queue.shift();
+      if (img.complete === false || !sizeOf(img).w) continue; // aún sin cargar: ya se hará al usarla
+      try { bakeSticker(img, pixel); } catch (e) {}
+    }
+    if (queue.length) idle(step);
+  };
+  idle(step);
+}
+
+// imagen → canvas recortado a la silueta y con borde de pegatina
+function bakeSticker(img, pixelArt) {
+  const key = baked.get(img);
+  if (key && key.pixelArt === pixelArt) return key.out;
+  const out = bakeStickerRaw(img, pixelArt);
+  if (out) baked.set(img, { pixelArt, out });
+  return out;
+}
+function bakeStickerRaw(img, pixelArt) {
+  const { w, h } = sizeOf(img);
+  if (!w || !h) return null;
+  let x0 = 0, y0 = 0, x1 = w - 1, y1 = h - 1;
+  try {
+    const box = silhouetteBox(img, w, h);
+    if (!box) return null;
+    [x0, y0, x1, y1] = box;
+  } catch (e) {
+    // imagen de otro origen: sin recorte
+  }
   const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
   const sw = Math.max(1, Math.round((bw * TARGET_H) / bh)), sh = TARGET_H;
   const pad = WHITE + INK + 2;

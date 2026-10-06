@@ -15,7 +15,9 @@ export function sfx(f, d, type = "square", vol = 0.05) {
   try {
     const a = ac();
     if (!a) return;
-    if (a.state === "suspended") {
+    if (a.state === "interrupted") {
+      a.suspend().then(() => a.resume()).catch(() => {}); // iOS al volver de segundo plano
+    } else if (a.state === "suspended") {
       a.resume();
     }
     const o = a.createOscillator();

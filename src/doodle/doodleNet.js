@@ -69,6 +69,20 @@ export const randomCode = () => Array.from({ length: 5 }, () => CODE_CHARS[Math.
 export const cleanCode = (s) => String(s || "").toUpperCase().replace(/[^A-Z]/g, "").slice(0, 5);
 
 
+// al volver a la app, las salas vivas que perdieron el servidor de señalización se reconectan
+const liveNets = new Set();
+if (typeof document !== "undefined") {
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") return;
+    for (const n of liveNets) {
+      const p = n.peer;
+      if (p && p.disconnected && !p.destroyed) { try { p.reconnect(); } catch (e) {} }
+    }
+  });
+}
+const HEARTBEAT_MS = 2000; // pulso de vida por cada conexión
+const DEAD_MS = 20000; // sin noticias de alguien en 20 s → se da por ido
+
 // `prefix` separa los juegos (shooter / pelea) en el servidor de señalización
 export function createNet({ prefix = PREFIX, maxPlayers = MAX_PLAYERS } = {}) {
   const handlers = {};
@@ -79,31 +93,78 @@ export function createNet({ prefix = PREFIX, maxPlayers = MAX_PLAYERS } = {}) {
     myId: null,
     hostId: null,
     conns: new Map(), // peerId → DataConnection
+    gen: 0, // sube en cada destroy(): lo que quede de una sala anterior se ignora
     get active() { return !!this.peer && (this.isHost || this.conns.size > 0); },
     on(type, fn) { handlers[type] = fn; },
     host, join, send, sendTo, broadcast, destroy
   };
   const emit = (type, msg, from) => { const h = handlers[type]; if (h) h(msg, from); };
+  // temporizadores de la sala: destroy() los cancela todos, para que un reintento o un
+  // tiempo de espera de una sala anterior no tire la que acabas de crear
+  const timers = new Set();
+  const later = (fn, ms) => { const id = setTimeout(() => { timers.delete(id); fn(); }, ms); timers.add(id); return id; };
+  const cancelled = () => Object.assign(new Error("Sala cancelada"), { cancelled: true });
 
+  // pulso de vida: detecta conexiones muertas que nunca llegan a cerrarse (móvil que se
+  // queda sin cobertura, app matada…). Si el congelado somos nosotros, no se echa a nadie.
+  const lastRx = new Map();
+  let hbTimer = 0, lastTick = 0;
+  function startHeartbeat() {
+    if (hbTimer) return;
+    lastTick = performance.now();
+    hbTimer = setInterval(() => {
+      const now = performance.now();
+      if (now - lastTick > HEARTBEAT_MS * 1.5) for (const id of lastRx.keys()) lastRx.set(id, now);
+      lastTick = now;
+      net.conns.forEach((c, id) => {
+        if (!c.open) return;
+        try { c.send({ t: "_hb" }); } catch (e) {}
+        if (now - (lastRx.get(id) ?? now) > DEAD_MS) { try { c.close(); } catch (e) {} drop(c); }
+      });
+    }, HEARTBEAT_MS);
+  }
+  // servidor de señalización perdido (las partidas siguen, pero nadie nuevo puede entrar):
+  // se reintenta con esperas crecientes
+  function keepSignal(peer, gen) {
+    let tries = 0;
+    peer.on("open", () => { tries = 0; });
+    peer.on("disconnected", () => {
+      const retry = () => {
+        if (gen !== net.gen || peer.destroyed || !peer.disconnected) return;
+        try { peer.reconnect(); } catch (e) {}
+        if (++tries < 6) later(retry, Math.min(8000, 1000 * 2 ** tries));
+      };
+      retry();
+    });
+  }
+
+  function drop(conn) {
+    if (net.conns.get(conn.peer) !== conn) return;
+    net.conns.delete(conn.peer);
+    lastRx.delete(conn.peer);
+    emit("_leave", {}, conn.peer);
+  }
   function wire(conn) {
-    conn.on("data", (m) => { if (m && m.t) emit(m.t, m, conn.peer); });
-    const gone = () => {
-      if (!net.conns.has(conn.peer)) return;
-      net.conns.delete(conn.peer);
-      emit("_leave", {}, conn.peer);
-    };
+    conn.on("open", () => lastRx.set(conn.peer, performance.now()));
+    conn.on("data", (m) => {
+      lastRx.set(conn.peer, performance.now());
+      if (m && m.t && m.t !== "_hb") emit(m.t, m, conn.peer);
+    });
+    const gone = () => drop(conn);
     conn.on("close", gone);
     conn.on("error", gone);
   }
 
   async function host(code) {
     destroy();
+    const gen = net.gen;
     net.isHost = true;
     net.code = code;
     const iceServers = await getIceServers();
+    if (gen !== net.gen) throw cancelled(); // se salió (o se pidió otra sala) mientras tanto
     return new Promise((resolve, reject) => {
       let opened = false;
-      const timer = setTimeout(() => {
+      const timer = later(() => {
         if (!opened) {
           destroy();
           reject(new Error("El servidor de salas no responde"));
@@ -114,10 +175,13 @@ export function createNet({ prefix = PREFIX, maxPlayers = MAX_PLAYERS } = {}) {
       net.peer = peer;
 
       peer.on("open", (id) => {
+        if (opened) return; // reconexión al servidor de señalización: la sala ya existía
         opened = true;
         clearTimeout(timer);
         net.myId = id;
         net.hostId = id;
+        liveNets.add(net);
+        startHeartbeat();
         resolve(id);
       });
 
@@ -125,7 +189,7 @@ export function createNet({ prefix = PREFIX, maxPlayers = MAX_PLAYERS } = {}) {
         if (net.conns.size >= maxPlayers - 1) {
           conn.on("open", () => {
             conn.send({ t: "full" });
-            setTimeout(() => conn.close(), 400);
+            later(() => conn.close(), 400);
           });
           return;
         }
@@ -136,9 +200,7 @@ export function createNet({ prefix = PREFIX, maxPlayers = MAX_PLAYERS } = {}) {
         });
       });
 
-      peer.on("disconnected", () => {
-        try { peer.reconnect(); } catch (e) {}
-      });
+      keepSignal(peer, gen);
 
       peer.on("error", (err) => {
         if (!opened) {
@@ -156,10 +218,12 @@ export function createNet({ prefix = PREFIX, maxPlayers = MAX_PLAYERS } = {}) {
 
   async function join(code) {
     destroy();
+    const gen = net.gen;
     net.isHost = false;
     net.code = code;
     net.hostId = prefix + code;
     const iceServers = await getIceServers();
+    if (gen !== net.gen) throw cancelled();
 
     return new Promise((resolve, reject) => {
       let done = false;
@@ -177,13 +241,13 @@ export function createNet({ prefix = PREFIX, maxPlayers = MAX_PLAYERS } = {}) {
         }
       };
 
-      const globalTimer = setTimeout(
+      const globalTimer = later(
         () => fail("No se pudo conectar con la sala (tiempo de espera agotado)"),
         GLOBAL_TIMEOUT
       );
 
       function attempt() {
-        if (done) return;
+        if (done || gen !== net.gen) return;
         attempts++;
 
         // Destruir peer anterior sin marcar done
@@ -193,6 +257,7 @@ export function createNet({ prefix = PREFIX, maxPlayers = MAX_PLAYERS } = {}) {
         net.peer = peer;
 
         peer.on("open", (id) => {
+          if (done) return; // reconexión al servidor de señalización: ya estamos dentro
           net.myId = id;
           const conn = peer.connect(net.hostId, { reliable: true });
           wire(conn);
@@ -202,6 +267,9 @@ export function createNet({ prefix = PREFIX, maxPlayers = MAX_PLAYERS } = {}) {
             if (!done) {
               done = true;
               clearTimeout(globalTimer);
+              liveNets.add(net);
+              startHeartbeat();
+              keepSignal(peer, gen);
               resolve(id);
             }
           });
@@ -224,7 +292,7 @@ export function createNet({ prefix = PREFIX, maxPlayers = MAX_PLAYERS } = {}) {
             // Puede ser transitorio si el host acaba de abrirse: reintentar
             if (attempts < MAX_ATTEMPTS) {
               try { peer.destroy(); } catch (e) {}
-              setTimeout(attempt, RETRY_DELAY);
+              later(attempt, RETRY_DELAY);
             } else {
               fail(`No se ha encontrado ninguna sala con el código ${code}. Comprueba el código e inténtalo de nuevo.`);
             }
@@ -255,6 +323,13 @@ export function createNet({ prefix = PREFIX, maxPlayers = MAX_PLAYERS } = {}) {
   }
 
   function destroy() {
+    net.gen++;
+    timers.forEach(clearTimeout);
+    timers.clear();
+    clearInterval(hbTimer);
+    hbTimer = 0;
+    lastRx.clear();
+    liveNets.delete(net);
     net.conns.forEach((c) => { try { c.close(); } catch (e) {} });
     net.conns.clear();
     if (net.peer) { try { net.peer.destroy(); } catch (e) {} }

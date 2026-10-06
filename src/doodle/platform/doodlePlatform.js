@@ -9,11 +9,12 @@
 // del plataformas clásico (José Luis imprime plataformas, Paloma vuela, Ana trepa…).
 // =============================================================================
 
+import { motionScale } from "../../engine/motion.js";
 import * as THREE from "three";
 import { createDoodleRenderer, INK, mat } from "../doodleRender.js";
 import { DoodleAudio } from "../doodleAudio.js";
 import { GEO } from "../doodleLevel.js";
-import { createSticker } from "../doodleSticker.js";
+import { createSticker, clearStickerCache } from "../doodleSticker.js";
 import { createTouchPad, ICON } from "../touchPad.js";
 import { makeEmail, makeMeeting, makeClock } from "../doodleActors.js";
 import { inkText, cinkLogo } from "../inkText.js";
@@ -1683,7 +1684,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     decals.push(d);
   }
   let shakeAmt = 0;
-  const shake = (a) => (shakeAmt = Math.max(shakeAmt, a));
+  const shake = (a) => (shakeAmt = Math.max(shakeAmt, a * motionScale()));
   function updateFx(dt) {
     for (const p of particles) {
       if (!p.alive) continue;
@@ -1935,9 +1936,8 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
       tp.power = true;
     }
   });
-  window.addEventListener("pointerup", () => {
-    if (!isTouch && tp.power) tp.power = false;
-  });
+  const onPointerUp = () => { if (!isTouch && tp.power) tp.power = false; };
+  window.addEventListener("pointerup", onPointerUp);
 
   const onCharSwitched = (e) => {
     if (devChar) return;
@@ -2036,6 +2036,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
 
   let destroyed = false;
   function destroy() {
+    clearStickerCache();
     if (destroyed) return;
     destroyed = true;
     cancelAnimationFrame(raf);
@@ -2044,6 +2045,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     window.removeEventListener("blur", onBlur);
     window.removeEventListener("resize", resize);
     window.removeEventListener("char_switched", onCharSwitched);
+    window.removeEventListener("pointerup", onPointerUp);
     if (ro) ro.disconnect();
     setInPlay(false);
     relabels.forEach(([el, t]) => (el.textContent = t));

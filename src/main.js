@@ -17,6 +17,7 @@ import { submitScore } from "./game/leaderboard.js";
 import { consumeCharInvite } from "./game/charRoute.js";
 import { initAuth } from "./game/auth.js";
 import { initDeckNav } from "./ui/deckNav.js";
+import { initAppUpdate, isChunkError, reloadForUpdate, atMenu } from "./engine/appUpdate.js";
 
 const cv = document.getElementById("cv");
 const cx = cv.getContext("2d");
@@ -26,6 +27,9 @@ function fitCanvas() {
   // en menús, elección de mundo y lobbies: pantalla completa táctil sin mando.
   const dpr = Math.min(2, window.devicePixelRatio || 1);
   const iw = window.innerWidth, ih = window.innerHeight;
+  // altura real visible: en la app instalada de iOS var(--app-h, 100dvh) sale mal al arrancar
+  // (y tras volver de segundo plano) hasta que hay un resize; el CSS usa --app-h
+  document.documentElement.style.setProperty("--app-h", `${ih}px`);
   const isPortrait = ih > iw;
   document.body.classList.toggle("is-portrait", isPortrait);
   const useDeck = isPortrait && GameState.inPlay;
@@ -99,6 +103,10 @@ if (window.visualViewport) {
 // En PWAs instaladas, el sistema operativo oculta barras o ajusta el viewport con un ligero retardo
 setTimeout(fitCanvas, 100);
 setTimeout(fitCanvas, 400);
+setTimeout(fitCanvas, 1200);
+// al volver de segundo plano (iOS restaura la app de memoria) se vuelve a medir
+window.addEventListener("pageshow", () => { fitCanvas(); setTimeout(fitCanvas, 300); });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") setTimeout(fitCanvas, 150); });
 
 // ── los mundos: id → módulo y cómo se arranca ──
 const WORLD_LOADERS = {
@@ -151,14 +159,18 @@ async function startGame(worldId) {
     GameState.gameMode = "menu";
     fitCanvas();
     worldMap.showWorldMap();
+    atMenu(); // si salió una versión nueva durante la partida, se actualiza ahora
   };
 
+  let timer = 0;
   try {
-    // Timeout de 20 s: si el módulo no carga (red lenta / service worker atascado)
-    const timeout = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error("Timeout cargando el mundo (20 s)")), 20000)
-    );
+    // Timeout de 20 s: si el módulo no carga (red lenta)
+    const timeout = new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error("Timeout cargando el mundo (20 s)")), 20000);
+    });
     const mod = await Promise.race([W.load(), timeout]);
+    clearTimeout(timer);
+    showLoading(true, "montando el escenario…");
     _startGameLock = false; // módulo cargado: liberar el lock, el mundo tiene su propio ciclo
     doodle = W.start(mod, {
       char: CHARS[GameState.charIdx] || CHARS[0],
@@ -170,21 +182,79 @@ async function startGame(worldId) {
       onExit: back
     });
   } catch (err) {
+    clearTimeout(timer);
     console.error(`No se pudo cargar ${W.name}`, err);
+    // si el mundo llegó a montar su capa antes de fallar, que no se quede debajo del mapa
+    document.querySelectorAll("#doodleRoot").forEach((n) => n.remove());
+    // trozo de una versión anterior que ya no existe: recargar con la nueva
+    if (navigator.onLine && isChunkError(err) && reloadForUpdate()) return;
     back();
+    // reintentar = recargar y abrir este mundo: el navegador recuerda el trozo que
+    // falló y un segundo import() en la misma página volvería a fallar
+    showLoadError(W.name, () => {
+      try { sessionStorage.setItem("cg-open-world", String(worldId)); } catch (e) {}
+      location.reload();
+    });
   }
 }
 
-function showLoading(on) {
+// el móvil ha tirado el contexto gráfico de un mundo (sin memoria, mucho rato en segundo
+// plano…): three.js no lo recupera solo, así que se ofrece recargar y volver a ese mundo
+window.addEventListener("doodle:contextlost", (e) => {
+  const c = e.detail && e.detail.canvas;
+  if (!c || !c.isConnected || !c.closest("#doodleRoot, .ov-root") || document.getElementById("worldError")) return;
+  const id = GameState.gameMode === "doodle" ? GameState.currentWorld : null;
+  const el = document.createElement("div");
+  el.id = "worldError";
+  el.className = "world-loading world-error";
+  el.innerHTML = `<div class="wl-card"><div class="wl-pen">🖍️</div><b>Se ha borrado el dibujo</b>
+    <small>El móvil ha liberado la memoria gráfica. Recarga para seguir.</small>
+    <div class="wl-btns"><button class="dd-btn wl-retry">Recargar</button></div></div>`;
+  document.body.appendChild(el);
+  el.querySelector(".wl-retry").addEventListener("click", () => {
+    try { if (id) sessionStorage.setItem("cg-open-world", String(id)); } catch (err) {}
+    location.reload();
+  });
+});
+
+// aviso visible cuando un mundo no abre (en vez de volver al mapa sin decir nada)
+function showLoadError(name, retry) {
+  document.getElementById("worldError")?.remove();
+  const el = document.createElement("div");
+  el.id = "worldError";
+  el.className = "world-loading world-error";
+  el.innerHTML = `<div class="wl-card"><div class="wl-pen">😵</div><b>No se ha podido abrir ${name}</b>
+    <small>${navigator.onLine ? "Puede que la conexión vaya lenta." : "Parece que no hay conexión."}</small>
+    <div class="wl-btns"><button class="dd-btn wl-retry">Reintentar</button><button class="dd-btn dd-ghost wl-close">Volver</button></div></div>`;
+  document.body.appendChild(el);
+  el.querySelector(".wl-retry").addEventListener("click", () => { el.remove(); retry(); });
+  el.querySelector(".wl-close").addEventListener("click", () => el.remove());
+}
+
+let slowTimer = 0;
+// pantalla de carga: dice en qué paso va y avisa si la red va lenta (para que no parezca colgado)
+function showLoading(on, step) {
   let el = document.getElementById("worldLoading");
   if (on && !el) {
     el = document.createElement("div");
     el.id = "worldLoading";
     el.className = "world-loading";
-    el.innerHTML = `<div class="wl-card"><div class="wl-pen">✏️</div><b>Cargando mundo…</b><small>afilando el boli</small></div>`;
+    el.innerHTML = `<div class="wl-card"><div class="wl-pen">✏️</div><b>Cargando mundo…</b><small>afilando el boli</small><div class="wl-bar"><i></i></div></div>`;
     (document.getElementById("wrap") || document.body).appendChild(el);
+    clearTimeout(slowTimer);
+    slowTimer = setTimeout(() => {
+      const s = document.querySelector("#worldLoading small");
+      if (s && !step) s.textContent = navigator.onLine ? "la conexión va lenta, ya casi…" : "parece que no hay conexión…";
+    }, 6000);
   }
-  if (!on && el) el.remove();
+  if (on && el && step) {
+    el.querySelector("small").textContent = step;
+    el.classList.add("wl-step2");
+  }
+  if (!on) {
+    clearTimeout(slowTimer);
+    if (el) el.remove();
+  }
 }
 // cuando el mundo 3D ya ha montado su pantalla, se quita la de carga.
 // Usamos un observer que se desconecta en cuanto cumple su misión para no
@@ -227,6 +297,13 @@ function reportScore(worldId, score, stats, rank) {
 
 initSprites();
 fitCanvas();
+initAppUpdate({ inMenu: () => GameState.gameMode !== "doodle" });
+// tras "Reintentar" (recarga), se abre directamente el mundo que se quería
+{
+  let id = null;
+  try { id = sessionStorage.getItem("cg-open-world"); sessionStorage.removeItem("cg-open-world"); } catch (e) {}
+  if (id && WORLD_LOADERS[id]) setTimeout(() => startGame(Number(id)), 0);
+}
 
 const worldMap = initWorldMap({ onSelectWorld: (worldId) => startGame(worldId) });
 const { updateSpotlight } = initOverlays({

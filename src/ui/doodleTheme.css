@@ -1648,7 +1648,7 @@ html body .comp2-nav .comp-tab-btn.on b { background: #fff; color: var(--nb-ink)
 .cg-auth-ov { position: fixed; inset: 0; z-index: 9000; display: grid; place-items: center; padding: 12px; background: rgba(39, 42, 54, 0.45); }
 .cg-auth-ov.hidden { display: none; }
 .cg-auth-card {
-  position: relative; width: min(440px, 100%); max-height: calc(100dvh - 24px); overflow-y: auto; box-sizing: border-box; padding: 18px 20px 16px; text-align: center;
+  position: relative; width: min(440px, 100%); max-height: calc(var(--app-h, 100dvh) - 24px); overflow-y: auto; box-sizing: border-box; padding: 18px 20px 16px; text-align: center;
   background: repeating-linear-gradient(transparent 0 27px, var(--nb-rule) 27px 29px), var(--nb-paper); color: var(--nb-pen);
   border: 3px solid var(--nb-pen); border-radius: 20px 12px 22px 14px; box-shadow: 7px 8px 0 var(--nb-ink); font-family: var(--nb-hand);
 }
@@ -1710,6 +1710,18 @@ html body .comp2-nav .comp-tab-btn.on b { background: #fff; color: var(--nb-ink)
 .wl-card b { font: 700 36px/1 var(--nb-title); color: var(--nb-ink); }
 .wl-card small { font-size: 16px; opacity: 0.7; }
 .wl-pen { font-size: 40px; animation: wl-draw 0.9s ease-in-out infinite; }
+/* avisos a pantalla completa por encima de los menús: versión nueva / el mundo no abre */
+.wl-bar { width: 160px; height: 8px; margin-top: 8px; border: 2px solid var(--nb-pen); border-radius: 6px; overflow: hidden; background: #fff; }
+.wl-bar i { display: block; height: 100%; width: 12%; background: var(--nb-ink); transition: width 1.2s ease-out; }
+.world-loading:not(.wl-step2) .wl-bar i { animation: wl-fill 8s cubic-bezier(0.1, 0.6, 0.3, 1) forwards; }
+.wl-step2 .wl-bar i { width: 92%; }
+@keyframes wl-fill { to { width: 70%; } }
+#updateNotice .wl-bar, #worldError .wl-bar { display: none; }
+#updateNotice, #worldError { position: fixed; z-index: 2000; text-align: center; padding: 16px; }
+#worldError { background: rgba(246, 243, 230, 0.94); }
+#worldError .wl-card b { font-size: clamp(24px, 6vw, 34px); }
+#worldError .wl-pen { animation: none; }
+.wl-btns { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; justify-content: center; }
 @keyframes wl-draw { 0%, 100% { transform: translateX(-18px) rotate(-10deg); } 50% { transform: translateX(18px) rotate(10deg); } }
 
 /* foco del mando Game Boy en los menús */
@@ -1781,7 +1793,7 @@ html body #menuOv .lobby-brand-title .lobby-brand-the { display: inline-block; v
   html body #menuOv .lobby-bottom-bar { height: auto !important; min-height: 0 !important; padding-top: 0 !important; }
   html body #menuOv .action-dock-item { height: 46px !important; min-height: 0 !important; }
   html body #menuOv .lobby-cta-play { height: 48px !important; font-size: 28px !important; }
-  html body #menuOv .hero-stage-container { --ped: min(240px, calc(100dvh - 150px)); }
+  html body #menuOv .hero-stage-container { --ped: min(240px, calc(var(--app-h, 100dvh) - 150px)); }
   html body #menuOv .hero-pedestal-wrap { width: var(--ped) !important; height: var(--ped) !important; }
   html body #menuOv .hero-nav-arrow.arrow-prev { left: calc(50% - var(--ped) / 2 - 22px) !important; }
   html body #menuOv .hero-nav-arrow.arrow-next { right: calc(50% - var(--ped) / 2 - 22px) !important; }
@@ -2038,7 +2050,7 @@ html body #worldMapOv .ws-card .ws-side-tick { display: none !important; }
   html body #worldMapOv .ws-card, html body #worldMapOv .ws-card.selected { transform: none !important; }
   html body #worldMapOv .ws-card.selected .ws-card-sheet { box-shadow: 0 0 0 3px var(--card-acc), 5px 6px 0 var(--card-acc) !important; }
   html body #worldMapOv .ws-card-sheet { padding: 6px 7px 8px !important; }
-  html body #worldMapOv .ws-art-window { height: calc(100dvh - 250px) !important; min-height: 72px !important; max-height: 110px !important; }
+  html body #worldMapOv .ws-art-window { height: calc(var(--app-h, 100dvh) - 250px) !important; min-height: 72px !important; max-height: 110px !important; }
   html body #worldMapOv .ws-scene-wrap { height: 100% !important; }
   html body #worldMapOv .ws-card-body { gap: 4px !important; padding-top: 6px !important; }
   html body #worldMapOv .ws-kicker { display: none !important; }
@@ -2136,7 +2148,7 @@ html body #menuOv .tr-main { font-size: 36px !important; }
   html body #menuOv .tr-main { font-size: 26px !important; }
   html body #menuOv .side-nav-btn { height: 32px !important; font-size: 13px !important; }
   html body #menuOv .hero-stage-container {
-    --ped: min(230px, calc(100dvh - 135px));
+    --ped: min(230px, calc(var(--app-h, 100dvh) - 135px));
     top: 48% !important;
   }
   html body #menuOv .hero-pedestal-wrap { width: var(--ped) !important; height: var(--ped) !important; }
@@ -2173,7 +2185,7 @@ html body #menuOv .tr-main { font-size: 36px !important; }
   html body #menuOv .tr-the { font-size: 11px !important; }
   html body #menuOv .tr-main { font-size: 22px !important; }
   html body #menuOv .hero-stage-container {
-    --ped: min(190px, calc(100dvh - 115px));
+    --ped: min(190px, calc(var(--app-h, 100dvh) - 115px));
     top: 47% !important;
   }
   html body #menuOv .side-nav-btn { height: 28px !important; font-size: 12px !important; }
@@ -3040,3 +3052,13 @@ body.doodle-mode:not(.world-office) #gbTouchBarContainer { display: none !import
   animation: lobbyRecoilShake 0.16s cubic-bezier(0.2, 0.9, 0.3, 1.2);
 }
 
+
+/* accesibilidad: con "reducir movimiento" activado, los menús no se mueven (el juego atenúa los temblores) */
+@media (prefers-reduced-motion: reduce) {
+  html body *:not(canvas), html body *::before, html body *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

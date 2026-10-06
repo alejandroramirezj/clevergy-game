@@ -264,6 +264,15 @@ export function createDoodleRenderer(canvas, opts = {}) {
   const pr = Math.min(window.devicePixelRatio || 1, lowEnd ? 1 : coarse ? 1.25 : 1.5);
   renderer.setPixelRatio(pr);
   renderer.setClearColor(0x000000, 0);
+  // si el móvil se queda sin memoria gráfica (o pasa mucho rato en segundo plano) el
+  // navegador puede tirar el contexto WebGL: se avisa para ofrecer recargar en vez de
+  // quedarse con la pantalla congelada (dispose() también lo pierde, a propósito)
+  let disposing = false;
+  const onLost = (e) => {
+    e.preventDefault();
+    if (!disposing) window.dispatchEvent(new CustomEvent("doodle:contextlost", { detail: { canvas } }));
+  };
+  canvas.addEventListener("webglcontextlost", onLost);
 
   const makeTarget = (w, h) => {
     const isWebGL2 = renderer.capabilities.isWebGL2;
@@ -349,6 +358,8 @@ export function createDoodleRenderer(canvas, opts = {}) {
   }
 
   function dispose() {
+    disposing = true;
+    canvas.removeEventListener("webglcontextlost", onLost);
     target.dispose();
     post.dispose();
     quad.geometry.dispose();

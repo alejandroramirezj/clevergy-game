@@ -5,13 +5,14 @@
 // Se autogestiona: crea su propio canvas/HUD, su bucle y lo destruye todo al salir.
 // =============================================================================
 
+import { motionScale } from "../engine/motion.js";
 import * as THREE from "three";
 import { createDoodleRenderer, INK, mat } from "./doodleRender.js";
 import { DoodleAudio } from "./doodleAudio.js";
 import { GEO } from "./doodleLevel.js";
 import { buildLevel, ARENA, SPAWNS, START, PLAYER_SPAWNS, BOSS_AREA, COFFEE_SPOTS, floorOf, F1 as F1_Y } from "./cinkLevel.js";
 import { makeEmail, makeMeeting, makeClock, makeBoss, makeGun, makeCoffee } from "./doodleActors.js";
-import { createSticker } from "./doodleSticker.js";
+import { createSticker, clearStickerCache } from "./doodleSticker.js";
 import { createTouchPad, ICON } from "./touchPad.js";
 import { touch as mando } from "../engine/input.js";
 import { speakCharacter } from "../engine/voice.js";
@@ -582,7 +583,7 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onPickChar, onEx
       hostRoster();
       setStatus("Comparte el código: tus compañeros pulsan «Unirse» y lo escriben.");
     } catch (err) {
-      setStatus(err.message, true);
+      if (!err.cancelled) setStatus(err.message, true);
     }
   });
   async function joinRoom() {
@@ -597,7 +598,7 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onPickChar, onEx
       renderLobby();
       setStatus("¡Dentro! La partida empieza cuando el anfitrión pulse «Empezar».");
     } catch (err) {
-      setStatus(err.message, true);
+      if (!err.cancelled) setStatus(err.message, true);
     }
   }
   $(".dd-mp-join").addEventListener("click", joinRoom);
@@ -1852,7 +1853,7 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onPickChar, onEx
     const speed = Math.hypot(P.vel.x, P.vel.z);
     if (P.onGround && speed > 0.5) P.bob += dt * speed * 1.6;
     const bobY = Math.sin(P.bob * 2) * 0.045 * Math.min(1, speed / 6);
-    const sh = P.shake * P.shake * 0.12;
+    const sh = P.shake * P.shake * 0.12 * motionScale();
     if (camMode === "third") {
       // cámara al hombro: detrás, algo arriba y a la derecha; se acerca si una pared se mete en medio
       const cp = Math.cos(P.pitch);
@@ -2114,6 +2115,7 @@ export function startDoodleWorld({ char, getChar, onSwitchChar, onPickChar, onEx
   // ── salida y limpieza ──
   let destroyed = false;
   function destroy() {
+    clearStickerCache();
     if (destroyed) return;
     destroyed = true;
     cancelAnimationFrame(raf);
