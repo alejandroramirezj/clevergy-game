@@ -1046,10 +1046,21 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
       if (s.t >= s.life) scene.remove(s.g);
     }
     for (let i = sparks.length - 1; i >= 0; i--) if (sparks[i].t >= sparks[i].life) sparks.splice(i, 1);
+    // las frases (bocadillos) nunca suben por encima del cartel de RETRO FIGHT y el reloj
+    let hudBottom = 0;
+    if (floats.some((fl) => fl.k > 1)) {
+      const r0 = root.getBoundingClientRect();
+      for (const el of root.querySelectorAll(".rf-top-banner, .sb-timer")) hudBottom = Math.max(hudBottom, el.getBoundingClientRect().bottom - r0.top);
+    }
     for (const fl of floats) {
       fl.t += dt / fl.k; // las frases largas (k > 1) se quedan más rato para poder leerlas
       fl.y += (dt * 1.4) / fl.k;
-      const [sx, sy] = toScreen(fl.x, fl.y);
+      let [sx, sy] = toScreen(fl.x, fl.y);
+      if (fl.k > 1) {
+        const hw = fl.el.offsetWidth / 2, hh = fl.el.offsetHeight / 2;
+        sy = Math.max(sy, hudBottom + hh + 8);
+        sx = Math.min(Math.max(sx, hw + 8), root.clientWidth - hw - 8); // ni por los lados
+      }
       fl.el.style.transform = `translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px) translate(-50%, -50%) scale(${1 + Math.max(0, 0.25 - fl.t) * 2})`;
       fl.el.style.opacity = String(Math.max(0, 1 - Math.max(0, fl.t - 0.5) / 0.4));
       if (fl.t > 0.9) fl.el.remove();
