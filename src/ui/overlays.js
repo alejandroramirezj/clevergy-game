@@ -8,6 +8,7 @@ import { fetchGlobalLeaderboard } from "../game/leaderboard.js";
 import { GOOGLE_G } from "../game/auth.js";
 import { speakCharacter, stopSpeaking } from "../engine/voice.js";
 import { YAIR_LINES, nextYairLine } from "../config/yairLines.js";
+import { MACA_LINES, nextMacaLine } from "../config/macaLines.js";
 
 export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWorld }) {
   // Elements
@@ -158,7 +159,7 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
           joseluis: "IMPRIMIR",
           josu: "REBOTE",
           juan: "CALENTAR",
-          maca: "MATE",
+          maca: "BOLA/CROMO",
           manu: "PISOTÓN",
           pablo: "RODAR",
           silvia: "SPEEDRUN",
@@ -397,7 +398,18 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
       at(500, () => pop("¡ESO ES DE CHARCA!", CX, 80, "#fb7185"));
     },
     // Pelota rebotadora: la pelota bota y bota y remata
-    maca: ({ HX, HY, GY, at }) => {
+    // Maca alterna: pelota rebotadora ↔ abanico de cromos del Mundial 2026 (y pregunta por Messi)
+    maca: (ctx) => {
+      if (macaFxN++ % 2 === 0) return macaBall(ctx);
+      const { HX, HY, at } = ctx;
+      [0, 90, 180, 270].forEach((ms, k) => at(ms, () => {
+        emo("🃏", HX + 10, HY - 30 + k * 8, { vx: 300 + k * 30, vy: (k - 1.5) * 70, vr: 10, size: 28, life: 0.9 });
+        sfx(2200 + k * 200, 0.03, "triangle", 0.06);
+      }));
+      at(300, () => pop("¡CROMOS DEL MUNDIAL!", HX + 40, HY - 110, "#22c55e"));
+      at(150, () => speakCharacter("maca", { phrase: MACA_LINES[nextMacaLine()], force: true, showBubble: true }));
+    },
+    _macaBall: ({ HX, HY, GY, at }) => {
       emo("🏐", HX, HY - 40, { vx: 140, vy: -200, gravity: 900, floor: GY - 16, bounce: 0.78, vr: 9, size: 34, life: 1.6 });
       [300, 620, 880].forEach((ms) => at(ms, () => sfx(420, 0.05, "square", 0.07)));
       at(900, () => pop("¡JA JA JA! ¡QUÉ GUAY!", 260, 110, "#fbbf24"));
@@ -447,7 +459,8 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
       at(150, () => speakCharacter("yair", { phrase: YAIR_LINES[nextYairLine()], force: true, showBubble: true }));
     }
   };
-  let yairFxN = 0;
+  let yairFxN = 0, macaFxN = 0;
+  const macaBall = (ctx) => ATTACK_FX._macaBall(ctx);
   function yairBuleria({ CX, at }) {
     for (let k = 0; k < 8; k++) at(k * 180, () => {
       glyph(k % 2 ? "♫" : "♪", CX + (k % 2 ? 80 : -80) + (Math.random() - 0.5) * 30, 200, k % 2 ? "#e11d48" : "#f59e0b", { vy: -90, wob: 8, wf: 8, size: 30, life: 1.0 });

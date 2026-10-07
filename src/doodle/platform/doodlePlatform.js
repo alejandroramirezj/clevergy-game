@@ -23,6 +23,7 @@ import { CHARS, POWER_INFO } from "../../config/characters.js";
 import { getCharacterAvatar } from "../../engine/sprites.js";
 import { speakCharacter } from "../../engine/voice.js";
 import { makePaddle, nextYairLine, YAIR_LINES } from "../pingPong.js";
+import { MACA_LINES, nextMacaLine } from "../../config/macaLines.js";
 import { setInPlay } from "../../game/state.js";
 import { makeLevel, LEVEL_W, LEVEL_H } from "./platformLevel.js";
 import { buzz } from "../haptics.js";
@@ -190,6 +191,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     jump: () => audio.tone({ freq: 360, to: 720, dur: 0.12, type: "square", gain: 0.08 }),
     coin: () => { audio.tone({ freq: 988, dur: 0.06, type: "square", gain: 0.07 }); audio.tone({ freq: 1319, dur: 0.14, type: "square", gain: 0.07, delay: 0.06 }); },
     bump: () => audio.tone({ freq: 180, to: 120, dur: 0.08, type: "square", gain: 0.1 }),
+    cards: () => { for (let i = 0; i < 4; i++) audio.noise({ dur: 0.05, gain: 0.12, filter: "bandpass", freq: 2400 + i * 300, q: 1.2, delay: i * 0.05 }); },
     pong: () => [0, 0.11, 0.2].forEach((d, i) => audio.tone({ freq: 1500 - i * 180, to: 900, dur: 0.035, type: "triangle", gain: 0.12, delay: d })),
     brick: () => audio.noise({ dur: 0.25, gain: 0.3, filter: "lowpass", freq: 1800, to: 200 }),
     stomp: () => { audio.tone({ freq: 500, to: 150, dur: 0.12, type: "square", gain: 0.12 }); audio.noise({ dur: 0.08, gain: 0.15, filter: "lowpass", freq: 900 }); },
@@ -952,6 +954,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
   ];
   let slackSeq = 0;
   let yairSeq = 0; // Yair alterna bulerías ↔ ping-pong
+  let macaSeq = 0; // Maca alterna pelota ↔ cromos del Mundial
 
   function usePower(inp) {
     const rawId = String((char && char.id) || "").toLowerCase();
@@ -1034,9 +1037,18 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
       msg("🪧 ¡Te da con el cartel de vegano!", 1.2);
     }
     else if (id === "maca") {
-      P.ball = true; if (P.g) P.vy = 11;
-      shoot({ x: P.x + f * 0.8, y: P.y + 0.8, vx: f * 12, vy: 6, arc: true, bounce: 4, boom: 1.5, life: 2.5, ink: INK.ORANGE, shape: "ball" });
-      msg("🏐 ¡Rebota, rebota y te da con la pelota!", 1.4);
+      if (macaSeq++ % 2 === 0) {
+        P.ball = true; if (P.g) P.vy = 11;
+        shoot({ x: P.x + f * 0.8, y: P.y + 0.8, vx: f * 12, vy: 6, arc: true, bounce: 4, boom: 1.5, life: 2.5, ink: INK.ORANGE, shape: "ball" });
+        msg("🏐 ¡Rebota, rebota y te da con la pelota!", 1.4);
+      } else {
+        // abanico de cromos asesinos del Mundial 2026: atraviesan todo lo que pillan
+        for (let k = 0; k < 4; k++) shoot({ x: P.x + f * 0.8, y: P.y + 0.7 + k * 0.32, vx: f * (14 - k * 0.8), vy: (k - 1.5) * 1.1, pierce: true, life: 1.15, ink: INK.GREEN, shape: "cromo", variant: k, ph: k * 0.9 });
+        sfx.cards();
+        const line = MACA_LINES[nextMacaLine()];
+        msg(`🃏 «${line}»`, 2.2);
+        speakCharacter(char, { phrase: line, force: true });
+      }
     }
     else if (id === "gonzalo") {
       for (let i = 0; i < 3; i++) spawnMinion("broc", i);
@@ -1158,6 +1170,13 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
       box(g, 0, -0.3, 0, 0.08, 0.7, 0.08, INK.ORANGE, { tone: -0.1 });
       box(g, 0, 0.3, 0, 0.85, 0.55, 0.08, INK.GREEN, { tone: 0.1 });
       const vt = inkText("VEGAN", { size: 0.18, ink: INK.BLACK, weight: 1.5 }); vt.position.set(0, 0.3, 0.05); g.add(vt);
+    } else if (shape === "cromo") {
+      // cromo del Mundial 2026: cartulina con la franja del equipo, el "26" y la foto
+      const team = [INK.RED, INK.BLUE, INK.GREEN, INK.ORANGE][variant % 4];
+      box(g, 0, 0, 0, 0.52, 0.72, 0.03, INK.ORANGE, { tone: 0.46 });
+      box(g, 0, 0.27, 0.02, 0.52, 0.16, 0.03, team, { fill: true });
+      box(g, 0, -0.02, 0.02, 0.3, 0.3, 0.02, team, { tone: 0.25 });
+      const n = inkText("26", { size: 0.13, ink: INK.BLACK, weight: 1.5 }); n.position.set(0, -0.26, 0.05); g.add(n);
     } else if (shape === "pingpong") {
       // pelota de ping-pong: pequeña, naranja clarita, con su costura
       const b = new THREE.Mesh(GEO.sph, mat(INK.ORANGE, { tone: 0.42 })); b.scale.setScalar(0.34); g.add(b);
@@ -1400,6 +1419,13 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
         p.mesh.scale.set(s, s, s);
         p.mesh.rotation.z = Math.sin(p.age * 9 + p.ph) * 0.1;
         p.mesh.position.y += Math.sin(p.age * 7 + p.ph) * 0.12;
+      }
+      else if (p.shape === "cromo") {
+        // los cromos vuelan dando vueltas como una baraja tirada con estilo
+        p.age += dt;
+        p.mesh.rotation.y = p.age * 14 + p.ph;
+        p.mesh.rotation.z = Math.sin(p.age * 6 + p.ph) * 0.35;
+        p.vy *= 1 - dt * 1.5;
       }
       else if (p.shape === "kiss") {
         // el besito hace eses y late como un corazón

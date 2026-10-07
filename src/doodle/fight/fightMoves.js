@@ -38,6 +38,10 @@ export const SPECIALS = {
 
 // Yair alterna su especial: bulerías (arriba) ↔ saque de ping-pong con la pala
 export const YAIR_PONG = PROJ(10, "pingpong", "PING-PONG", INK.ORANGE, { arc: true, speed: 12, vy: 5, life: 2.2 });
+// Maca alterna el mate (embestida) ↔ abanico de cromos asesinos del Mundial 2026
+export const MACA_CROMOS = PROJ(8, "cromo", "CROMOS 2026", INK.GREEN, { speed: 14, vy: 0, life: 1.1 });
+// segundo especial de quien lo tiene: se usa uno de cada dos
+export const ALT_SPECIAL = { yair: YAIR_PONG, maca: MACA_CROMOS };
 
 export function specialFor(charId) {
   return SPECIALS[charId] || DASH(13, 15, "ESPECIAL", INK.BLUE);

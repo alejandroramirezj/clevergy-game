@@ -29,8 +29,9 @@ import { getCharacterAvatar } from "../../engine/sprites.js";
 import { speakCharacter } from "../../engine/voice.js";
 import { setInPlay } from "../../game/state.js";
 import { buildFightStage, PLATFORMS, MAIN, BLAST, RESPAWN, FIGHT_Z } from "./fightStage.js";
-import { specialFor, rollMulti, specialCooldown, YAIR_PONG } from "./fightMoves.js";
+import { specialFor, rollMulti, specialCooldown, ALT_SPECIAL } from "./fightMoves.js";
 import { makePaddle, nextYairLine, YAIR_LINES } from "../pingPong.js";
+import { MACA_LINES, nextMacaLine } from "../../config/macaLines.js";
 import { buzz } from "../haptics.js";
 import "../doodle.css";
 import "./fight.css";
@@ -238,6 +239,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
 
   // ── sonido ──
   const sfx = {
+    cards: () => { for (let i = 0; i < 4; i++) audio.noise({ dur: 0.05, gain: 0.12, filter: "bandpass", freq: 2400 + i * 300, q: 1.2, delay: i * 0.05 }); },
     pong: () => [0, 0.1, 0.19].forEach((d, i) => audio.tone({ freq: 1500 - i * 180, to: 900, dur: 0.035, type: "triangle", gain: 0.12, delay: d })),
     whoosh: () => audio.noise({ dur: 0.09, gain: 0.18, filter: "bandpass", freq: 900, to: 2600, q: 0.8 }),
     charge: () => audio.tone({ freq: 220, to: 520, dur: 0.18, type: "sawtooth", gain: 0.06 }),
@@ -463,7 +465,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
         if (inp.punch) attack(f, inp);
         else if (inp.special) {
           if (inp.y > 0.6 && !f.upB) startMove(f, f.sp.kind === "rise" ? f.sp : UPB, true);
-          else if (f.cd <= 0) startMove(f, f.sp.kind === "multi" ? rollMulti() : f.cid === "yair" && (f.yairN = (f.yairN || 0) + 1) % 2 === 0 ? YAIR_PONG : f.sp, true);
+          else if (f.cd <= 0) startMove(f, f.sp.kind === "multi" ? rollMulti() : ALT_SPECIAL[f.cid] && (f.altN = (f.altN || 0) + 1) % 2 === 0 ? ALT_SPECIAL[f.cid] : f.sp, true);
         }
       }
     }
@@ -717,7 +719,15 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
   function projMesh(shape, ink) {
     const g = new THREE.Group();
     const add = (geo, o, s, p) => { const m = new THREE.Mesh(geo, mat(ink, o)); m.scale.set(...s); if (p) m.position.set(...p); g.add(m); return m; };
-    if (shape === "pingpong") {
+    if (shape === "cromo") {
+      // cromo del Mundial 2026: cartulina, franja del equipo, la foto y el "26"
+      const team = [INK.RED, INK.BLUE, INK.GREEN, INK.ORANGE][Math.floor(Math.random() * 4)];
+      const card = new THREE.Mesh(GEO.box, mat(INK.ORANGE, { tone: 0.46 })); card.scale.set(0.5, 0.7, 0.03); g.add(card);
+      const band = new THREE.Mesh(GEO.box, mat(team, { fill: true })); band.scale.set(0.5, 0.15, 0.03); band.position.set(0, 0.26, 0.02); g.add(band);
+      const pic = new THREE.Mesh(GEO.box, mat(team, { tone: 0.25 })); pic.scale.set(0.28, 0.28, 0.02); pic.position.set(0, -0.02, 0.02); g.add(pic);
+      const n = inkText("26", { size: 0.12, ink: INK.BLACK, weight: 1.5 }); n.position.set(0, -0.25, 0.05); g.add(n);
+    }
+    else if (shape === "pingpong") {
       const b = new THREE.Mesh(GEO.sph, mat(ink, { tone: 0.42 })); b.scale.setScalar(0.3); g.add(b);
       const seam = new THREE.Mesh(GEO.torus, mat(ink, { fill: true })); seam.scale.setScalar(0.29); seam.rotation.y = Math.PI / 2; g.add(seam);
     }
@@ -745,25 +755,30 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
     scene.add(g);
     return g;
   }
+  const BURSTS = {
+    pingpong: { lines: YAIR_LINES, next: nextYairLine, icon: "🏓", sfx: "pong", paddle: true, extra: 2, spread: (d, k) => ({ speed: d.speed + k * 1.6, vy: d.vy - k * 1.6 }) },
+    cromo: { lines: MACA_LINES, next: nextMacaLine, icon: "🃏", sfx: "cards", extra: 3, spread: (d, k) => ({ speed: d.speed - k * 0.9, vy: (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 1.6 }) }
+  };
   function fireProjectile(f, d, net_) {
     const p = net_ || {
       id: `${f.slot}-${++atkSeq}`, owner: f.slot, shape: d.shape, ink: d.ink, dmg: d.dmg, base: d.base, grow: d.grow, ang: d.ang, boom: d.boom || 0,
       arc: !!d.arc, ground: !!d.ground, x: f.x + f.facing * 0.7, y: d.ground ? 0 : f.y + 1.1, vx: f.facing * d.speed, vy: d.arc ? d.vy : d.vy || 0, life: d.life || 2.5
     };
-    // saque de ping-pong de Yair: tres pelotas y una batallita de sus torneos (la frase viaja con la 1ª)
-    if (!net_ && p.shape === "pingpong" && !d.extra) p.line = nextYairLine();
+    // ráfagas con frase: el saque de ping-pong de Yair y los cromos de Maca (la frase viaja con el 1º)
+    const burst = BURSTS[p.shape];
+    if (!net_ && burst && !d.extra) p.line = burst.next();
     p.mesh = projMesh(p.shape, p.ink);
     p.t = 0;
     projectiles.push(p);
     if (!net_ && online.on) { const { mesh, ...data } = p; tx({ t: "proj", p: data }); }
-    if (p.shape === "pingpong" && f) {
-      f.paddleT = 0.4;
+    if (burst && f) {
+      if (burst.paddle) f.paddleT = 0.4;
       if (p.line != null) {
-        sfx.pong();
-        floatText(f, `🏓 «${YAIR_LINES[p.line]}»`, "quote");
-        if (f.ctrl === "local") speakCharacter(f.cid, { phrase: YAIR_LINES[p.line], force: true });
+        sfx[burst.sfx]();
+        floatText(f, `${burst.icon} «${burst.lines[p.line]}»`, "quote");
+        if (f.ctrl === "local") speakCharacter(f.cid, { phrase: burst.lines[p.line], force: true });
       }
-      if (!net_ && !d.extra) for (let k = 1; k <= 2; k++) fireProjectile(f, { ...d, extra: true, speed: d.speed + k * 1.6, vy: d.vy - k * 1.6 });
+      if (!net_ && !d.extra) for (let k = 1; k <= burst.extra; k++) fireProjectile(f, { ...d, extra: true, ...burst.spread(d, k) });
     }
   }
   function explode(p) {
@@ -793,6 +808,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
       p.y += p.vy * dt;
       p.mesh.position.set(p.x, p.y + (p.ground ? Math.abs(Math.sin(p.t * 14)) * 0.12 : 0), FIGHT_Z);
       p.mesh.rotation.z += dt * ((p.arc || p.shape === "stapler" || p.shape === "bomb") ? -8 * Math.sign(p.vx) : 0);
+      if (p.shape === "cromo") { p.mesh.rotation.y = p.t * 14; p.mesh.rotation.z = Math.sin(p.t * 6) * 0.35; }
       if (p.shape === "wave" || p.shape === "micro") p.mesh.scale.setScalar(1 + p.t * 1.6);
       if (p.shape === "worker") p.mesh.scale.x = Math.sign(p.vx) || 1;
       // sólo quien lo lanzó decide si impacta
