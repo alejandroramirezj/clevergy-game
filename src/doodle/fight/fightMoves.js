@@ -36,6 +36,9 @@ export const SPECIALS = {
   yair: { kind: "slam", dmg: 14, name: "BULERÍA", ink: INK.RED, radius: 2.5 }
 };
 
+// Yair alterna su especial: bulerías (arriba) ↔ saque de ping-pong con la pala
+export const YAIR_PONG = PROJ(10, "pingpong", "PING-PONG", INK.ORANGE, { arc: true, speed: 12, vy: 5, life: 2.2 });
+
 export function specialFor(charId) {
   return SPECIALS[charId] || DASH(13, 15, "ESPECIAL", INK.BLUE);
 }

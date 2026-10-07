@@ -29,7 +29,8 @@ import { getCharacterAvatar } from "../../engine/sprites.js";
 import { speakCharacter } from "../../engine/voice.js";
 import { setInPlay } from "../../game/state.js";
 import { buildFightStage, PLATFORMS, MAIN, BLAST, RESPAWN, FIGHT_Z } from "./fightStage.js";
-import { specialFor, rollMulti, specialCooldown } from "./fightMoves.js";
+import { specialFor, rollMulti, specialCooldown, YAIR_PONG } from "./fightMoves.js";
+import { makePaddle, nextYairLine, YAIR_LINES } from "../pingPong.js";
 import { buzz } from "../haptics.js";
 import "../doodle.css";
 import "./fight.css";
@@ -237,6 +238,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
 
   // ── sonido ──
   const sfx = {
+    pong: () => [0, 0.1, 0.19].forEach((d, i) => audio.tone({ freq: 1500 - i * 180, to: 900, dur: 0.035, type: "triangle", gain: 0.12, delay: d })),
     whoosh: () => audio.noise({ dur: 0.09, gain: 0.18, filter: "bandpass", freq: 900, to: 2600, q: 0.8 }),
     charge: () => audio.tone({ freq: 220, to: 520, dur: 0.18, type: "sawtooth", gain: 0.06 }),
     hit: (heavy) => {
@@ -284,6 +286,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
     f.sticker.dispose();
     scene.remove(f.shadow, f.bubble);
     if (f.held) scene.remove(f.held);
+    if (f.paddle) overlay.remove(f.paddle);
     if (f.tag) f.tag.remove();
   }
 
@@ -460,7 +463,7 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
         if (inp.punch) attack(f, inp);
         else if (inp.special) {
           if (inp.y > 0.6 && !f.upB) startMove(f, f.sp.kind === "rise" ? f.sp : UPB, true);
-          else if (f.cd <= 0) startMove(f, f.sp.kind === "multi" ? rollMulti() : f.sp, true);
+          else if (f.cd <= 0) startMove(f, f.sp.kind === "multi" ? rollMulti() : f.cid === "yair" && (f.yairN = (f.yairN || 0) + 1) % 2 === 0 ? YAIR_PONG : f.sp, true);
         }
       }
     }
@@ -714,7 +717,11 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
   function projMesh(shape, ink) {
     const g = new THREE.Group();
     const add = (geo, o, s, p) => { const m = new THREE.Mesh(geo, mat(ink, o)); m.scale.set(...s); if (p) m.position.set(...p); g.add(m); return m; };
-    if (shape === "calc") { add(GEO.box, { tone: 0.05 }, [0.45, 0.6, 0.12]); add(GEO.box, { fill: true }, [0.36, 0.14, 0.13], [0, 0.18, 0]); }
+    if (shape === "pingpong") {
+      const b = new THREE.Mesh(GEO.sph, mat(ink, { tone: 0.42 })); b.scale.setScalar(0.3); g.add(b);
+      const seam = new THREE.Mesh(GEO.torus, mat(ink, { fill: true })); seam.scale.setScalar(0.29); seam.rotation.y = Math.PI / 2; g.add(seam);
+    }
+    else if (shape === "calc") { add(GEO.box, { tone: 0.05 }, [0.45, 0.6, 0.12]); add(GEO.box, { fill: true }, [0.36, 0.14, 0.13], [0, 0.18, 0]); }
     else if (shape === "wave" || shape === "micro") { const r = add(GEO.torus, { fill: true }, [0.7, 0.7, 0.7]); r.rotation.y = Math.PI / 2; add(GEO.torus, { tone: 0.1 }, [0.45, 0.45, 0.45]).rotation.y = Math.PI / 2; }
     else if (shape === "broccoli") { add(GEO.sph, { tone: -0.05 }, [0.5, 0.5, 0.5], [0, 0.15, 0]); add(GEO.cyl, { tone: 0.2 }, [0.18, 0.35, 0.18], [0, -0.15, 0]); }
     else if (shape === "worker") { add(GEO.box, { tone: 0 }, [0.35, 0.55, 0.3], [0, 0.35, 0]); add(GEO.sph, { tone: 0.2 }, [0.3, 0.3, 0.3], [0, 0.8, 0]); add(GEO.box, { fill: true }, [0.05, 0.55, 0.05], [0.2, 0.9, 0]); }
@@ -743,10 +750,21 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
       id: `${f.slot}-${++atkSeq}`, owner: f.slot, shape: d.shape, ink: d.ink, dmg: d.dmg, base: d.base, grow: d.grow, ang: d.ang, boom: d.boom || 0,
       arc: !!d.arc, ground: !!d.ground, x: f.x + f.facing * 0.7, y: d.ground ? 0 : f.y + 1.1, vx: f.facing * d.speed, vy: d.arc ? d.vy : d.vy || 0, life: d.life || 2.5
     };
+    // saque de ping-pong de Yair: tres pelotas y una batallita de sus torneos (la frase viaja con la 1ª)
+    if (!net_ && p.shape === "pingpong" && !d.extra) p.line = nextYairLine();
     p.mesh = projMesh(p.shape, p.ink);
     p.t = 0;
     projectiles.push(p);
     if (!net_ && online.on) { const { mesh, ...data } = p; tx({ t: "proj", p: data }); }
+    if (p.shape === "pingpong" && f) {
+      f.paddleT = 0.4;
+      if (p.line != null) {
+        sfx.pong();
+        floatText(f, `🏓 «${YAIR_LINES[p.line]}»`, "quote");
+        if (f.ctrl === "local") speakCharacter(f.cid, { phrase: YAIR_LINES[p.line], force: true });
+      }
+      if (!net_ && !d.extra) for (let k = 1; k <= 2; k++) fireProjectile(f, { ...d, extra: true, speed: d.speed + k * 1.6, vy: d.vy - k * 1.6 });
+    }
   }
   function explode(p) {
     sfx.boom();
@@ -984,7 +1002,8 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
     el.className = `cf-float ${color || ""}`;
     el.textContent = txt;
     floatsEl.appendChild(el);
-    floats.push({ el, x: f.x + rnd(-0.3, 0.3), y: f.y + FH + 0.3, t: 0 });
+    const quote = color === "quote"; // frase larga: más arriba (no se pisa con el daño) y más rato
+    floats.push({ el, x: f.x + (quote ? 0 : rnd(-0.3, 0.3)), y: f.y + FH + (quote ? 1.3 : 0.3), t: 0, k: quote ? 3.5 : 1 });
   }
   const _v = new THREE.Vector3();
   function toScreen(x, y) {
@@ -1012,8 +1031,8 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
     }
     for (let i = sparks.length - 1; i >= 0; i--) if (sparks[i].t >= sparks[i].life) sparks.splice(i, 1);
     for (const fl of floats) {
-      fl.t += dt;
-      fl.y += dt * 1.4;
+      fl.t += dt / fl.k; // las frases largas (k > 1) se quedan más rato para poder leerlas
+      fl.y += (dt * 1.4) / fl.k;
       const [sx, sy] = toScreen(fl.x, fl.y);
       fl.el.style.transform = `translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px) translate(-50%, -50%) scale(${1 + Math.max(0, 0.25 - fl.t) * 2})`;
       fl.el.style.opacity = String(Math.max(0, 1 - Math.max(0, fl.t - 0.5) / 0.4));
@@ -1077,6 +1096,15 @@ export function startDoodleFight({ charId, onPickChar, onExit, onVictory, onScor
     // burbuja del escudo (encoge con la vida del escudo)
     f.bubble.visible = !dead && (f.state === "shield" || f.state === "counter");
     if (f.bubble.visible) { f.bubble.position.set(f.x, f.y + 1, FIGHT_Z); f.bubble.scale.setScalar(0.9 + 1.4 * (f.shieldHp / 100)); }
+    // la pala de ping-pong de Yair (se esconde si lleva un objeto en la mano)
+    if (f.cid === "yair" && !f.paddle) { f.paddle = makePaddle(1.05); overlay.add(f.paddle); }
+    if (f.paddle) {
+      f.paddle.visible = !dead && !f.held && f.sticker.pivot.visible;
+      f.paddleT = Math.max(0, (f.paddleT || 0) - dt);
+      const sw = f.paddleT > 0 ? Math.sin((1 - f.paddleT / 0.4) * Math.PI) : 0;
+      f.paddle.position.set(f.x + f.facing * (0.5 + sw * 0.25), f.y + 0.72, FIGHT_Z + 0.6);
+      f.paddle.rotation.set(0, 0, -f.facing * (0.35 + sw * 1.5));
+    }
     // objeto en la mano
     if (f.held) {
       f.held.visible = !dead;

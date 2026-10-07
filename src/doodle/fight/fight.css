@@ -204,6 +204,7 @@
   text-shadow: 2px 2px 0 var(--dd-paper), -2px -2px 0 var(--dd-paper), 2px -2px 0 var(--dd-paper), -2px 2px 0 var(--dd-paper);
 }
 .cf-float.red { color: var(--dd-red); font-size: 38px; }
+.cf-float.quote { font-family: "Patrick Hand", sans-serif; font-size: 17px; white-space: normal; width: 230px; text-align: center; color: var(--dd-ink); text-shadow: none; background: rgba(246, 243, 230, 0.94); border: 2.5px solid var(--dd-black); border-radius: 14px 9px 16px 10px; padding: 4px 10px; box-shadow: 3px 3px 0 #f97316; }
 .cf-float.blue { color: var(--dd-ink); }
 
 /* botones de acción: el especial en azul */

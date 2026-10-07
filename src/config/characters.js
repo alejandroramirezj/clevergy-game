@@ -74,9 +74,9 @@ export const CHARS = [
   { id: "silvia", emoji: "📄", name: "SILVIA", form: "Finance Runner", ab: "FACTURAS IMPAGADAS", spd: 5.4, jump: 10, cd: 0.6,
     tip: "X: te lanza facturas que no se han pagado a toda velocidad",
     voice: ["Este cliente no ha pagado."] },
-  { id: "yair", emoji: "💃", name: "JAIR", form: "Fronten Cajón", ab: "TE BAILA", spd: 3.8, jump: 10, cd: 0.9,
-    tip: "X: se arranca a bailar por bulerías y aturde a los de alrededor",
-    voice: ["Soy campeón de ping-pong."] }
+  { id: "yair", emoji: "💃", name: "YAIR", form: "Fronten Cajón", ab: "BULERÍAS Y PING-PONG", spd: 3.8, jump: 10, cd: 0.9,
+    tip: "X: alterna: se arranca por bulerías (aturde alrededor) y saca la pala de ping-pong (pelotas que rebotan)",
+    voice: ["Soy campeón de ping-pong.", "Así gané el torneo de Minnesota en el 73."] }
 ];
 
 export const FLY_META = {
@@ -114,5 +114,5 @@ export const POWER_INFO = {
   pablo: { icon: "🍊", desc: "Naranja rodante: no para de rodar a toda velocidad con su naranja arrollando todo." },
   paloma: { icon: "👜", desc: "Bolso de la abuela: pega con el bolso de la abuela y vuela con su barra de vuelo." },
   silvia: { icon: "📄", desc: "Facturas impagadas: te lanza facturas que no se han pagado a toda velocidad." },
-  yair: { icon: "💃", desc: "Te baila: se arranca a bailar por bulerías y aturde a todos a su alrededor." }
+  yair: { icon: "🏓", desc: "Bulerías y ping-pong: alterna entre arrancarse por bulerías (aturde a todos a su alrededor) y sacar su pala para lanzar pelotas de ping-pong que rebotan, contando cómo ganó el torneo de Minnesota en el 73." }
 };

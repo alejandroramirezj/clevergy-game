@@ -7,6 +7,7 @@ import { ANIM, SPR, getCharacterAvatar } from "../engine/sprites.js";
 import { fetchGlobalLeaderboard } from "../game/leaderboard.js";
 import { GOOGLE_G } from "../game/auth.js";
 import { speakCharacter, stopSpeaking } from "../engine/voice.js";
+import { YAIR_LINES, nextYairLine } from "../config/yairLines.js";
 
 export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWorld }) {
   // Elements
@@ -161,7 +162,7 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
           manu: "PISOTÓN",
           pablo: "RODAR",
           silvia: "SPEEDRUN",
-          yair: "BULERÍA"
+          yair: "BAILE/PONG"
         };
         gbLabelB.textContent = actionNames[c.id] || c.ab.split(" ")[0].toUpperCase();
       }
@@ -433,16 +434,28 @@ export function initOverlays({ onStartGame, onOpenMap, onPlayWorld, onExploreWor
       at(250, () => emo("💶", HX + 40, HY - 70, { vy: -60, size: 24, life: 0.8 }));
       at(560, () => pop("¡ESTE CLIENTE NO HA PAGADO!", 230, 90, "#f87171"));
     },
-    // Te baila: bulerías con palmas y notas
-    yair: ({ CX, at }) => {
-      for (let k = 0; k < 8; k++) at(k * 180, () => {
-        glyph(k % 2 ? "♫" : "♪", CX + (k % 2 ? 80 : -80) + (Math.random() - 0.5) * 30, 200, k % 2 ? "#e11d48" : "#f59e0b", { vy: -90, wob: 8, wf: 8, size: 30, life: 1.0 });
-        sfx(k % 2 ? 660 : 880, 0.05, "square", 0.06); // palmas
-      });
-      [200, 560, 920].forEach((ms) => at(ms, () => emo("👏", CX + (Math.random() > 0.5 ? 100 : -100), 150, { vy: -40, size: 26, life: 0.6 })));
-      at(700, () => pop("¡OLÉ! ¡POR BULERÍAS!", CX, 70, "#fb7185"));
+    // Yair alterna: bulerías con palmas y notas ↔ saque de ping-pong con su batallita
+    yair: (ctx) => {
+      if (yairFxN++ % 2 === 0) return yairBuleria(ctx);
+      const { HX, HY, at } = ctx;
+      emo("🏓", HX - 6, HY - 10, { vr: -14, size: 40, life: 0.45 });
+      [0, 140, 280].forEach((ms, k) => at(ms, () => {
+        emo("⚪", HX + 20, HY - 24 + k * 6, { vx: 330 + k * 40, vy: -200 + k * 60, gravity: 620, size: 15, life: 1.0 });
+        sfx(1500 - k * 180, 0.035, "triangle", 0.09);
+      }));
+      at(320, () => pop("¡PING-PONG!", HX + 60, HY - 110, "#f97316"));
+      at(150, () => speakCharacter("yair", { phrase: YAIR_LINES[nextYairLine()], force: true, showBubble: true }));
     }
   };
+  let yairFxN = 0;
+  function yairBuleria({ CX, at }) {
+    for (let k = 0; k < 8; k++) at(k * 180, () => {
+      glyph(k % 2 ? "♫" : "♪", CX + (k % 2 ? 80 : -80) + (Math.random() - 0.5) * 30, 200, k % 2 ? "#e11d48" : "#f59e0b", { vy: -90, wob: 8, wf: 8, size: 30, life: 1.0 });
+      sfx(k % 2 ? 660 : 880, 0.05, "square", 0.06); // palmas
+    });
+    [200, 560, 920].forEach((ms) => at(ms, () => emo("👏", CX + (Math.random() > 0.5 ? 100 : -100), 150, { vy: -40, size: 26, life: 0.6 })));
+    at(700, () => pop("¡OLÉ! ¡POR BULERÍAS!", CX, 70, "#fb7185"));
+  }
 
   // Disparo de arma Boli Bic (pose shoot + proyectil láser de tinta)
   function spawnLobbyShot() {

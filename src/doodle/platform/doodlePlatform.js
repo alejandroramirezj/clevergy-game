@@ -22,6 +22,7 @@ import { touch as mando } from "../../engine/input.js";
 import { CHARS, POWER_INFO } from "../../config/characters.js";
 import { getCharacterAvatar } from "../../engine/sprites.js";
 import { speakCharacter } from "../../engine/voice.js";
+import { makePaddle, nextYairLine, YAIR_LINES } from "../pingPong.js";
 import { setInPlay } from "../../game/state.js";
 import { makeLevel, LEVEL_W, LEVEL_H } from "./platformLevel.js";
 import { buzz } from "../haptics.js";
@@ -164,6 +165,10 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
   let enemies = [], shots = [], powers = [], pickups = [], pops = [], minions = [], prints = [], rings = [];
   let boss = null, bossDone = false, bossWalls = [];
   const sticker = createSticker(overlay, { height: 1.95 });
+  // la pala de ping-pong de Yair (sólo se ve con él); se balancea al sacar
+  const paddle = makePaddle(1.15);
+  paddle.visible = false;
+  overlay.add(paddle);
   const shadow = new THREE.Mesh(GEO.disc, mat(INK.BLACK, { fill: true }));
   shadow.rotation.x = -Math.PI / 2;
   scene.add(shadow);
@@ -185,6 +190,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     jump: () => audio.tone({ freq: 360, to: 720, dur: 0.12, type: "square", gain: 0.08 }),
     coin: () => { audio.tone({ freq: 988, dur: 0.06, type: "square", gain: 0.07 }); audio.tone({ freq: 1319, dur: 0.14, type: "square", gain: 0.07, delay: 0.06 }); },
     bump: () => audio.tone({ freq: 180, to: 120, dur: 0.08, type: "square", gain: 0.1 }),
+    pong: () => [0, 0.11, 0.2].forEach((d, i) => audio.tone({ freq: 1500 - i * 180, to: 900, dur: 0.035, type: "triangle", gain: 0.12, delay: d })),
     brick: () => audio.noise({ dur: 0.25, gain: 0.3, filter: "lowpass", freq: 1800, to: 200 }),
     stomp: () => { audio.tone({ freq: 500, to: 150, dur: 0.12, type: "square", gain: 0.12 }); audio.noise({ dur: 0.08, gain: 0.15, filter: "lowpass", freq: 900 }); },
     hurt: () => audio.hurt(),
@@ -945,6 +951,7 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
     { ch: "#VENTAS", ink: INK.GREEN, badge: "2", l1: 0, l2: 1, txt: "#ventas: ¡nuevo cliente cerrado!" }
   ];
   let slackSeq = 0;
+  let yairSeq = 0; // Yair alterna bulerías ↔ ping-pong
 
   function usePower(inp) {
     const rawId = String((char && char.id) || "").toLowerCase();
@@ -995,9 +1002,19 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
       msg("📻 ¡Onda microondas!", 1.2);
     }
     else if (id === "yair") {
-      blast(P.x, P.y + 0.8, 3.4, INK.RED);
-      if (P.g) P.vy = Math.max(P.vy, 4);
-      msg("💃 ¡Yair te baila!", 1.3);
+      if (yairSeq++ % 2 === 0) {
+        blast(P.x, P.y + 0.8, 3.4, INK.RED);
+        if (P.g) P.vy = Math.max(P.vy, 4);
+        msg("💃 ¡Yair te baila por bulerías!", 1.3);
+      } else {
+        // saca la pala: tres pelotas de ping-pong con efecto que rebotan por el suelo
+        P.paddleT = 0.4;
+        for (let k = 0; k < 3; k++) shoot({ x: P.x + f * (0.9 + k * 0.2), y: P.y + 1.15 + k * 0.12, vx: f * (12.5 + k * 1.6), vy: 4.5 - k * 1.6, arc: true, bounce: 3, life: 2.2, ink: INK.ORANGE, shape: "pingpong" });
+        sfx.pong();
+        const line = YAIR_LINES[nextYairLine()];
+        msg(`🏓 «${line}»`, 2.4);
+        speakCharacter(char, { phrase: line, force: true });
+      }
     }
     else if (id === "jesus") {
       for (let k = 0; k < 4; k++) {
@@ -1141,6 +1158,10 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
       box(g, 0, -0.3, 0, 0.08, 0.7, 0.08, INK.ORANGE, { tone: -0.1 });
       box(g, 0, 0.3, 0, 0.85, 0.55, 0.08, INK.GREEN, { tone: 0.1 });
       const vt = inkText("VEGAN", { size: 0.18, ink: INK.BLACK, weight: 1.5 }); vt.position.set(0, 0.3, 0.05); g.add(vt);
+    } else if (shape === "pingpong") {
+      // pelota de ping-pong: pequeña, naranja clarita, con su costura
+      const b = new THREE.Mesh(GEO.sph, mat(INK.ORANGE, { tone: 0.42 })); b.scale.setScalar(0.34); g.add(b);
+      const seam = new THREE.Mesh(GEO.torus, mat(INK.ORANGE, { fill: true })); seam.scale.setScalar(0.33); seam.rotation.y = Math.PI / 2; g.add(seam);
     } else if (shape === "ball") {
       // Pelota que rebota
       const b = new THREE.Mesh(GEO.sph, mat(INK.ORANGE, { tone: 0.1 })); b.scale.setScalar(0.7); g.add(b);
@@ -1782,6 +1803,15 @@ export function startDoodlePlatform({ charId, getChar, onSwitchChar, onPickChar,
       squash: P.squash
     });
     sticker.pivot.rotation.y = 0;
+    // pala de Yair en la mano delantera: en reposo apunta arriba; al sacar, da el raquetazo
+    paddle.visible = char.id === "yair" && P.dead <= 0 && sticker.pivot.visible !== false;
+    if (paddle.visible) {
+      P.paddleT = Math.max(0, (P.paddleT || 0) - dt);
+      const sw = P.paddleT > 0 ? Math.sin((1 - P.paddleT / 0.4) * Math.PI) : 0;
+      const f = P.facing;
+      paddle.position.set(P.x + f * (0.55 + sw * 0.25), P.y + 0.75 + Math.sin(playT * 3) * 0.03, 0.9);
+      paddle.rotation.set(0, 0, -f * (0.35 + sw * 1.5));
+    }
     // parpadeo durante la invulnerabilidad; brillo azul con el escudo
     sticker.setVisible(!(P.inv > 0 && P.dead <= 0 && Math.floor(P.inv * 14) % 2 && P.shieldT <= 0));
     let gy = 0;
